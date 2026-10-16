@@ -52,6 +52,7 @@
 #include "Landscape.h"
 #include "LHNetBase.h"
 #include "MagicTeleport.h"
+#include "MapCoordsMeters.h"
 #include "MPFEConnectionStatus.h"
 #include "MPFEStartGameData.h"
 #include "Network.h"
@@ -88,7 +89,7 @@
 #define PLAYER_LINE(line)  (line)
 #endif
 
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 // TODO: original name and home unknown (not in the Mac build). Reports the end of a multiplayer
 // game to the lobby server.
 struct LobbyServerAddress
@@ -263,7 +264,7 @@ void GPlayer::SetToZero()
 	type = PLAYER_TYPE_0;
 	player_number = 0;
 	StartGameData = NULL;
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 	Score = 0.0f;
 #endif
 	memset(name, 0, sizeof(name));
@@ -301,7 +302,7 @@ void GPlayer::SetToZero()
 	ComputerPlayer = NULL;
 	field_0x93c = 0;
 	info = GPlayerInfo::GetInfo();
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 	Conditions.clear();
 	for (i = 0; i < 500; i++)
 	{
@@ -424,7 +425,7 @@ void GPlayer::ClaimTown(Town* town)
 	}
 	GGame::g_game->GameFlags |= GAME_FLAG_NEEDS_CONTROL_MAP_UPDATE;
 	GGame::g_game->ForceNeedUpdateInfluence();
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 	if (GGame::g_game->IsMultiplayerGame() && town->GetPlayer() != NULL)
 	{
 		GetPlayer()->AddToCondition(WC_TAKEOVER_NUM_TOWNS, 1);
@@ -438,7 +439,7 @@ void GPlayer::ProcessPlayers()
 	for (player = GGame::g_game->GetNextPlayerAndNeutral(NULL); player != NULL;
 	     player = GGame::g_game->GetNextPlayerAndNeutral(player))
 	{
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 		if (GGame::g_game->IsMultiplayerGame())
 		{
 			player->SetCondition(WC_WOOD_IN_PITS, player->GetTotalWoodInStoragePits());
@@ -467,13 +468,13 @@ void GPlayer::ProcessPlayers()
 		player->Process();
 	}
 
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 	if ((GGame::g_game->IsMultiplayerGame() || GGame::g_game->SkirmishGame != 0) && !GGame::g_game->GameOver)
 #else
 	if (GGame::g_game->IsMultiplayerGame() || GGame::g_game->SkirmishGame != 0)
 #endif
 	{
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 		bool checkLosers = false;
 		if (GGame::g_game->MyPlayer()->Conditions.size() != 0 ||
 		    (GGame::g_game->MultiplayerTimeLimit == GGame::g_game->data.GameTurn && GGame::g_game->SkirmishGame == 0))
@@ -615,7 +616,7 @@ void GPlayer::ProcessPlayers()
 		if (checkLosers)
 #endif
 		{
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 			if (GGame::g_game->data.GameTurn % 10 == 0)
 			{
 				float total = 0.0f;
@@ -644,7 +645,7 @@ void GPlayer::ProcessPlayers()
 				{
 					continue;
 				}
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 				if (player == GGame::g_game->MyPlayer())
 				{
 					GameStats::GetPackage();
@@ -673,7 +674,7 @@ void GPlayer::ProcessPlayers()
 					if (GGame::g_game->GetNumberOfPlayersThatHaveLost() < GGame::g_game->GetNoPlayers() - 1)
 					{
 						FrontEnd::EndGameDialog->field_0x5e = true;
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 						HideGameOverDialogs();
 #endif
 						FrontEnd::EndGameDialog->ShowResult(END_GAME_RESULT_ELIMINATED, GGame::g_game->PlayerIndex,
@@ -684,7 +685,7 @@ void GPlayer::ProcessPlayers()
 					{
 						FrontEnd::EndGameDialog->field_0x5e = false;
 						GGame::g_game->GameOver = true;
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 						PingLobbyServer();
 						HideGameOverDialogs();
 #endif
@@ -704,11 +705,11 @@ void GPlayer::ProcessPlayers()
 				else
 				{
 					GGame::g_game->GameOver = true;
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 					PingLobbyServer();
 #endif
 					GGame::g_game->field_0x599d = true;
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 					HideGameOverDialogs();
 #endif
 					FrontEnd::EndGameDialog->ShowResult(END_GAME_RESULT_WON, GGame::g_game->PlayerIndex, team != 0,
@@ -1536,7 +1537,7 @@ bool32_t GPlayer::IsAtLeastOneSpellBeginToBeCharged()
 			{
 				for (WorshipSpellIcon* icon = site->IconList.head; icon != NULL; icon = icon->next)
 				{
-					if (icon->Charge > 0.0f)
+					if (icon->ChantStore > 0.0f)
 					{
 						return TRUE;
 					}
@@ -1559,7 +1560,7 @@ bool32_t GPlayer::IsSpellBeginToBeCharged(MAGIC_TYPE type)
 			{
 				for (WorshipSpellIcon* icon = site->IconList.head; icon != NULL; icon = icon->next)
 				{
-					if (icon->GetMagicType() == type && icon->Charge > 0.0f)
+					if (icon->GetMagicType() == type && icon->ChantStore > 0.0f)
 					{
 						return TRUE;
 					}
@@ -1759,8 +1760,8 @@ WorshipSpellIcon* GPlayer::FindBestSpellIconForSpellSeed(GInterfaceStatus* statu
 
 inline MapCoords::MapCoords(float x, float z, float altitude)
 {
-	SetWholeX((long)(x * (float)0x10000 / MetresPerMapCell));
-	SetWholeZ((long)(z * (float)0x10000 / MetresPerMapCell));
+	SetMetersX(x);
+	SetMetersZ(z);
 	this->altitude = altitude;
 }
 
@@ -1993,7 +1994,7 @@ void GPlayer::UpdateSpellInfo(Spell* spell, PSysProcessInfo* info)
 	}
 }
 
-uint32_t GPlayer::Save(GameOSFile& file)
+bool32_t GPlayer::Save(GameOSFile& file)
 {
 	if (GameThing::Save(file))
 	{
@@ -2027,12 +2028,12 @@ uint32_t GPlayer::Save(GameOSFile& file)
 		file.WritePtrArray((GameThing**)interfaces, 18);
 		file.WriteIt(HasLost);
 		file.WriteIt(field_0x93c);
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
-uint32_t GPlayer::Load(GameOSFile& file)
+bool32_t GPlayer::Load(GameOSFile& file)
 {
 	if (GameThing::Load(file))
 	{
@@ -2066,9 +2067,9 @@ uint32_t GPlayer::Load(GameOSFile& file)
 		file.ReadPtrArray((GameThing**)interfaces);
 		file.ReadIt(HasLost);
 		file.ReadIt(field_0x93c);
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 void GPlayer::SaveExtraData(GameOSFile& file)
@@ -2505,7 +2506,7 @@ unsigned long GPlayer::GetTotalFoodInStoragePits()
 	return total;
 }
 
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 void GPlayer::SetCondition(int type, int value)
 {
 	if (this != NULL && GGame::g_game->IsMultiplayerGame())

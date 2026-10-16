@@ -32,7 +32,8 @@ class MobileStatic : public MultiMapFixed
 {
 public:
 	GPlayer* Player;
-	uint8_t  field_0x80[0x8];
+	uint32_t field_0x80;
+	uint32_t field_0x84;
 
 	// Override methods
 
@@ -47,9 +48,9 @@ public:
 	// BW1W120 0055d750 BW1M119 013c1970
 	virtual char* GetDebugText() { return "MobileStatic:"; }
 	// BW1W120 00608590 BW1M119 013c8e20
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 00608650 BW1M119 013c8ce0
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0055d740 BW1M119 013c1930
 	virtual uint32_t GetSaveType() { return GAME_THING_TYPE_MOBILE_STATIC; }
 	// BW1W120 0055d720 BW1M119 013b7140
@@ -132,7 +133,7 @@ public:
 	// BW1W120 004396b0 BW1M119 010b7030
 	virtual uint32_t ApplyOnlyAfterReleased();
 	// BW1W120 00609270 BW1M119 013c6c20
-	virtual uint32_t GetPhysicsConstantsType();
+	virtual PHYSICS_CONSTANTS_TYPE GetPhysicsConstantsType();
 	// BW1W120 00608f40 BW1M119 013c7780
 	virtual void GetBoundingSphere(LHPoint& param_1, float& param_2);
 	// BW1W120 006090b0 BW1M119 013c7310
@@ -189,6 +190,13 @@ public:
 
 	// BW1W120 0055d790 BW1M119 inlined
 	GBaseOnly() {}
+	// BW1W120 inlined BW1M119 inlined
+	GBaseOnly(const MapCoords& coords, const GObjectInfo* info) : Object(coords, info) {}
+
+	// Static methods
+
+	// BW1W120 00609340 BW1M119 013c6a70
+	static GBaseOnly* Create(const MapCoords& coords, const GObjectInfo* info);
 };
 
 #endif /* BW1_DECOMP_MOBILE_STATIC_INCLUDED_H */

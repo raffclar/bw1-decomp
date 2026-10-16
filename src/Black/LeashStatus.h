@@ -4,6 +4,8 @@
 #include <assert.h> /* For static_assert */
 #include <stdint.h> /* For uint32_t, uint8_t */
 
+#include <chlasm/Enum.h> /* For enum LEASH_TYPE */
+
 #include "GameThing.h" /* For struct GameThing */
 
 // Forward Declares
@@ -20,8 +22,8 @@ class GLeashStatus : public GameThing
 {
 public:
 	uint32_t          field_0x14;
-	uint32_t          field_0x18;
-	uint32_t          field_0x1c;
+	bool32_t          LeashWorks;
+	LEASH_TYPE        LeashType;
 	uint32_t          field_0x20;
 	Object*           ObjectAttachedTo;
 	uint32_t          field_0x28;
@@ -37,9 +39,9 @@ public:
 	// BW1W120 005e7630 BW1M119 01382c20
 	virtual GPlayer* GetPlayer();
 	// BW1W120 005e7430 BW1M119 01382c80
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 005e7230 BW1M119 01382f70
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 005db930 BW1M119 01382b00
 	virtual uint32_t GetSaveType();
 	// BW1W120 005e71d0 BW1M119 01383280

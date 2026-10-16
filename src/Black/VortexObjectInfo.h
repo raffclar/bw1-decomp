@@ -20,11 +20,11 @@ public:
 	// Override methods
 
 	// BW1W120 0055d820 BW1M119 013babf0
-	virtual char* GetDebugText() { return "##a_class:"; }
+	virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 	// BW1W120 00600bf0 BW1M119 013bac40
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 00600ad0 BW1M119 013baf40
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0055d810 BW1M119 013babb0
 	virtual uint32_t GetSaveType() { return GAME_THING_TYPE_VORTEX_OBJECT_INFO; }
 

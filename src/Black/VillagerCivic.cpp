@@ -195,15 +195,15 @@ bool32_t Villager::ArrivesAtBuildingSite()
 		{
 			LHPoint*  buildPoint = &building_site->BuildingPositions[index];
 			MapCoords buildPos;
-			buildPos.x = (int)(buildPoint->x * 6553.6f);
-			buildPos.z = (int)(buildPoint->z * 6553.6f);
+			buildPos.SetX(buildPoint->x);
+			buildPos.SetZ(buildPoint->z);
 			buildPos.altitude = 0.0f;
 			if (Pos.GetDistance(buildPos) > 0.2f)
 			{
 				SetupMoveToWithHug(buildPos, VILLAGER_STATE_ARRIVES_AT_BUILDING_SITE);
 				return 1;
 			}
-			if (LookAtObject(building_site->GetBuilding(), 1) == 1)
+			if (LookAtObject(building_site->GetBuilding(), LIVING_LOOK_AT_SPEED_NORMAL) == true)
 			{
 				int16_t wood = ResourceHeld[RESOURCE_TYPE_WOOD];
 				if (wood != 0)
@@ -285,8 +285,8 @@ static ClearAreaPoint g_ClearAreaPoint;
 bool32_t ClearAreaPoint::ProcessPoint(const LHPoint& point)
 {
 	MapCoords mc;
-	mc.x = (int)(point.x * 6553.6f);
-	mc.z = (int)(point.z * 6553.6f);
+	mc.SetX(point.x);
+	mc.SetZ(point.z);
 	mc.altitude = 0.0f;
 	for (Object* obj = mc.FindType(OBJECT_TYPE_ANY, NULL); obj != NULL; obj = mc.FindType(OBJECT_TYPE_ANY, obj))
 	{
@@ -308,11 +308,9 @@ bool32_t ClearAreaPoint::ProcessPoint(const LHPoint& point)
 // BW1W120 007592e0 BW1M119 0157cf30
 bool32_t Villager::ArriveAtPushObject()
 {
-	// TODO: the wander area really spans 0x118..0x123 (JustWholeMapXZ at 0x118, float radius
-	// at 0x120); Villager.h models TargetThing/WanderArea separately, hence the casts.
-	MapCoords pushPos((JustWholeMapXZ*)&TargetThing);
-	float     wanderRadius = *(float*)&WanderArea.z;
-	if (CheckForClearArea(pushPos, wanderRadius) == 1)
+	MapCoords pushPos((JustWholeMapXZ*)ClearAreaPos);
+	float     radius = ClearAreaRadius;
+	if (CheckForClearArea(pushPos, radius) == 1)
 		return true;
 	return ReenterBuildingState();
 }
@@ -459,7 +457,7 @@ uint32_t Villager::CheckForScaffoldForBuildingSite(BuildingSite* param_1)
 }
 
 // BW1W120 007595f0 BW1M119 0157c760
-bool32_t Villager::IsScaffoldValid()
+bool Villager::IsScaffoldValid()
 {
 	// TODO: target emits narrow `xor al,al` (byte) but this uint-mangled (?..@@QAEIXZ)
 	// function constant-folds `return false;` to `xor eax,eax` no matter the phrasing

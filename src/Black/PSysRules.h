@@ -20,6 +20,7 @@
 class AtomCollection;
 class AtomCore;
 class Creature;
+class DefensiveSphere;
 class FloatProvider;
 class GameThingWithPos;
 class LH3DStorm;
@@ -39,16 +40,16 @@ public:
 		bool SoundRemoved;
 
 		// BW1W120 0055f6f0 BW1M119 inlined
-		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier), SoundRemoved(false) {}
+		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier) { SoundRemoved = false; }
 
 		// BW1W120 0055f720 BW1M119 inlined
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_REMOVE_SOUND_FROM_ATOM_ATOM_DATA; }
 		// BW1W120 0055f730 BW1M119 inlined
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00696c70 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cd7d0 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	RemoveSoundFromAtom(PersistentOwner* owner) : AppearanceUpdateRule(owner)
@@ -78,16 +79,16 @@ public:
 		bool SoundAdded;
 
 		// BW1W120 0055f670 BW1M119 inlined
-		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier), SoundAdded(false) {}
+		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier) { SoundAdded = false; }
 
 		// BW1W120 0055f6a0 BW1M119 0142ad00
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_ADD_SOUND_TO_ATOM_ATOM_DATA; }
 		// BW1W120 0055f6b0 BW1M119 0142ad50
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00696c10 BW1M119 01424220
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cd770 BW1M119 0148b0b0
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	AddSoundToAtom(PersistentOwner* owner) : AppearanceUpdateRule(owner)
@@ -207,7 +208,7 @@ public:
 	// BW1W120 006ab9b0 BW1M119 014731c0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a4d00 BW1M119 0107c8c0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float   StartTime;
 	float   StopTime;
@@ -226,10 +227,10 @@ public:
 	class AtomData : public BaseAtomModifierData
 	{
 	public:
-		bool     ConditionMet;
-		uint32_t field_0x24;
-		uint32_t field_0x28;
-		uint32_t field_0x2c;
+		bool  ConditionMet;
+		float StartTime;
+		float StartAlpha;
+		float StartScale;
 
 		// BW1W120 0055f5f0 BW1M119 inlined
 		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier), ConditionMet(false) {}
@@ -237,11 +238,11 @@ public:
 		// BW1W120 0055f620 BW1M119 inlined
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_AR_FADE_OUT_ONCE_CONDITION_TRUE_ATOM_DATA; }
 		// BW1W120 0055f630 BW1M119 inlined
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00696b00 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cd660 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	AR_FadeOutOnceConditionTrue(PersistentOwner* owner) : AppearanceUpdateRule(owner)
@@ -380,7 +381,7 @@ public:
 	// BW1W120 006abca0 BW1M119 01472740
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 00684e60 BW1M119 01407e10
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float K_Spring;
 	float field_0x24;
@@ -405,11 +406,11 @@ public:
 		// BW1W120 00560ef0 BW1M119 inlined
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_FLOCKING_COLLECTION_DATA; }
 		// BW1W120 00560f00 BW1M119 inlined
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 006987d0 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cf2b0 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 00683470 BW1M119 0140a370
@@ -418,7 +419,7 @@ public:
 	// BW1W120 006abcd0 BW1M119 01471ff0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 00683580 BW1M119 01409720
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	// BW1W120 006ac0c0 BW1M119 01472700
 	long GetAccnType() { return AccnType; }
@@ -498,7 +499,7 @@ public:
 	// BW1W120 006ac150 BW1M119 01471e90
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 00687660 BW1M119 0140aa10
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float AngularVelocity;
 	float PercentToUse;
@@ -511,14 +512,14 @@ class UpdateRuleGravity : public UpdateRule
 public:
 	UpdateRuleGravity(PersistentOwner* owner) : UpdateRule(owner)
 	{
+		Gravity = 10.0f;
 		MaxSpeed = 100.0f;
-		WindMagnification = 100.0f;
 		UseDamping = false;
 		Damping = 0.0f;
 		UseWind = false;
 		DisableDampingForNonHuman = false;
 		DisableWindForNonHuman = false;
-		Gravity = 10.0f;
+		WindMagnification = 100.0f;
 	}
 
 	// BW1W120 006ac1b0 BW1M119 01471b90
@@ -542,6 +543,9 @@ public:
 };
 static_assert(sizeof(UpdateRuleGravity) == 0x34, "Data type is of wrong size");
 
+#define UPDATE_RULE_GRAVITY_WIND_SCALE 0.1f
+#define UPDATE_RULE_GRAVITY_MIN_SLIDE  0.0001f
+
 class UpdateRuleGravityWithFloor : public UpdateRuleGravity
 {
 public:
@@ -559,11 +563,11 @@ public:
 		// BW1W120 0055f810 BW1M119 inlined
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UPDATE_RULE_GRAVITY_WITH_FLOOR_ATOM_DATA_RIPPLE; }
 		// BW1W120 0055f820 BW1M119 inlined
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00696cd0 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cd830 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 006a1510 BW1M119 01439ea0
@@ -572,12 +576,17 @@ public:
 	// BW1W120 006ac3a0 BW1M119 014717c0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a1880 BW1M119 010799c0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
+
+	// BW1W120 006a1630 BW1M119 01439b60
+	void CreateImpactSound(AtomCore* core, const LHPoint& pos, float speed) const;
+	// BW1W120 006a1fa0 BW1M119 014398b0
+	static void DoAnyShieldDeflections(AtomCore* core, const LHPoint& previous_pos);
 
 	float            DampingHorozontalBounce;
 	float            DampingVerticalBounce;
 	float            GroundDrag;
-	uint32_t         field_0x40;
+	float            RippleSpacing;
 	PSysSoundAction  ImpactSound;
 	TEventCondition* ImpactSoundCondition;
 	float            ImpactSpeedSmall;
@@ -585,7 +594,7 @@ public:
 	float            ImpactSpeedLarge;
 	long             MinAlphaForImpactSoundOrRipple;
 	bool             UseSurfaceForBounce;
-	uint8_t          field_0x71;
+	bool             MakeRipples;
 	bool             CheckShieldDeflections;
 	uint8_t          field_0x73;
 };
@@ -598,9 +607,9 @@ public:
 	class AtomData : public BaseAtomModifierData
 	{
 	public:
-		LHPoint  field_0x20;
-		uint32_t field_0x2c;
-		bool     FirstUpdate;
+		LHPoint SmoothedVelocity;
+		float   SpinAngle;
+		bool    FirstUpdate;
 
 		// BW1W120 005604e0 BW1M119 inlined
 		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier) { FirstUpdate = true; }
@@ -608,11 +617,11 @@ public:
 		// BW1W120 00560510 BW1M119 01429990
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_ORIENT_WITH_VELOCITY_ATOM_DATA; }
 		// BW1W120 00560520 BW1M119 014299e0
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00697520 BW1M119 014235d0
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006ce090 BW1M119 0148a480
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	UR_OrientWithVelocity(PersistentOwner* owner) : UpdateRule(owner)
@@ -651,11 +660,11 @@ public:
 		// BW1W120 00560df0 BW1M119 0142b060
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_ORIENT_SPRITE_WITH_VELOCITY_ATOM_DATA; }
 		// BW1W120 00560e00 BW1M119 0142b0c0
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00696940 BW1M119 014244c0
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cd4a0 BW1M119 0148b340
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	UR_OrientSpriteWithVelocity(PersistentOwner* owner) : UpdateRule(owner)
@@ -681,23 +690,24 @@ public:
 	class AtomData : public BaseAtomModifierData
 	{
 	public:
-		bool FirstUpdate;
-		long Angle;
+		bool  FirstUpdate;
+		float Angle;
 
 		// BW1W120 00560460 BW1M119 inlined
-		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier), Angle(0)
+		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier)
 		{
 			FirstUpdate = true;
+			Angle = 0.0f;
 		}
 
 		// BW1W120 00560490 BW1M119 01429ef0
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_ORIENT_SPRITE_WITH_RANDOM_ANGLE_ATOM_DATA; }
 		// BW1W120 005604a0 BW1M119 01429f50
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 006972a0 BW1M119 014238b0
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cde10 BW1M119 0148a760
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	UR_OrientSpriteWithRandomAngle(PersistentOwner* owner) : UpdateRule(owner)
@@ -709,7 +719,7 @@ public:
 	// BW1W120 006ac660 BW1M119 01471390
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a2100 BW1M119 01439720
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float RandomAngle;
 	float DefaultAngle;
@@ -753,7 +763,7 @@ public:
 	// BW1W120 006c0e70 BW1M119 014752c0
 	virtual void DeleteReference(AtomCollection* collection) const { ReferenceCount--; }
 	// BW1W120 0069f540 BW1M119 0143ce30
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 };
 static_assert(sizeof(SetInitialRandomOrientations) == 0x20, "Data type is of wrong size");
 
@@ -833,7 +843,7 @@ public:
 	// BW1W120 006aca00 BW1M119 014708c0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a2720 BW1M119 01438ca0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	FloatProvider* Alpha;
 };
@@ -936,11 +946,11 @@ public:
 		// BW1W120 00560c40 BW1M119 014292c0
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_CLOUD_MOVER_NEW_COLLECTION_DATA; }
 		// BW1W120 00560c50 BW1M119 01429310
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00697c20 BW1M119 01422900
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006ce710 BW1M119 014899f0
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 006d4150 BW1M119 01491ef0
@@ -949,7 +959,7 @@ public:
 	// BW1W120 006acd10 BW1M119 0146fff0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006d41c0 BW1M119 014919a0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float DelayBeforeMove;
 	float WindDamping;
@@ -993,13 +1003,13 @@ public:
 		// BW1W120 00560b40 BW1M119 01427ea0
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_CLOUD_GATHER_COLLECTION_DATA; }
 		// BW1W120 00560b50 BW1M119 01427ef0
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 006d4900 BW1M119 014916e0
 		virtual ~CollectionData();
 		// BW1W120 00698b30 BW1M119 01421a70
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cf610 BW1M119 01488b60
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	class AtomData : public BaseAtomModifierData
@@ -1022,11 +1032,11 @@ public:
 		// BW1W120 00560ba0 BW1M119 01427e00
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_CLOUD_GATHER_ATOM_DATA; }
 		// BW1W120 00560bb0 BW1M119 01427e50
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00698da0 BW1M119 01421990
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cf870 BW1M119 01488a80
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 006d4700 BW1M119 014917f0
@@ -1035,7 +1045,7 @@ public:
 	// BW1W120 006acd70 BW1M119 0146f940
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006d4a70 BW1M119 01490460
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float           MaxRadius;
 	long            NumAtoms;
@@ -1104,11 +1114,11 @@ public:
 		// BW1W120 00560cf0 BW1M119 01428720
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_VORTEX_ATTRACT_ATOM_DATA; }
 		// BW1W120 00560d00 BW1M119 01428770
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00698350 BW1M119 01422200
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cee70 BW1M119 01489300
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 006d3910 BW1M119 014929d0
@@ -1117,7 +1127,7 @@ public:
 	// BW1W120 006ad310 BW1M119 0146f5c0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006d39c0 BW1M119 01491fa0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float    RadialSpeed;
 	float    ThetaSpeed;
@@ -1178,7 +1188,7 @@ public:
 	// BW1W120 006ad3e0 BW1M119 0146f190
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006d59b0 BW1M119 0148fa30
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	long  NumAtoms;
 	float MaxRadius;
@@ -1216,11 +1226,11 @@ public:
 		// BW1W120 005609d0 BW1M119 inlined
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_TORNADO_DEBRIS_COLLECTION_DATA; }
 		// BW1W120 005609e0 BW1M119 inlined
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00698fc0 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cfaa0 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	class FlyingAtomData : public BaseAtomModifierData
@@ -1240,11 +1250,11 @@ public:
 		// BW1W120 00560a20 BW1M119 inlined
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_TORNADO_FLYING_ATOM_DATA; }
 		// BW1W120 00560a30 BW1M119 inlined
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00699070 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cfb50 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	class DebrisCollectionData : public BaseCollectionModifierData
@@ -1262,11 +1272,11 @@ public:
 		// BW1W120 00560980 BW1M119 01427cb0
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_TORNADO_DEBRIS_COLLECTION_DATA; }
 		// BW1W120 00560990 BW1M119 01427d00
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00698f10 BW1M119 014218e0
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cf9f0 BW1M119 014889d0
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	class CollectionData : public BaseCollectionModifierData
@@ -1299,13 +1309,13 @@ public:
 		// BW1W120 00560930 BW1M119 014278c0
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_TORNADO_COLLECTION_DATA; }
 		// BW1W120 00560940 BW1M119 01427910
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 006d18a0 BW1M119 014953b0
 		virtual ~CollectionData();
 		// BW1W120 00699150 BW1M119 014215a0
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cfc40 BW1M119 01488690
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 006d1680 BW1M119 01495460
@@ -1314,7 +1324,7 @@ public:
 	// BW1W120 006ad550 BW1M119 0146e820
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006d18b0 BW1M119 01494eb0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float            TopHeight;
 	long             WiggleCount;
@@ -1538,7 +1548,7 @@ public:
 	// BW1W120 006ae5e0 BW1M119 0146d400
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a60b0 BW1M119 01433610
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	// BW1W120 006ae750 BW1M119 0146d690
 	void KeyPointsYGetArray(GJArray<float>* array);
@@ -1558,25 +1568,26 @@ public:
 	class CollectionData : public BaseCollectionModifierData
 	{
 	public:
-		bool FirstUpdate;
-		long Count;
+		bool             FirstUpdate;
+		DefensiveSphere* Shield;
 
 		// BW1W120 0055f950 BW1M119 inlined
-		CollectionData(const AtomCollectionModifier* modifier) : BaseCollectionModifierData(modifier), Count(0)
+		CollectionData(const AtomCollectionModifier* modifier) : BaseCollectionModifierData(modifier)
 		{
 			FirstUpdate = true;
+			Shield = NULL;
 		}
 
 		// BW1W120 0055f980 BW1M119 01429360
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_ADD_DEFENSIVE_SPHERE_COLLECTION_DATA; }
 		// BW1W120 0055f990 BW1M119 014293c0
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 006a2a30 BW1M119 014386e0
 		virtual ~CollectionData();
 		// BW1W120 00697bb0 BW1M119 014229b0
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006ce6a0 BW1M119 01489aa0
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	UR_AddDefensiveSphere(PersistentOwner* owner) : UpdateRule(owner)
@@ -1588,7 +1599,7 @@ public:
 	// BW1W120 006ae8c0 BW1M119 0146d270
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a2a60 BW1M119 01438530
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	FloatProvider* SphereRadius;
 	bool           IsMagical;
@@ -1605,7 +1616,11 @@ public:
 	class AtomData : public BaseAtomModifierData
 	{
 	public:
-		uint8_t field_0x20[0x40];
+		float    RandomAngleX;
+		float    RandomAngleY;
+		float    RandomAngleZ;
+		long     NumWiggles;
+		LHMatrix Orientation;
 
 		// BW1W120 0055f9c0 BW1M119 inlined
 		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier) {}
@@ -1613,11 +1628,11 @@ public:
 		// BW1W120 0055f9f0 BW1M119 0142a790
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UPDATE_RULE_SHIELD_SPARK_ATOM_DATA; }
 		// BW1W120 0055fa00 BW1M119 0142a7e0
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00696d90 BW1M119 01423e90
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cd8f0 BW1M119 0148ad20
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 006a2b40 BW1M119 01438440
@@ -1626,7 +1641,10 @@ public:
 	// BW1W120 006aea00 BW1M119 0146cee0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a2bf0 BW1M119 01437e40
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
+
+	// BW1W120 006a2f90 BW1M119 014379b0
+	bool ModifySubCollection(AtomCore* core, AtomCollection* collection, AtomData* data) const;
 
 	FloatProvider*  SphereRadius;
 	long            MaxNumAtomsForCollection;
@@ -1645,7 +1663,7 @@ public:
 	// BW1W120 006aeb80 BW1M119 0146cdb0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a0f40 BW1M119 0143a520
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float WiggleFreq;
 };
@@ -1657,10 +1675,10 @@ public:
 	class AtomData : public BaseAtomModifierData
 	{
 	public:
-		bool     FirstUpdate;
-		uint32_t field_0x24;
-		uint32_t field_0x28;
-		uint32_t field_0x2c;
+		bool  FirstUpdate;
+		float Theta;
+		float Phi;
+		float Psi;
 
 		// BW1W120 0055fa40 BW1M119 inlined
 		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier) { FirstUpdate = true; }
@@ -1668,11 +1686,11 @@ public:
 		// BW1W120 0055fa70 BW1M119 01428290
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_SPHERE_SURFACE_TRACER_ATOM_DATA; }
 		// BW1W120 0055fa80 BW1M119 014282e0
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00698870 BW1M119 01421d20
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cf350 BW1M119 01488e10
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	UR_SphereSurfaceTracer(PersistentOwner* owner) : UpdateRule(owner)
@@ -1717,10 +1735,10 @@ public:
 	class AtomData : public BaseAtomModifierData
 	{
 	public:
-		bool     FirstUpdate;
-		uint32_t field_0x24;
-		uint32_t field_0x28;
-		uint32_t field_0x2c;
+		bool  FirstUpdate;
+		float InitialTheta;
+		float InitialPhi;
+		float InitialPsi;
 
 		// BW1W120 0055fac0 BW1M119 inlined
 		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier) { FirstUpdate = true; }
@@ -1728,11 +1746,11 @@ public:
 		// BW1W120 0055faf0 BW1M119 inlined
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_FOREST_PATH_ATOM_DATA; }
 		// BW1W120 0055fb00 BW1M119 inlined
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00698a20 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cf500 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 006a35e0 BW1M119 01437320
@@ -1741,7 +1759,7 @@ public:
 	// BW1W120 006aee60 BW1M119 0146c5b0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a3770 BW1M119 01436f80
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float          ThetaSpeed;
 	float          PhiSpeed;
@@ -1766,6 +1784,9 @@ public:
 static_assert(sizeof(UR_ForestPath::AtomData) == 0x30, "Data type is of wrong size");
 static_assert(sizeof(UR_ForestPath) == 0x54, "Data type is of wrong size");
 
+#define VAPOUR_END_EFFECT_FADE_IN_ALPHA_PER_SECOND 30.0f
+#define VAPOUR_END_EFFECT_MIN_MOVEMENT             0.0001f
+
 class UR_VapourEndEffect : public UpdateRule
 {
 public:
@@ -1780,11 +1801,11 @@ public:
 		// BW1W120 0055fb70 BW1M119 0142a640
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_VAPOUR_END_EFFECT_ATOM_DATA; }
 		// BW1W120 0055fb80 BW1M119 0142a690
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00696ed0 BW1M119 01423df0
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cda40 BW1M119 0148ac80
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	UR_VapourEndEffect(PersistentOwner* owner) : UpdateRule(owner) { ScaleFactor = NULL; }
@@ -1814,11 +1835,11 @@ public:
 		// BW1W120 0055fcf0 BW1M119 01428140
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_CHECK_SHIELD_DEFLECTIONS_ATOM_DATA; }
 		// BW1W120 0055fd00 BW1M119 01428190
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00698980 BW1M119 01421c70
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cf460 BW1M119 01488d60
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	CheckShieldDeflections(PersistentOwner* owner) : UpdateRule(owner)
@@ -1852,16 +1873,16 @@ public:
 		bool Added;
 
 		// BW1W120 0055fbc0 BW1M119 inlined
-		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier), Added(false) {}
+		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier) { Added = false; }
 
 		// BW1W120 0055fbf0 BW1M119 0142a4f0
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_ADD_SUB_COLLECTIONS_TO_ATOM_ATOM_DATA; }
 		// BW1W120 0055fc00 BW1M119 0142a540
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00696f30 BW1M119 01423d40
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cdaa0 BW1M119 0148abd0
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	AddSubCollectionsToAtom(PersistentOwner* owner) : AtomCollectionModifier(owner) {}
@@ -1897,7 +1918,7 @@ public:
 	// BW1W120 006af980 BW1M119 0146b980
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a6700 BW1M119 01432e40
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float   Speed;
 	bool    OrientWithParent;
@@ -1913,27 +1934,29 @@ public:
 	class CollectionData : public BaseCollectionModifierData
 	{
 	public:
-		uint32_t field_0x20;
-		bool     Striking;
-		long     NumEmitted;
-		long     EmitTime;
-		bool     FirstUpdate;
+		float StrikeTime;
+		bool  Striking;
+		float NextEmitTime;
+		long  NumEmitted;
+		bool  FirstUpdate;
 
 		// BW1W120 0055fdc0 BW1M119 inlined
-		CollectionData(const AtomCollectionModifier* modifier)
-			: BaseCollectionModifierData(modifier), Striking(false), NumEmitted(0), EmitTime(0)
+		CollectionData(const AtomCollectionModifier* modifier) : BaseCollectionModifierData(modifier)
 		{
+			Striking = false;
+			NextEmitTime = 0.0f;
+			NumEmitted = 0;
 			FirstUpdate = true;
 		}
 
 		// BW1W120 0055fdf0 BW1M119 01426e50
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_EMITTER_RULE_LIGHTNING_SPRITE_COLLECTION_DATA; }
 		// BW1W120 0055fe00 BW1M119 01426eb0
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00699ac0 BW1M119 01420d40
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006d0490 BW1M119 01487d90
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	EmitterRuleLightningSprite(PersistentOwner* owner) : AtomCreateRule(owner)
@@ -1948,7 +1971,10 @@ public:
 	// BW1W120 006af9c0 BW1M119 0146b640
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a6910 BW1M119 014329f0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
+
+	// BW1W120 006a6860 BW1M119 01432c90
+	bool ShouldEmit(AtomCollection* collection, CollectionData* data) const;
 
 	float   SpecLife;
 	float   EmissionFreq;
@@ -1974,7 +2000,7 @@ public:
 	// BW1W120 006afa40 BW1M119 0146b570
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a64d0 BW1M119 0106f890
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float Radius;
 	float Height;
@@ -1996,7 +2022,7 @@ public:
 	// BW1W120 006afa90 BW1M119 0146b450
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a6610 BW1M119 01433060
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float StartRadius;
 	float StopRadius;
@@ -2019,7 +2045,7 @@ public:
 	// BW1W120 006afb20 BW1M119 0146b360
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a6a60 BW1M119 01432770
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float Speed;
 	float Spread;
@@ -2033,13 +2059,13 @@ public:
 	class CollectionData : public BaseCollectionModifierData
 	{
 	public:
-		bool FirstUpdate;
-		long NumEmitted;
-		long EmitTime;
+		bool  FirstUpdate;
+		float NumToEmit;
+		long  NumEmitted;
 
 		// BW1W120 00560040 BW1M119 inlined
 		CollectionData(const AtomCollectionModifier* modifier)
-			: BaseCollectionModifierData(modifier), NumEmitted(0), EmitTime(0)
+			: BaseCollectionModifierData(modifier), NumToEmit(0.0f), NumEmitted(0)
 		{
 			FirstUpdate = true;
 		}
@@ -2047,11 +2073,11 @@ public:
 		// BW1W120 00560070 BW1M119 inlined
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_ER_EMIT_FROM_PARENT_ATOM_COLLECTION_DATA; }
 		// BW1W120 00560080 BW1M119 inlined
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 006996a0 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006d01b0 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 006a5b00 BW1M119 01433e20
@@ -2060,7 +2086,7 @@ public:
 	// BW1W120 006afb80 BW1M119 0146af70
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a5ba0 BW1M119 01433a20
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	long             MaxAtoms;
 	long             MaxAlpha;
@@ -2091,11 +2117,11 @@ public:
 		// BW1W120 00560e70 BW1M119 01429570
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_ATOMS_AT_EP_TARGET_COLLECTION_DATA; }
 		// BW1W120 00560e80 BW1M119 014295c0
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00697800 BW1M119 01423040
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006ce340 BW1M119 01489f90
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	UR_AtomsAtEPTarget(PersistentOwner* owner) : AtomCreateRule(owner) { NumExtraPoints = 0; }
@@ -2103,7 +2129,7 @@ public:
 	// BW1W120 006afd70 BW1M119 0146ac90
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 0069a960 BW1M119 0142d920
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	long NumExtraPoints;
 };
@@ -2116,27 +2142,27 @@ public:
 	class CollectionData : public BaseCollectionModifierData
 	{
 	public:
-		LHPoint field_0x20;
-		long    NumEmitted;
-		long    EmitTime;
+		LHPoint LastParentPos;
+		float   NumToEmit;
+		float   NumEmitted;
 		bool    FirstUpdate;
 
 		// BW1W120 0055fe40 BW1M119 inlined
 		CollectionData(const AtomCollectionModifier* modifier) : BaseCollectionModifierData(modifier)
 		{
-			EmitTime = 0;
-			NumEmitted = 0;
+			NumEmitted = 0.0f;
+			NumToEmit = 0.0f;
 			FirstUpdate = true;
 		}
 
 		// BW1W120 0055fe70 BW1M119 014276d0
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_WILLOW_WISP_COLLECTION_DATA; }
 		// BW1W120 0055fe80 BW1M119 01427720
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 006994b0 BW1M119 01421350
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cffc0 BW1M119 01488440
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 006a6c20 BW1M119 01432630
@@ -2145,7 +2171,7 @@ public:
 	// BW1W120 006afda0 BW1M119 0146a700
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a6d20 BW1M119 01075690
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float            Speed;
 	float            MaxSpeed;
@@ -2203,7 +2229,7 @@ public:
 	// BW1W120 006b0170 BW1M119 0146a370
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 0068a080 BW1M119 01075350
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float          DieAge;
 	float          MinEmitDist;
@@ -2232,11 +2258,11 @@ public:
 		// BW1W120 0055f5a0 BW1M119 0142b320
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_FOLLOW_TARGETS_COLLECTION_DATA; }
 		// BW1W120 0055f5b0 BW1M119 0142b380
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 006967f0 BW1M119 01424660
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cd350 BW1M119 0148b4d0
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	class AtomData : public BaseAtomModifierData
@@ -2249,9 +2275,9 @@ public:
 		// BW1W120 0069c810 BW1M119 inlined
 		virtual char* GetDebugText();
 		// BW1W120 00696790 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cd2f0 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 		// BW1W120 0069c800 BW1M119 inlined
 		virtual uint32_t GetSaveType();
 
@@ -2265,7 +2291,7 @@ public:
 	// BW1W120 006b0300 BW1M119 0146a010
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 0069c940 BW1M119 0142f430
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	FloatProvider* RadiusFP;
 	float          DefaultRadius;
@@ -2287,9 +2313,9 @@ public:
 		// BW1W120 0069cce0 BW1M119 inlined
 		virtual char* GetDebugText();
 		// BW1W120 00696720 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cd280 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 		// BW1W120 0069ccd0 BW1M119 inlined
 		virtual uint32_t GetSaveType();
 
@@ -2303,7 +2329,7 @@ public:
 	// BW1W120 006b0460 BW1M119 01469c70
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 0069cee0 BW1M119 0142ebb0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	long    MatInd;
 	float   AnimSpeedU;
@@ -2329,7 +2355,7 @@ public:
 	// BW1W120 006b0560 BW1M119 01469720
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006884f0 BW1M119 0107ef00
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float            LightSheetHeightScale;
 	float            TimeToIdeal;
@@ -2369,13 +2395,13 @@ public:
 	class CollectionData : public BaseCollectionModifierData
 	{
 	public:
-		bool FirstUpdate;
-		long NumEmitted;
-		long EmitTime;
+		bool  FirstUpdate;
+		float NumToEmit;
+		long  NumEmitted;
 
 		// BW1W120 0055fec0 BW1M119 inlined
 		CollectionData(const AtomCollectionModifier* modifier)
-			: BaseCollectionModifierData(modifier), NumEmitted(0), EmitTime(0)
+			: BaseCollectionModifierData(modifier), NumToEmit(0.0f), NumEmitted(0)
 		{
 			FirstUpdate = true;
 		}
@@ -2383,11 +2409,11 @@ public:
 		// BW1W120 0055fef0 BW1M119 inlined
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_BURST_FROM_PARENT_ATOM_COLLECTION_DATA; }
 		// BW1W120 0055ff00 BW1M119 inlined
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 006995c0 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006d00d0 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 006a5810 BW1M119 014342a0
@@ -2396,7 +2422,7 @@ public:
 	// BW1W120 006b0880 BW1M119 014693c0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a58b0 BW1M119 01433f10
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	long  MaxAtoms;
 	long  MaxAlpha;
@@ -2415,44 +2441,44 @@ public:
 	{
 	public:
 		bool                        FirstUpdate;
+		float                       NumToEmit;
 		long                        NumEmitted;
-		long                        EmitTime;
 		GTPointer<GameThingWithPos> Target;
 
 		// BW1W120 0055ff40 BW1M119 inlined
 		ParentAtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier)
 		{
+			NumToEmit = 0.0f;
 			NumEmitted = 0;
-			EmitTime = 0;
 			FirstUpdate = true;
 		}
 
 		// BW1W120 0055ff70 BW1M119 0142a250
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_ER_GLINTS_ON_TARGET_PARENT_ATOM_DATA; }
 		// BW1W120 0055ff80 BW1M119 0142a2a0
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00696ff0 BW1M119 01423b10
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cdb60 BW1M119 0148a9b0
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	class AtomData : public BaseAtomModifierData
 	{
 	public:
-		long Count;
+		long VertexIndex;
 
 		// BW1W120 0055ff90 BW1M119 inlined
-		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier), Count(0) {}
+		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier), VertexIndex(0) {}
 
 		// BW1W120 0055ffc0 BW1M119 0142a100
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_ER_GLINTS_ON_TARGET_ATOM_DATA; }
 		// BW1W120 0055ffd0 BW1M119 0142a150
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 006970e0 BW1M119 01423a70
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cdc50 BW1M119 0148a910
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 006a5300 BW1M119 01434b80
@@ -2461,7 +2487,10 @@ public:
 	// BW1W120 006b0920 BW1M119 01468ff0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a53a0 BW1M119 01434860
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
+
+	// BW1W120 006a5520 BW1M119 01434380
+	bool ModifySubCollection(ParentAtomData* data, AtomCollection* collection) const;
 
 	long             MaxAtoms;
 	long             MaxAlpha;
@@ -2482,21 +2511,28 @@ public:
 	class CollectionData : public BaseCollectionModifierData
 	{
 	public:
-		// BW1W120 006a7b80 BW1M119 inlined
-		virtual ~CollectionData();
+		float NumToEmit;
+		long  NumEmitted;
+		bool  FirstUpdate;
 
-		// BW1W120 inlined BW1M119 inlined
-		CollectionData(const AtomCollectionModifier* modifier);
+		// BW1W120 006a7af0 BW1M119 inlined
+		CollectionData(const AtomCollectionModifier* modifier)
+			: BaseCollectionModifierData(modifier), NumToEmit(0.0f), NumEmitted(0)
+		{
+			FirstUpdate = true;
+		}
 	};
 
 	class AtomData : public BaseAtomModifierData
 	{
 	public:
-		// BW1W120 006a7bb0 BW1M119 inlined
-		virtual ~AtomData();
+		LHPoint StartPos;
 
-		// BW1W120 inlined BW1M119 inlined
-		AtomData(const AtomCollectionModifier* modifier);
+		// BW1W120 006a7b20 BW1M119 inlined
+		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier)
+		{
+			StartPos = LHPoint(0.0f, 0.0f, 0.0f);
+		}
 	};
 
 	// BW1W120 006a7730 BW1M119 014320f0
@@ -2505,7 +2541,7 @@ public:
 	// BW1W120 006b0ae0 BW1M119 01468cd0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a77c0 BW1M119 01431c00
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float   RaiseTime;
 	float   EmitRate;
@@ -2515,6 +2551,8 @@ public:
 	uint8_t field_0x3a;
 	uint8_t field_0x3b;
 };
+static_assert(sizeof(ER_MultiPickup::CollectionData) == 0x2c, "Data type is of wrong size");
+static_assert(sizeof(ER_MultiPickup::AtomData) == 0x2c, "Data type is of wrong size");
 static_assert(sizeof(ER_MultiPickup) == 0x3c, "Data type is of wrong size");
 
 class CreateRuleMakeChain : public OnceOnlyCreateRule
@@ -2525,7 +2563,7 @@ public:
 	// BW1W120 006b0b60 BW1M119 01468730
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 0069fd10 BW1M119 0143c210
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	long NumAtoms;
 };
@@ -2544,9 +2582,9 @@ public:
 		// BW1W120 0067e1a0 BW1M119 inlined
 		virtual char* GetDebugText();
 		// BW1W120 006984d0 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cf000 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 		// BW1W120 0067e190 BW1M119 inlined
 		virtual uint32_t GetSaveType();
 
@@ -2565,11 +2603,11 @@ public:
 		// BW1W120 00560d70 BW1M119 01428520
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_EXPLOSION_ATOM_DATA; }
 		// BW1W120 00560d80 BW1M119 01428570
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00698770 BW1M119 01421ea0
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cf250 BW1M119 01488f90
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 0067e090 BW1M119 01401d20
@@ -2578,7 +2616,7 @@ public:
 	// BW1W120 006b0b90 BW1M119 01468390
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 0067ece0 BW1M119 014007f0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	long  MaxObjectsToDelete;
 	long  MaxObjectsToExplode;
@@ -2605,7 +2643,7 @@ public:
 	// BW1W120 006b0c70 BW1M119 014680a0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006814e0 BW1M119 0108c3b0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	long  MaxTrigsPerFrag;
 	float RandomFactor;
@@ -2624,7 +2662,7 @@ public:
 	// BW1W120 006b0cb0 BW1M119 01467db0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 00681560 BW1M119 0108c530
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float RandomFactor;
 	long  MaxDepth;
@@ -2647,7 +2685,7 @@ public:
 	// BW1W120 006b0cf0 BW1M119 014679d0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 0069e160 BW1M119 0108a150
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 	// BW1W120 0069e2f0 BW1M119 0109a6c0
 	virtual void SetInitialVelocity(AtomCore* core, long index, long count) const;
 
@@ -2674,7 +2712,7 @@ public:
 	// BW1W120 006b0f20 BW1M119 014675a0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 0069f410 BW1M119 0109ad30
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float           OffsetX;
 	float           OffsetY;
@@ -2694,19 +2732,19 @@ public:
 	class AtomData : public BaseAtomModifierData
 	{
 	public:
-		long Count;
+		bool32_t Created;
 
 		// BW1W120 0055fc40 BW1M119 inlined
-		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier), Count(0) {}
+		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier) { Created = false; }
 
 		// BW1W120 0055fc70 BW1M119 0142a3a0
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_CREATE_NEW_BASE_ATOM_ATOM_DATA; }
 		// BW1W120 0055fc80 BW1M119 0142a3f0
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00696f90 BW1M119 01423bf0
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cdb00 BW1M119 0148aa80
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	CreateNewBaseAtom(PersistentOwner* owner) : AtomCreateRule(owner)
@@ -2759,13 +2797,13 @@ public:
 		// BW1W120 0055f7a0 BW1M119 inlined
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_ATTATCH_FIREBALL_TO_ATOM_ATOM_DATA; }
 		// BW1W120 0055f7b0 BW1M119 inlined
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00682fa0 BW1M119 inlined
 		virtual ~AtomData();
 		// BW1W120 00696a50 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cd5b0 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	AttatchFireBallToAtom(PersistentOwner* owner) : UpdateRule(owner) {}
@@ -2773,10 +2811,22 @@ public:
 	// BW1W120 006b1220 BW1M119 01467030
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 00682fd0 BW1M119 014061a0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 };
 static_assert(sizeof(AttatchFireBallToAtom::AtomData) == 0x2c, "Data type is of wrong size");
 static_assert(sizeof(AttatchFireBallToAtom) == 0x20, "Data type is of wrong size");
+
+#define INITIAL_DIRECTION_DEFAULT_GRAVITY        30.0f
+#define INITIAL_DIRECTION_MIN_TARGET_DISTANCE_SQ 0.1f
+#define INITIAL_DIRECTION_TARGET_NUDGE           0.1f
+#define INITIAL_DIRECTION_AIM_FRACTION           0.8f
+#define INITIAL_DIRECTION_HORIZONTAL_SPEED       40.0f
+#define INITIAL_DIRECTION_MIN_FLIGHT_TIME        0.5f
+#define INITIAL_DIRECTION_MIN_SPEED_SQ           0.01
+#define INITIAL_DIRECTION_MAX_ELEVATION          (PI_F * 0.1667f)
+#define INITIAL_DIRECTION_MIN_FLIGHT_TIME_SQ     0.1f
+#define INITIAL_DIRECTION_HEAVY_SPEED_FRACTION   0.6
+#define INITIAL_DIRECTION_MEDIUM_SPEED_FRACTION  0.3
 
 class CreateWithInitialDirection : public OnceOnlyCreateRule
 {
@@ -2787,7 +2837,7 @@ public:
 	// BW1W120 006b1230 BW1M119 01466b70
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 0069e950 BW1M119 0143d5d0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	long            NumAtoms;
 	PSysSoundAction SoundOfCreate;
@@ -2827,11 +2877,11 @@ public:
 		// BW1W120 005600f0 BW1M119 01429d90
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_SIDE_SPIN_ATOM_DATA; }
 		// BW1W120 00560100 BW1M119 01429de0
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00697340 BW1M119 01423800
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cdeb0 BW1M119 0148a6b0
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	UR_SideSpin(PersistentOwner* owner) : UpdateRule(owner)
@@ -2868,11 +2918,11 @@ public:
 		// BW1W120 00560170 BW1M119 01429c50
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_INITIAL_SPIN_ATOM_DATA; }
 		// BW1W120 00560180 BW1M119 01429ca0
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 006973e0 BW1M119 01423750
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cdf50 BW1M119 0148a600
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	UR_InitialSpin(PersistentOwner* owner) : UpdateRule(owner)
@@ -2911,7 +2961,7 @@ public:
 	// BW1W120 006b1580 BW1M119 01466490
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 0069f610 BW1M119 0143cb60
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	uint32_t        field_0x2c;
 	uint32_t        field_0x30;
@@ -2969,7 +3019,7 @@ public:
 	// BW1W120 006b1930 BW1M119 01465d90
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 0069ded0 BW1M119 0143eaa0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	// Not exposed as a property; the constructor shows a PSysSoundAction.
 	PSysSoundAction Sound;
@@ -3017,11 +3067,11 @@ public:
 	class CollectionData : public BaseCollectionModifierData
 	{
 	public:
-		bool FirstUpdate;
-		long Count;
+		bool  FirstUpdate;
+		float Age;
 
 		// BW1W120 0055f8e0 BW1M119 inlined
-		CollectionData(const AtomCollectionModifier* modifier) : BaseCollectionModifierData(modifier), Count(0)
+		CollectionData(const AtomCollectionModifier* modifier) : BaseCollectionModifierData(modifier), Age(0.0f)
 		{
 			FirstUpdate = true;
 		}
@@ -3029,13 +3079,13 @@ public:
 		// BW1W120 0055f910 BW1M119 01426cf0
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_HAND_SPRINKLE_COLLECTION_DATA; }
 		// BW1W120 0055f920 BW1M119 01426d40
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 0069fef0 BW1M119 0143c000
 		virtual ~CollectionData();
 		// BW1W120 00699c00 BW1M119 01420b30
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006d05e0 BW1M119 01487b80
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 0069ff00 BW1M119 0143be80
@@ -3044,7 +3094,7 @@ public:
 	// BW1W120 006b19d0 BW1M119 01465700
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a0220 BW1M119 0143b960
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float TotalTime;
 	float HeightToRaise;
@@ -3099,11 +3149,11 @@ public:
 		// BW1W120 00560590 BW1M119 01428d20
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_CREATURE_SPELL_COLLECTION_DATA; }
 		// BW1W120 005605a0 BW1M119 01428d70
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00698030 BW1M119 01422530
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006ceb40 BW1M119 01489630
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 00677e70 BW1M119 013f4d50
@@ -3112,7 +3162,7 @@ public:
 	// BW1W120 006b1bc0 BW1M119 014652e0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 00677f90 BW1M119 013f4980
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	PSysSoundAction SoundCreatureSpell;
 	PSysSoundAction SoundCreatureSpellCast;
@@ -3137,11 +3187,11 @@ public:
 		// BW1W120 00560610 BW1M119 01428bb0
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_CREATURE_SPELL_ITCH_COLLECTION_DATA; }
 		// BW1W120 00560620 BW1M119 01428c10
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 006980e0 BW1M119 01422480
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cebf0 BW1M119 01489580
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	UR_CreatureSpellItch(PersistentOwner* owner) : AtomCreateRule(owner)
@@ -3154,7 +3204,7 @@ public:
 	// BW1W120 006b1c00 BW1M119 01464fd0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006781a0 BW1M119 013f43b0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	long  NumAtoms;
 	float PauseBeforeGotoCreature;
@@ -3183,11 +3233,11 @@ public:
 		// BW1W120 00560690 BW1M119 inlined
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_CREATURE_SPELL_FREEZE_COLLECTION_DATA; }
 		// BW1W120 005606a0 BW1M119 inlined
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00698140 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cec50 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	UR_CreatureSpellFreeze(PersistentOwner* owner) : AtomCreateRule(owner)
@@ -3202,7 +3252,7 @@ public:
 	// BW1W120 006b1c60 BW1M119 01464ca0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 00678610 BW1M119 013f3df0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	long  MaxAtoms;
 	float DieAge;
@@ -3235,11 +3285,11 @@ public:
 		// BW1W120 00560740 BW1M119 01428e80
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_CREATURE_SPELL_GENERIC_COLLECTION_DATA; }
 		// BW1W120 00560750 BW1M119 01428ee0
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00697ea0 BW1M119 01422660
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006ce9a0 BW1M119 01489750
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	class AtomData : public BaseAtomModifierData
@@ -3260,11 +3310,11 @@ public:
 		// BW1W120 005607a0 BW1M119 01428f40
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_CREATURE_SPELL_GENERIC_ATOM_DATA; }
 		// BW1W120 005607b0 BW1M119 01428f90
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00697d60 BW1M119 01422750
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006ce850 BW1M119 01489840
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	UR_CreatureSpellGeneric(PersistentOwner* owner) : AtomCreateRule(owner)
@@ -3284,7 +3334,7 @@ public:
 	// BW1W120 006b1cd0 BW1M119 01464940
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 00678d50 BW1M119 013f2ba0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	long  NumAtoms;
 	float EmitDuration;
@@ -3320,11 +3370,11 @@ public:
 		// BW1W120 00560850 BW1M119 01429150
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_CREATURE_SPELL_COMPASSION_COLLECTION_DATA; }
 		// BW1W120 00560860 BW1M119 014291b0
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00697c80 BW1M119 01422830
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006ce770 BW1M119 01489920
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	UR_CreatureSpellCompassion(PersistentOwner* owner) : AtomCreateRule(owner)
@@ -3338,7 +3388,7 @@ public:
 	// BW1W120 006b1d70 BW1M119 01464620
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 00678a50 BW1M119 013f3960
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	long  MaxAtoms;
 	float DieAge;
@@ -3364,11 +3414,11 @@ public:
 		// BW1W120 005601f0 BW1M119 inlined
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_FOLLOW_TARGETS_COLLECTION_DATA; }
 		// BW1W120 00560200 BW1M119 inlined
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00699780 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006d0290 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	class AtomData : public BaseAtomModifierData
@@ -3382,11 +3432,11 @@ public:
 		// BW1W120 00560240 BW1M119 inlined
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_FOLLOW_TARGETS_ATOM_DATA; }
 		// BW1W120 00560250 BW1M119 inlined
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00697600 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006ce170 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	UR_FollowTargets(PersistentOwner* owner) : AtomCreateRule(owner)
@@ -3401,7 +3451,7 @@ public:
 	// BW1W120 006b1dd0 BW1M119 01464310
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a04b0 BW1M119 0143b3a0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	bool            RemoveTargetFromManager;
 	bool            RemoveAtomWhenTargetDies;
@@ -3419,21 +3469,30 @@ public:
 	class AtomData : public BaseAtomModifierData
 	{
 	public:
-		uint8_t field_0x20[0x18];
+		Object*           ListedTarget;
+		GTPointer<Object> Target;
+		bool              Finished;
+		bool              FirstUpdate;
+		bool              SoundStarted;
+		float             TargetRadius;
+		float             TargetHeight;
 
-		// BW1W120 006a0980 BW1M119 inlined
-		virtual ~AtomData();
-		// BW1W120 006a0970 BW1M119 inlined
-		virtual char* GetDebugText();
-		// BW1W120 00697140 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
-		// BW1W120 006cdcb0 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
-		// BW1W120 006a0960 BW1M119 inlined
-		virtual uint32_t GetSaveType();
-
-		// BW1W120 inlined BW1M119 0143b170
+		// BW1W120 006a0920 BW1M119 0143b170
 		AtomData(const AtomCollectionModifier* modifier);
+
+		// BW1W120 006a0960 BW1M119 01429fb0
+		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_HEAL_SPELL_CHAKRA_ATOM_DATA; }
+		// BW1W120 006a0970 BW1M119 0142a000
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
+		// BW1W120 006a09a0 BW1M119 0143afc0
+		virtual ~AtomData();
+		// BW1W120 00697140 BW1M119 01423970
+		virtual bool32_t Load(GameOSFile& file);
+		// BW1W120 006cdcb0 BW1M119 0148a820
+		virtual bool32_t Save(GameOSFile& file);
+
+		// BW1W120 006a0a60 BW1M119 inlined
+		void SetTarget(Object* target);
 	};
 
 	// BW1W120 006a0810 BW1M119 0143b280
@@ -3442,7 +3501,12 @@ public:
 	// BW1W120 006b1e40 BW1M119 01463f40
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a0b20 BW1M119 0143a950
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
+
+	// BW1W120 006a0ab0 BW1M119 inlined
+	void GetTargetPos(Object* target, LHPoint* pos) const;
+	// BW1W120 006a0e30 BW1M119 0143a6d0
+	void ModifySubCollection(AtomCollection* collection, AtomData* data) const;
 
 	bool            ScalePropObjectSize;
 	bool            TakeCentrePos;
@@ -3479,11 +3543,11 @@ public:
 		// BW1W120 00560300 BW1M119 01427140
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_TRAIL_COLLECTION_DATA; }
 		// BW1W120 00560310 BW1M119 01427190
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 006997e0 BW1M119 01420f80
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006d02f0 BW1M119 01487fd0
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 006a4030 BW1M119 01436350
@@ -3492,7 +3556,12 @@ public:
 	// BW1W120 006b1f60 BW1M119 01463b40
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a40f0 BW1M119 014361d0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
+
+	// BW1W120 006a41b0 BW1M119 01436040
+	void MakeTrail(AtomCollection* collection, CollectionData* data) const;
+	// BW1W120 006a4280 BW1M119 01435790
+	void UpdateTrail(AtomCollection* collection, CollectionData* data) const;
 
 	float   MaxTrailLength;
 	long    NumAtoms;
@@ -3539,11 +3608,11 @@ public:
 		// BW1W120 0055f4a0 BW1M119 0142b8e0
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_MANA_PATH_NEW_ATOM_DATA; }
 		// BW1W120 0055f4b0 BW1M119 0142b930
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00695fc0 BW1M119 01424be0
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006ccb10 BW1M119 0148ba40
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	UR_ManaPathNew(PersistentOwner* owner) : AtomCreateRule(owner)
@@ -3561,7 +3630,7 @@ public:
 	// BW1W120 006b20b0 BW1M119 014637c0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 0069acd0 BW1M119 01081bc0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float   GlowPosSpeed;
 	float   GlowLength;
@@ -3593,11 +3662,11 @@ public:
 		// BW1W120 0055f520 BW1M119 0142ba30
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_BELIEF_SPRITE_ATOM_DATA; }
 		// BW1W120 0055f530 BW1M119 0142ba80
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00695f20 BW1M119 01424d00
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cca70 BW1M119 0148bb60
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	UR_BeliefSprite(PersistentOwner* owner) : AtomCreateRule(owner)
@@ -3621,7 +3690,7 @@ public:
 	// BW1W120 006b2180 BW1M119 01463390
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 0069b750 BW1M119 01082650
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float           RiseSpeed;
 	float           DieAge;
@@ -3698,7 +3767,7 @@ public:
 	// BW1W120 006b22f0 BW1M119 01462ef0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 0069bf30 BW1M119 010592d0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float   RadiusAt0;
 	float   RadiusAt1;
@@ -3726,25 +3795,30 @@ public:
 };
 static_assert(sizeof(UR_TownCentreBelief) == 0x7c, "Data type is of wrong size");
 
+#define LIGHTNING_FORK_FLICKER_NUM_ALPHAS 6
+
 class LightningForkFlicker : public AtomCollectionModifier
 {
 public:
 	class CollectionData : public BaseCollectionModifierData
 	{
 	public:
-		long Count;
+		float NextFlickerTime;
 
 		// BW1W120 00560360 BW1M119 inlined
-		CollectionData(const AtomCollectionModifier* modifier) : BaseCollectionModifierData(modifier), Count(0) {}
+		CollectionData(const AtomCollectionModifier* modifier)
+			: BaseCollectionModifierData(modifier), NextFlickerTime(0.0f)
+		{
+		}
 
 		// BW1W120 00560390 BW1M119 inlined
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_LIGHTNING_FORK_FLICKER_COLLECTION_DATA; }
 		// BW1W120 005603a0 BW1M119 inlined
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00699a60 BW1M119 inlined
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006d0430 BW1M119 inlined
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	LightningForkFlicker(PersistentOwner* owner) : AtomCollectionModifier(owner) { FlickerFreq = 1.0f; }
@@ -3752,7 +3826,7 @@ public:
 	// BW1W120 006b24d0 BW1M119 01462dc0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a1000 BW1M119 0143a340
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float FlickerFreq;
 };
@@ -3768,7 +3842,7 @@ public:
 	// BW1W120 006b2500 BW1M119 01462820
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006914b0 BW1M119 0141c4e0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	long             MaxLightningObjects;
 	long             MinLightningObjects;
@@ -3817,7 +3891,7 @@ public:
 	// BW1W120 006b28b0 BW1M119 01462550
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006937a0 BW1M119 01082da0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	PSysSoundAction SoundLightning;
 };
@@ -3842,13 +3916,13 @@ public:
 		// BW1W120 0055f1a0 BW1M119 01429620
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_SIMPLE_BEAM_SUB_COLLECTION_DATA; }
 		// BW1W120 0055f1b0 BW1M119 01429670
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 0055f240 BW1M119 014296c0
 		virtual ~SubCollectionData() {}
 		// BW1W120 00697670 BW1M119 01423110
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006ce1e0 BW1M119 0148a050
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	class AtomData : public BaseAtomModifierData
@@ -3864,11 +3938,11 @@ public:
 		// BW1W120 0055f140 BW1M119 0142b1d0
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_SIMPLE_BEAM_ATOM_DATA; }
 		// BW1W120 0055f150 BW1M119 0142b220
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00696850 BW1M119 01424590
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cd3b0 BW1M119 0148b410
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 00675c50 BW1M119 013f0e70
@@ -3877,7 +3951,7 @@ public:
 	// BW1W120 006b28e0 BW1M119 01462180
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006760e0 BW1M119 013f03a0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	long     MaxJointsPerFork;
 	uint32_t field_0x30;
@@ -3924,7 +3998,7 @@ public:
 	// BW1W120 006b29f0 BW1M119 01461fe0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006844a0 BW1M119 01408710
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float RopeLength;
 	float Stiffness;
@@ -3961,7 +4035,7 @@ public:
 	// BW1W120 006b2a90 BW1M119 01461c40
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006933e0 BW1M119 010821b0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	long             AverageTicksPerUpdate;
 	float            RandomFrac;
@@ -3972,7 +4046,7 @@ public:
 };
 static_assert(sizeof(UR_ObjectArcer) == 0x44, "Data type is of wrong size");
 
-class UR_BankedTurning
+class UR_BankedTurning : public UpdateRule
 {
 public:
 	class AtomData : public BaseAtomModifierData
@@ -3986,12 +4060,15 @@ public:
 		// BW1W120 0055f890 BW1M119 0142a8e0
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_BANKED_TURNING_ATOM_DATA; }
 		// BW1W120 0055f8a0 BW1M119 0142a930
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00696d30 BW1M119 01424030
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cd890 BW1M119 0148aec0
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
+
+	// BW1W120 006a1380 BW1M119 null
+	virtual void ModifyAtomCore(AtomCore* core) const;
 };
 static_assert(sizeof(UR_BankedTurning::AtomData) == 0x24, "Data type is of wrong size");
 
@@ -4014,13 +4091,13 @@ public:
 		// BW1W120 0055f330 BW1M119 0142b640
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_PLASMA_SUB_COLLECTION_DATA; }
 		// BW1W120 0055f340 BW1M119 0142b690
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 0055f3a0 BW1M119 0142b6e0
 		virtual ~SubCollectionData() {}
 		// BW1W120 006963e0 BW1M119 01424a20
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006ccf60 BW1M119 0148b880
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	class AtomData : public BaseAtomModifierData
@@ -4040,11 +4117,11 @@ public:
 		// BW1W120 0055f380 BW1M119 0142b5c0
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_UR_PLASMA_ATOM_DATA; }
 		// BW1W120 0055f390 BW1M119 0142b600
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00696570 BW1M119 01424940
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cd0c0 BW1M119 0148b7a0
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	// BW1W120 00676460 BW1M119 013f01d0
@@ -4053,7 +4130,7 @@ public:
 	// BW1W120 006b2c30 BW1M119 014617e0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 00676530 BW1M119 013efd10
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float            ScaleTangents;
 	float            RandomTangents;
@@ -4094,7 +4171,7 @@ public:
 	// BW1W120 006b2e80 BW1M119 01461240
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 00686370 BW1M119 0140afd0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	std::string TextureFileName;
 	bool        UseAdditiveAlpha;
@@ -4157,7 +4234,7 @@ public:
 	// BW1W120 006b3240 BW1M119 014610c0
 	virtual void DefineProperties(PropertyList* list);
 	// BW1W120 006a7be0 BW1M119 014319f0
-	virtual void ModifyAtomCollection(AtomCollection* collection) const;
+	virtual bool ModifyAtomCollection(AtomCollection* collection) const;
 
 	float CameraDistMin;
 	float CameraDistMax;
@@ -4224,20 +4301,20 @@ public:
 	class AtomData : public BaseAtomModifierData
 	{
 	public:
-		bool     ConditionMet;
-		uint32_t field_0x24;
+		bool  ConditionMet;
+		float ConditionMetAge;
 
 		// BW1W120 005603e0 BW1M119 inlined
-		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier), ConditionMet(false) {}
+		AtomData(const AtomCollectionModifier* modifier) : BaseAtomModifierData(modifier) { ConditionMet = false; }
 
 		// BW1W120 00560410 BW1M119 01429ae0
 		virtual uint32_t GetSaveType() { return GAME_THING_TYPE_REMOVE_RULE_AFTER_CONDITION_TRUE_ATOM_DATA; }
 		// BW1W120 00560420 BW1M119 01429b40
-		virtual char* GetDebugText() { return "##a_class:"; }
+		virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 		// BW1W120 00697480 BW1M119 01423690
-		virtual uint32_t Load(GameOSFile& file);
+		virtual bool32_t Load(GameOSFile& file);
 		// BW1W120 006cdff0 BW1M119 0148a540
-		virtual uint32_t Save(GameOSFile& file);
+		virtual bool32_t Save(GameOSFile& file);
 	};
 
 	RemoveRuleAfterConditionTrue(PersistentOwner* owner) : RemoveRule(owner)

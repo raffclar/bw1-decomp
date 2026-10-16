@@ -7,6 +7,10 @@
 // fabricated
 typedef int32_t LH3DMapCoordsFull;
 
+#define MAP_COORDS_UNITS_PER_CELL  ((float)0x10000)
+#define MAP_COORDS_METRES_PER_CELL 10.0f
+#define MAP_COORDS_FRACTION_MAX    0xffff
+
 struct LH3DMapCoords
 {
 	union {
@@ -39,8 +43,8 @@ struct LH3DMapCoords
 	}
 	// World units to 16.16 fixed point: a cell is 10 units across.
 	LH3DMapCoords(float _x, float _z)
-		: x((LH3DMapCoordsFull)((float)(_x * (float)0x10000) / 10.0f)),
-		  z((LH3DMapCoordsFull)((float)(_z * (float)0x10000) / 10.0f)), altitude(0.0f)
+		: x((LH3DMapCoordsFull)((float)(_x * MAP_COORDS_UNITS_PER_CELL) / MAP_COORDS_METRES_PER_CELL)),
+		  z((LH3DMapCoordsFull)((float)(_z * MAP_COORDS_UNITS_PER_CELL) / MAP_COORDS_METRES_PER_CELL)), altitude(0.0f)
 	{
 	}
 
@@ -64,6 +68,10 @@ struct LH3DMapCoords
 	uint16_t MapX() const { return CellX; }
 	// BW1W120 inlined BW1M119 0104c370
 	uint16_t MapZ() const { return CellZ; }
+	// BW1W120 inlined BW1M119 0116fe50
+	uint16_t BlockX() const { return FractionX; }
+	// BW1W120 inlined BW1M119 0116fe10
+	uint16_t BlockZ() const { return FractionZ; }
 	// BW1W120 inlined BW1M119 01048140
 	int32_t WholeX() const { return x; }
 	// BW1W120 inlined BW1M119 010484b0
@@ -86,5 +94,14 @@ struct LH3DMapCoords
 		SetAltitude(0.0f);
 	}
 };
+
+class JustXZ
+{
+public:
+	int32_t x; /* 0x0 */
+	int32_t z;
+};
+
+static_assert(sizeof(JustXZ) == 0x8, "Data type is of wrong size");
 
 #endif /* BW1_DECOMP_LH3D_MAP_COORDS_INCLUDED_H */

@@ -1,3 +1,6 @@
+#include "GameTimeConstants.h"
+#include "LandscapeConstants.h" /* For LandscapeExtent */
+#include "ColourConstants.h"    /* For White */
 #include "GameOSFile.h"
 
 #include "BaseInfo.h"
@@ -242,7 +245,7 @@ void ResetCameraIfNecessary();
 GameOSFile::GameOSFile()
 {
 	Checksum = 0;
-	Status = 0;
+	MapFile = false;
 }
 
 GameOSFile::~GameOSFile()
@@ -654,7 +657,7 @@ void GameOSFile::LoadInstance(GameThing** out_thing)
 	case GAME_THING_TYPE_CITADEL_ENTRANCE:
 		thing = new (GAME_OS_FILE_FILE, 830) CitadelEntrance;
 		break;
-	case GAME_THING_TYPE_CITADEL_HEART_2:
+	case GAME_THING_TYPE_PLANNED_WORSHIP_SITE:
 		thing = new (GAME_OS_FILE_FILE, 834) CitadelHeart;
 		break;
 	case GAME_THING_TYPE_WORSHIP_SITE:
@@ -1772,7 +1775,7 @@ void GameOSFile::WriteSafe(GData& value)
 	{
 		return;
 	}
-	WriteIt(value.MapLoadCount);
+	WriteIt(value.InteractDesire);
 	if (!WriteEnabled)
 	{
 		return;
@@ -1788,7 +1791,7 @@ void GameOSFile::ReadSafe(GData& value)
 	ReadIt(value.RealGameTurn);
 	ReadIt(value.NumCreatedObjects);
 	ReadIt(value.FrameCount);
-	ReadIt(value.MapLoadCount);
+	ReadIt(value.InteractDesire);
 	ReadIt(value.WorldPopulation);
 }
 

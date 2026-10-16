@@ -10,6 +10,7 @@
 #include <Lionhead/LHFile/ver3.0/LHReleasedOSFile.h> /* For struct LHReleasedOSFile */
 #include <Lionhead/LHLib/ver5.0/LHLinkedList.h>      /* For struct LHLinkedList */
 #include <Lionhead/LHLib/ver5.0/LHListHead.h>        /* For struct LHListHead */
+#include <Lionhead/LHLib/ver5.0/LHStack.h>           /* For class LHStack */
 
 #include <re_common.h> /* For bool32_t */
 
@@ -22,6 +23,9 @@
 
 template <class T> class GJVector;
 template <typename T> class GTPointer;
+template <typename T> class LHDynamicStack;
+template <typename T> class LHOrderedLinkedList;
+template <typename T> class LHOrderedLinkedListIterator;
 class CalculateDrawPosInfo;
 class ChainJoint;
 class CollectionAndOwnership;
@@ -56,7 +60,7 @@ enum GAME_OS_FILE_CREATURE_FLAG
 class GameOSFile : public LHReleasedOSFile
 {
 public:
-	uint32_t                    Status;
+	bool32_t                    MapFile;
 	char                        Filename[0x100]; /* 0x110 */
 	uint32_t                    field_0x210;
 	uint32_t                    Checksum; /* 0x214 */
@@ -407,6 +411,134 @@ public:
 		if (WriteEnabled && written != (int)count)
 		{
 			WriteEnabled = false;
+		}
+		return true;
+	}
+	// BW1W120 inlined BW1M119 inlined
+	template <typename T, int N> bool32_t ReadSafe(LHStack<T, N>& stack)
+	{
+		if (!ReadEnabled)
+		{
+			return false;
+		}
+		long count;
+		ReadIt(count);
+		while (count > 0)
+		{
+			T value;
+			ReadIt(value);
+			stack.Push(value);
+			count--;
+		}
+		return true;
+	}
+	// BW1W120 inlined BW1M119 inlined
+	template <typename T, int N> bool32_t WriteSafe(LHStack<T, N>& stack)
+	{
+		if (!WriteEnabled)
+		{
+			return false;
+		}
+		uint32_t count = stack.Size();
+		int      written = 0;
+		long     size = stack.Size();
+		WriteIt(size);
+		for (long i = size - 1; i >= 0; i--)
+		{
+			if (++written > (int)count)
+			{
+				WriteEnabled = false;
+				break;
+			}
+			if (!WriteEnabled)
+			{
+				break;
+			}
+			T value = stack[i];
+			WriteIt(value);
+		}
+		return true;
+	}
+	// BW1W120 inlined BW1M119 inlined
+	template <typename T> void ReadSafe(LHDynamicStack<T>& stack)
+	{
+		if (ReadEnabled)
+		{
+			long count;
+			ReadIt(count);
+			while (count > 0)
+			{
+				T value;
+				ReadIt(value);
+				stack.Push(value);
+				count--;
+			}
+		}
+	}
+	// BW1W120 inlined BW1M119 inlined
+	template <typename T> void WriteSafe(LHDynamicStack<T>& stack)
+	{
+		if (WriteEnabled)
+		{
+			int      written = 0;
+			uint32_t count = stack.GetSize();
+			WriteIt(stack.GetSizeRef());
+			for (long i = stack.GetSize() - 1; i >= 0; i--)
+			{
+				if (++written > (int)count)
+				{
+					WriteEnabled = false;
+					break;
+				}
+				if (!WriteEnabled)
+				{
+					break;
+				}
+				T value = stack.GetNthMember(i);
+				WriteIt(value);
+			}
+		}
+	}
+	// BW1W120 inlined BW1M119 inlined
+	template <typename T> bool32_t ReadSafe(LHOrderedLinkedList<T>& list)
+	{
+		if (!ReadEnabled)
+		{
+			return false;
+		}
+		long count;
+		ReadIt(count);
+		while (count > 0)
+		{
+			T* element;
+			ReadPtr((GameThing**)&element);
+			list.Insert(element);
+			count--;
+		}
+		return true;
+	}
+	// BW1W120 inlined BW1M119 inlined
+	template <typename T> bool32_t WriteSafe(LHOrderedLinkedList<T>& list)
+	{
+		if (!WriteEnabled)
+		{
+			return false;
+		}
+		uint32_t count = list.count;
+		int      written = 0;
+		WriteIt(list.count);
+		for (LHOrderedLinkedListIterator<T> iterator(list); iterator.MoreToDo(); iterator++)
+		{
+			if (++written > (int)count)
+			{
+				WriteEnabled = false;
+				break;
+			}
+			if (!WriteEnabled)
+			{
+				break;
+			}
+			WritePtr(iterator.Get());
 		}
 		return true;
 	}

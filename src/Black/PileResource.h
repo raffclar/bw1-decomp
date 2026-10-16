@@ -37,9 +37,9 @@ public:
 	// BW1W120 0066d330 BW1M119 01003c70
 	virtual uint32_t JustAddResource(RESOURCE_TYPE type, uint32_t amount, bool param_3);
 	// BW1W120 0066f690 BW1M119 0111fe30
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 0066f620 BW1M119 0111ff10
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0066e3d0 BW1M119 01122770
 	virtual float GetLife();
 	// BW1W120 0066e3c0 BW1M119 01122810
@@ -59,7 +59,7 @@ public:
 	// BW1W120 0066e710 BW1M119 01121f50
 	virtual bool32_t NetworkFriendlyStartLockedSelect(GInterfaceStatus* param_1);
 	// BW1W120 0066e830 BW1M119 01121ee0
-	virtual bool32_t NetworkUnfriendlyLockedSelect(ControlHandUpdateInfo* param_1);
+	virtual bool32_t NetworkUnfriendlyLockedSelect(ControlHandUpdateInfo* info);
 	// BW1W120 0066e840 BW1M119 01121e90
 	virtual bool32_t NetworkUnfriendlyEndLockedSelect();
 	// BW1W120 0066e850 BW1M119 01121d60
@@ -83,8 +83,8 @@ public:
 	// BW1W120 inlined BW1M119 0130ee50
 	PileResource() {}
 	// BW1W120 0066ec70 BW1M119 011218a0
-	PileResource(const MapCoords& param_1, const GPotInfo* info, uint32_t param_3, MultiMapFixed* param_4,
-	             Town* param_5, int param_6, float param_7, float param_8);
+	PileResource(const MapCoords& coords, const GPotInfo* info, uint32_t resource, MultiMapFixed* parent, Town* town,
+	             int param_6, float y_angle, float scale);
 };
 
 #endif /* BW1_DECOMP_PILE_RESOURCE_INCLUDED_H */

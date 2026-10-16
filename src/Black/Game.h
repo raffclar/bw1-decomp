@@ -12,18 +12,19 @@
 #include <Lionhead/LHLib/ver5.0/LHTimer.h> /* For LHTimer */
 #include <Lionhead/LHLib/ver5.0/LHMouse.h> /* For enum LH_MOUSE_EVENT_TYPE */
 
-#include "BindableAction.h"   /* For struct CMouse */
-#include "CreatureDatabase.h" /* For struct CreatureDatabase */
-#include "Data.h"             /* For struct GData */
-#include "GTPointer.h"        /* For GTPointer */
-#include "GameThing.h"        /* For struct GameThing */
-#include "GlobalGameLists.h"  /* For struct GlobalGameLists */
-#include "KeyBuffer.h"        /* For struct GKeyBuffer */
-#include "Landscape.h"        /* For struct GLandscape */
-#include "Language.h"         /* For struct GLanguage */
-#include "Map.h"              /* For struct GMap */
-#include "MapCoords.h"        /* For struct MapCoords */
-#include "Network.h"          /* For struct GNetwork */
+#include "BindableAction.h"    /* For struct CMouse */
+#include "CreatureDatabase.h"  /* For struct CreatureDatabase */
+#include "Data.h"              /* For struct GData */
+#include "GTPointer.h"         /* For GTPointer */
+#include "GameLandConstants.h" /* For GAME_LAND_NUMBER_PLAYGROUND */
+#include "GameThing.h"         /* For struct GameThing */
+#include "GlobalGameLists.h"   /* For struct GlobalGameLists */
+#include "KeyBuffer.h"         /* For struct GKeyBuffer */
+#include "Landscape.h"         /* For struct GLandscape */
+#include "Language.h"          /* For struct GLanguage */
+#include "Map.h"               /* For struct GMap */
+#include "MapCoords.h"         /* For struct MapCoords */
+#include "Network.h"           /* For struct GNetwork */
 #include "Packet.h"
 #include "PathCreator.h"         /* For struct PathCreator */
 #include "Player.h"              /* For enum PLAYER_NAME, struct GPlayer */
@@ -33,11 +34,7 @@
 #include "Setup.h"
 #include "TerrainMap.h" /* For struct GTerrainMap */
 
-enum
-{
-	GAME_LAND_NUMBER_PLAYGROUND = 6,
-	GAME_MILLISECONDS_PER_TURN = 100,
-};
+#define GAME_MILLISECONDS_PER_TURN 100
 
 enum GAME_VIEW_MODE
 {
@@ -120,8 +117,8 @@ enum GAME_FLAGS
 	GAME_FLAG_AUTO_SAVE_ENABLED = 0x10000,
 	GAME_FLAG_UNKNOWN_0x20000 = 0x20000,
 	GAME_FLAG_WAIT_FOR_BUILDING_WOOD = 0x40000,
-	GAME_FLAG_UNKNOWN_0x200000 = 0x200000,
-	GAME_FLAG_UNKNOWN_0x400000 = 0x400000,
+	GAME_FLAG_SHOW_VILLAGER_INFO = 0x200000,
+	GAME_FLAG_FORCE_GAME_TURN = 0x400000,
 };
 
 class GGame : public GameThing
@@ -211,7 +208,7 @@ public:
 	uint8_t          field_0x599d;
 	uint8_t          field_0x599e;
 	uint8_t          field_0x599f;
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 	uint32_t MultiplayerTimeLimit;
 #endif
 	uint32_t               field_0x59a4;
@@ -307,7 +304,7 @@ public:
 	uint8_t               field_0x2502cf;
 	FILE*                 field_0x2502d0;
 	FILE*                 field_0x2502d4;
-	FILE*                 field_0x2502d8;
+	FILE*                 TownDesireLogFile;
 	FILE*                 field_0x2502dc;
 	FILE*                 field_0x2502e0;
 	FILE*                 field_0x2502e4;
@@ -338,9 +335,9 @@ public:
 	// BW1W120 0054b9c0 BW1M119 0116e6c0
 	virtual char* GetDebugText();
 	// BW1W120 00554830 BW1M119 0154ca00
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 00554090 BW1M119 01366f90
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0054b9b0 BW1M119 01357d50
 	virtual uint32_t GetSaveType();
 	// BW1W120 00555080 BW1M119 01367ec0
@@ -475,6 +472,8 @@ public:
 	GPlayer* GetPlayer(PLAYER_NAME player_name);
 	// BW1W120 00550dd0 BW1M119 0157b2a0
 	void SetPacket(PACKET_TYPE type);
+	// BW1W120 00550c50 BW1M119 010a7990
+	void SetPacket(PACKET_TYPE type, unsigned short param_2, unsigned short param_3);
 	// BW1W120 00551690 BW1M119 010086d0
 	void SendPacketCompressed(PACKET_TYPE type, SETPACKET_FUNCTION_NUMBER function_number);
 	// BW1W120 00552620 BW1M119 0105fc60

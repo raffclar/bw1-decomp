@@ -23,6 +23,15 @@
 
 // Forward Declares
 
+enum CREATURE_HEIGHT
+{
+	CREATURE_HEIGHT_VERY_SMALL,
+	CREATURE_HEIGHT_SMALL,
+	CREATURE_HEIGHT_MEDIUM,
+	CREATURE_HEIGHT_BIG,
+	CREATURE_HEIGHT_LAST
+};
+
 class Base;
 struct BookmarkGraphic;
 struct Bubble;
@@ -42,7 +51,6 @@ class EffectValues;
 class GAlignment;
 class GArena;
 struct GatheringText;
-struct GCreatureInfo;
 class GInterfaceStatus;
 class GParticleContainer;
 class GPlayer;
@@ -75,6 +83,11 @@ struct CreatureRecentTrees
 	uint32_t Count;
 
 	void Add(Tree* tree);
+	void Clear()
+	{
+		Index = 0;
+		Count = 0;
+	}
 };
 
 struct CreatureEmotionsForMusic
@@ -93,7 +106,7 @@ public:
 	static void OnClearMap();
 	// BW1W120 00c5fcf8 BW1M119 01a7e57c
 	static LHLinkedList<Creature*> CreatureList;
-#ifndef VERSION_BW1W120
+#if !defined(VERSION_BW1W120) && !defined(VERSION_BW1W130)
 	// BW1W120 null BW1M119 01756bac
 	static uint32_t ImpressiveSpellDoneWhen[5];
 	// BW1W120 null BW1M119 01756cf0
@@ -144,16 +157,15 @@ public:
 	uint8_t                               field_0x37d;
 	uint8_t                               field_0x37e;
 	uint8_t                               field_0x37f;
-	uint32_t                              field_0x380;
-	uint32_t                              field_0x384;
+	bool32_t                              CommandedByLeash;
+	bool32_t                              Fainted;
 	CreatureEmotionsForMusic              EmotionsForMusic;
 	uint32_t                              field_0x390[0xa];
 	uint32_t                              field_0x3b8;
 	uint32_t                              field_0x3bc[0x3];
 	uint32_t                              field_0x3c8;
 	uint32_t                              field_0x3cc;
-	Creature*                             next;
-	uint32_t                              field_0x3d4;
+	LHLinkedList<Creature*>               Friends;
 	MapCoords                             field_0x3d8;
 	uint32_t                              field_0x3e4;
 	uint32_t                              field_0x3e8;
@@ -170,11 +182,11 @@ public:
 	uint8_t                               field_0x407;
 	CreatureSubActionAgenda               SubActionAgenda;
 	int                                   field_0x1058;
-	uint32_t                              field_0x105c;
-	uint32_t                              field_0x1060;
+	uint32_t                              ActionForced;
+	bool32_t                              ReactionsEnabled;
 	uint32_t                              field_0x1064;
 	uint32_t                              field_0x1068;
-	uint32_t                              field_0x106c;
+	bool32_t                              Invisible;
 	GPlayer*                              owner;
 	Dance*                                dance;
 	uint32_t                              field_0x1078;
@@ -185,13 +197,13 @@ public:
 	uint32_t                              field_0x108c;
 	uint32_t                              field_0x1090;
 	uint32_t                              field_0x1094;
-	uint32_t                              field_0x1098;
+	int                                   ActionPriorityUpdateIndex;
 	LH3DSmoke*                            smoke;
 	GArena*                               arena;
 	uint32_t                              field_0x10a4;
 	uint32_t                              field_0x10a8;
-	uint32_t                              field_0x10ac;
-	uint32_t                              field_0x10b0;
+	bool32_t                              FightStarted;
+	bool32_t                              FightEnded;
 	uint32_t                              field_0x10b4;
 	uint32_t                              field_0x10b8;
 	uint32_t                              field_0x10bc;
@@ -204,7 +216,7 @@ public:
 	uint32_t                              field_0x10e8;
 	uint32_t                              field_0x10ec;
 	uint32_t                              field_0x10f0;
-	uint32_t                              field_0x10f4;
+	bool32_t                              RespondingToEmergency;
 	Town*                                 LastTownImpressed;
 	uint32_t                              LastImpressiveDanceTurn;
 	uint32_t                              LastImpressiveDanceType;
@@ -232,7 +244,7 @@ public:
 	float                                 ObjectsDestroyed;
 	uint32_t                              field_0x11c4;
 	uint32_t                              field_0x11c8;
-	MapCoords                             field_0x11cc;
+	MapCoords                             DestPosBeforeTeleport;
 	uint8_t                               field_0x11d8[0xc];
 	GParticleContainer*                   ParticleContainer0x11e4;
 	uint32_t                              field_0x11e8;
@@ -247,10 +259,10 @@ public:
 	MapCoords                             HomePos;
 	uint32_t                              field_0x120c;
 	uint32_t                              field_0x1210;
-	MapCoords                             field_0x1214;
+	MapCoords                             DestPos;
 	LHLinkedList<LHPoint*>                DebugPath;
 	uint8_t                               field_0x1228[0x40];
-	int                                   field_0x1268;
+	DEVELOPMENT_PHASE                     DevelopmentPhase;
 	uint32_t                              field_0x126c;
 	uint32_t                              field_0x1270;
 	LHLinkedList<CreatureSpeechItem*>     SpeechItems;
@@ -260,8 +272,8 @@ public:
 	uint32_t                              field_0x1288;
 	uint32_t                              ScriptAnim;
 	uint32_t                              ScriptAnimRepeats;
-	uint32_t                              field_0x1294;
-	uint32_t                              field_0x1298;
+	bool32_t                              ConfinedToObject;
+	GameThingWithPos*                     ConfinementObject;
 	int                                   field_0x129c;
 	uint32_t                              field_0x12a0;
 	uint32_t                              field_0x12a4;
@@ -274,7 +286,7 @@ public:
 	uint32_t                              field_0x12b4;
 	uint32_t                              field_0x12b8;
 	uint32_t                              field_0x12bc;
-	uint32_t                              field_0x12c0;
+	bool32_t                              IgnoredByVillagers;
 	uint32_t                              field_0x12c4;
 
 	// Override methods
@@ -310,9 +322,9 @@ public:
 	// BW1W120 0071bd50 BW1M119 01517850
 	virtual uint32_t GetSampleForAttack();
 	// BW1W120 004e5ff0 BW1M119 0126ef60
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 004e4ea0 BW1M119 01270820
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 004740c0 BW1M119 011eaa00
 	virtual uint32_t GetSaveType();
 	// BW1W120 004e6ab0 BW1M119 0126e8e0
@@ -328,7 +340,7 @@ public:
 	// BW1W120 0047b160 BW1M119 011dc260
 	virtual void SetScale(float param_1);
 	// BW1W120 0047d810 BW1M119 011d6c80
-	virtual void SetSpeedInMetres(float param_1, int param_2);
+	virtual void SetSpeedInMetres(float speed_in_metres, bool32_t scale_speed);
 	// BW1W120 0047c630 BW1M119 011da0a0
 	virtual float GetRunningSpeedInMetres();
 	// BW1W120 0047c640 BW1M119 011da050
@@ -362,7 +374,7 @@ public:
 	// BW1W120 004e4280 BW1M119 015ed600
 	virtual bool32_t CanBeAttackedByCreature(Creature* param_1);
 	// BW1W120 004740b0 BW1M119 011ea9b0
-	virtual bool32_t CanBeFrighteningToCreature(Creature* param_1);
+	virtual bool32_t CanBeFrighteningToCreature(Creature* creature);
 	// BW1W120 00474070 BW1M119 011ea860
 	virtual bool32_t CanBePlayedWithByCreature(Creature* param_1);
 	// BW1W120 00474060 BW1M119 011ea810
@@ -476,7 +488,7 @@ public:
 	// BW1W120 0047b1e0 BW1M119 inlined
 	virtual uint32_t CanBeDestroyedBySpell_1(Spell* param_1);
 	// BW1W120 00479b80 BW1M119 011de770
-	virtual uint32_t GetPhysicsConstantsType();
+	virtual PHYSICS_CONSTANTS_TYPE GetPhysicsConstantsType();
 	// BW1W120 00479b90 BW1M119 011de590
 	virtual void SetUpPhysOb(PhysOb* param_1);
 	// BW1W120 00479970 BW1M119 011dea80
@@ -505,7 +517,7 @@ public:
 	// BW1W120 004753c0 BW1M119 011e5ef0
 	virtual MapCoords* GetDestPos();
 	// BW1W120 004753d0 BW1M119 011e5e70
-	virtual MapCoords* GetFinalDestPos(MapCoords* param_1);
+	virtual void GetFinalDestPos(MapCoords* out);
 	// BW1W120 004f0560 BW1M119 0127e040
 	virtual bool32_t DecideWhatToDo();
 	// BW1W120 0047b1a0 BW1M119 011dc1d0
@@ -517,7 +529,7 @@ public:
 	// BW1W120 00473f10 BW1M119 inlined
 	virtual int CallOutofAnimationFunction(uint8_t state);
 	// BW1W120 00473f40 BW1M119 inlined
-	virtual bool IsFinalState(uint8_t state);
+	virtual bool32_t IsFinalState(uint8_t state);
 	// BW1W120 00473f90 BW1M119 inlined
 	virtual void SetAnim(int anim);
 	// BW1W120 00473ef0 BW1M119 011ea1f0
@@ -531,96 +543,96 @@ public:
 	// BW1W120 0047c670 BW1M119 011d9f60
 	virtual bool32_t IsDancing();
 	// BW1W120 004f2820 BW1M119 01281880
-	virtual bool32_t IsAvailableForReaction(REACTION param_1);
+	virtual bool32_t IsAvailableForReaction(REACTION reaction);
 	// BW1W120 004f2780 BW1M119 01281a20
 	virtual void UpdateHowImpressed(Reaction* param_1, int param_2);
-	// BW1W120 004f2680 BW1M119 inlined
-	virtual void AddReaction(Reaction* param_1, VILLAGER_STATES param_2);
+	// BW1W120 004f2680 BW1M119 01281c80
+	virtual void AddReaction(Reaction* reaction, VILLAGER_STATES state);
 	// BW1W120 004f26d0 BW1M119 01281b70
-	virtual void StartReacting(REACTION param_1, GameThingWithPos* param_2, Reaction* param_3);
+	virtual void StartReacting(REACTION type, GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 00477f30 BW1M119 011e17e0
 	virtual void ResetStateAfterReacting();
 	// BW1W120 004f2b00 BW1M119 01281200
-	virtual void SetupFleeFromObject(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupFleeFromObject(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004f2b40 BW1M119 01281130
-	virtual void SetupLookAtNiceSpell(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupLookAtNiceSpell(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004f2ce0 BW1M119 01280c50
-	virtual void SetupReactToCreature(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToCreature(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004f2de0 BW1M119 01280a90
-	virtual void SetupReactToFood(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToFood(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004f2e50 BW1M119 01280950
-	virtual void SetupReactToMagicTree(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToMagicTree(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004f35a0 BW1M119 0127f990
-	virtual void SetupReactToFlyingObject(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToFlyingObject(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004f2f70 BW1M119 01280470
-	virtual void SetupReactToFire(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToFire(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004f2ea0 BW1M119 012807b0
-	virtual void SetupReactToBall(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToBall(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004f3090 BW1M119 012803f0
-	virtual void SetupReactToMagicShield(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToMagicShield(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004f36b0 BW1M119 0127f680
-	virtual void SetupReactToHandPickUp(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToHandPickUp(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004f3820 BW1M119 0127f480
-	virtual void SetupReactToHandUsingTotem(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToHandUsingTotem(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004f3930 BW1M119 0127f1a0
-	virtual void SetupReactToObjectCrushed(GameThingWithPos* param_1, Reaction* param_2);
-	// BW1W120 004f3a00 BW1M119 016decbc
-	virtual void SetupReactToFight(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToObjectCrushed(GameThingWithPos* thing, Reaction* reaction);
+	// BW1W120 004f3a00 BW1M119 0127f040
+	virtual void SetupReactToFight(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004f3a60 BW1M119 0127ede0
-	virtual void SetupReactToTeleport(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToTeleport(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004f2b80 BW1M119 01281040
-	virtual void SetupReactToHandPuttingStuffInStoragePit(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToHandPuttingStuffInStoragePit(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004f3b50 BW1M119 0127ec70
-	virtual void SetupReactToDeath(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToDeath(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004f3b90 BW1M119 0127eb90
-	virtual void SetupReactToFainting(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToFainting(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004f3bd0 BW1M119 0127eaa0
-	virtual void SetupReactToConfused(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToConfused(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004f2ab0 BW1M119 012812d0
-	virtual uint8_t FleeFromSpellPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t FleeFromSpellPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 004f2bf0 BW1M119 01280dc0
-	virtual uint8_t ReactToCreaturePriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToCreaturePriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 004f2d90 BW1M119 01280b60
-	virtual uint8_t ReactToFoodPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToFoodPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 004f2e20 BW1M119 012809d0
-	virtual uint8_t ReactToMagicTreePriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToMagicTreePriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 004f3480 BW1M119 0127fad0
-	virtual uint8_t ReactToFlyingObjectPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToFlyingObjectPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 004f2e70 BW1M119 01280890
-	virtual uint8_t ReactToBallPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToBallPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 004f2ee0 BW1M119 01280680
-	virtual uint8_t ReactToFirePriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToFirePriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 004f3620 BW1M119 0127f820
-	virtual uint8_t ReactToHandPickUpPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToHandPickUpPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 004f37d0 BW1M119 0127f590
-	virtual uint8_t ReactToHandUsingTotemPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToHandUsingTotemPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 004f3870 BW1M119 0127f2c0
-	virtual uint8_t ReactToObjectCrushedPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToObjectCrushedPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 004f3990 BW1M119 0127f0a0
-	virtual uint8_t ReactToFightPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToFightPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 004f3a10 BW1M119 0127ef60
-	virtual uint8_t ReactToTeleportPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToTeleportPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 004f2bc0 BW1M119 01280f60
-	virtual uint8_t ReactToHandPuttingStuffInStoragePitPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToHandPuttingStuffInStoragePitPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 004f3b20 BW1M119 0127ed40
-	virtual uint8_t ReactToDeathPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToDeathPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 004f29c0 BW1M119 012815c0
-	virtual uint32_t StandardNumGameTurnsToReactFunction(GameThingWithPos* param_1, uint32_t param_2, float param_3);
+	virtual uint32_t StandardNumGameTurnsToReactFunction(GameThingWithPos* thing, uint32_t reaction, float distance);
 	// BW1W120 004f2a20 BW1M119 012814b0
-	virtual uint32_t StandardNumGameTurnsBeforeReactingAgainFunction(GameThingWithPos* param_1, uint32_t param_2,
-	                                                                 float param_3);
+	virtual uint32_t StandardNumGameTurnsBeforeReactingAgainFunction(GameThingWithPos* thing, uint32_t reaction,
+	                                                                 float distance);
 	// BW1W120 004f2a70 BW1M119 01281430
-	virtual uint32_t NumGameTurnsToReactToCreatureFunction(GameThingWithPos* param_1, uint32_t param_2, float param_3);
+	virtual uint32_t NumGameTurnsToReactToCreatureFunction(GameThingWithPos* thing, uint32_t reaction, float distance);
 	// BW1W120 004f2a90 BW1M119 012813a0
-	virtual uint32_t NumGameTurnsBeforeReactingAgainToCreatureFunction(GameThingWithPos* param_1, uint32_t param_2,
-	                                                                   float param_3);
+	virtual uint32_t NumGameTurnsBeforeReactingAgainToCreatureFunction(GameThingWithPos* thing, uint32_t reaction,
+	                                                                   float distance);
 
 	// Static methods
 
 	// BW1W120 00474a20 BW1M119 011e7440
-	static Creature* Create(const MapCoords& coords, const GCreatureInfo* info, GPlayer* player);
+	static Creature* Create(const MapCoords& coords, const CreatureInfo* info, GPlayer* player);
 	// BW1W120 00474b50 BW1M119 011e7370
-	static Creature* CreateCreature(const MapCoords& coords, const GCreatureInfo* info, GPlayer* player);
+	static Creature* CreateCreature(const MapCoords& coords, const CreatureInfo* info, GPlayer* player);
 	// BW1W120 0047cbd0 BW1M119 011d8360
 	static void CheckAllCreaturesForCatching(Object* object, PhysicsObject* physics_object);
 	// BW1W120 0047c6b0 BW1M119 011d8d80
@@ -635,9 +647,13 @@ public:
 
 	// BW1W120 00474690 BW1M119 011e7610
 	Creature();
+	// BW1W120 00473b90 BW1M119 011e8a20
+	Creature(const MapCoords& coords, const CreatureInfo* info, GPlayer* player);
 
 	// Non-virtual methods
 
+	// BW1W120 00474130 BW1M119 011e87b0
+	void SetToZero();
 	// BW1W120 004753f0 BW1M119 011e5db0
 	void CantFindRoute();
 	// BW1W120 00475730 BW1M119 011e57d0
@@ -650,6 +666,79 @@ public:
 	LH3DCreature* GetCreature3D();
 	// BW1W120 0047cce0 BW1M119 011d82c0
 	bool32_t IsConfinedToArea();
+	// BW1W120 0047cd20 BW1M119 011d81d0
+	bool32_t IsPosOutsideConfinedArea(const MapCoords& pos);
+	// BW1W120 004e3d30 BW1M119 015ee940
+	float MaximumPickUpWeight();
+	// BW1W120 004c3990 BW1M119 01235120
+	float GetActionPriority(CREATURE_ACTION action, CreaturePlan& plan);
+	// BW1W120 004c39f0 BW1M119 01235090
+	void UpdateActionPriority();
+	// BW1W120 004c3aa0 BW1M119 01235040
+	void ConsiderSamplingWeighting(CREATURE_ACTION action, float weight);
+	// BW1W120 004c3ab0 BW1M119 01234ff0
+	float ConstantActionSource(CreaturePlan& plan);
+	// BW1W120 004c3ac0 BW1M119 01234f00
+	float HowMuchFasterIsObjectThanMe(CreaturePlan& plan);
+	// BW1W120 004c3b30 BW1M119 01234e50
+	float HowInterestingIsObject(CreaturePlan& plan);
+	// BW1W120 004c3b90 BW1M119 01234df0
+	float HowEdibleIsObjectAfterCrush(CreaturePlan& plan);
+	// BW1W120 004c3ba0 BW1M119 01234d40
+	float HowNearIsHome(CreaturePlan& plan);
+	// BW1W120 004c3be0 BW1M119 01234cf0
+	float HowDangerousIsObject(CreaturePlan& plan);
+	// BW1W120 004c3bf0 BW1M119 01234bf0
+	float HowMuchStrongerIsOpponentThanMe(CreaturePlan& plan);
+	// BW1W120 004c3c70 BW1M119 01234ad0
+	float HowMuchMoreLifeHasOpponentThanMe(CreaturePlan& plan);
+	// BW1W120 004c3d00 BW1M119 012349b0
+	float HowManyDangerousSpellsOpponentKnows(CreaturePlan& plan);
+	// BW1W120 004c3d80 BW1M119 012348e0
+	float HowNearIsPlayer(CreaturePlan& plan);
+	// BW1W120 004c3de0 BW1M119 012347f0
+	float HowNearIsSea(CreaturePlan& plan);
+	// BW1W120 004c3e70 BW1M119 01234790
+	float HowMuchEnergy(CreaturePlan& plan);
+	// BW1W120 004c3e90 BW1M119 012346f0
+	float HowDamagedIsObject(CreaturePlan& plan);
+	// BW1W120 004c3ec0 BW1M119 012345f0
+	float HowImpressedIsObject(CreaturePlan& plan);
+	// BW1W120 004c3f30 BW1M119 012345a0
+	float HowMuchDangerNearMe(CreaturePlan& plan);
+	// BW1W120 004c3f40 BW1M119 01234540
+	float HowAbusiveIsPlayer(CreaturePlan& plan);
+	// BW1W120 004c3f60 BW1M119 01234440
+	float HowNeglectfulIsPlayer(CreaturePlan& plan);
+	// BW1W120 004c3ff0 BW1M119 012343e0
+	float HowMuchDangerNearObject(CreaturePlan& plan);
+	// BW1W120 004c4000 BW1M119 01234290
+	float HowNearIsCamera(CreaturePlan& plan);
+	// BW1W120 004c40a0 BW1M119 012341a0
+	float HowMuchFriendNeedsToKnowFireball(CreaturePlan& plan);
+	// BW1W120 004c4120 BW1M119 012340b0
+	float HowMuchFriendNeedsToKnowLightning(CreaturePlan& plan);
+	// BW1W120 004c41a0 BW1M119 01233fc0
+	float HowMuchFriendNeedsToKnowMagicFood(CreaturePlan& plan);
+	// BW1W120 004c4220 BW1M119 01233ed0
+	float HowMuchFriendNeedsToKnowMagicWood(CreaturePlan& plan);
+	// BW1W120 004c42a0 BW1M119 01233e00
+	float HowHungryIsFriend(CreaturePlan& plan);
+	// BW1W120 004c4310 BW1M119 01233da0
+	float HowInterestingIsPlayer(CreaturePlan& plan);
+	// BW1W120 004c43a0 BW1M119 01235aa0
+	bool32_t ForceActivityAndDecideAction(CREATURE_DESIRES desire, CreatureBelief* activity_object);
+	// BW1W120 004f0a70 BW1M119 0127d450
+	void FindBestActionForPlan(CreaturePlan& plan);
+	// BW1W120 004f0ca0 BW1M119 0127d0d0
+	float GetActionPriorityModificationFromWhenLastDone(CREATURE_ACTION action);
+	// BW1W120 004c4580 BW1M119 01235750
+	void CommandActivityAndAction(CREATURE_DESIRES desire, CreatureBelief* activity_object, CREATURE_ACTION action,
+	                              CreatureBelief* object_to_act_on, CreatureBelief* object_to_use);
+	// BW1W120 004f1560 BW1M119 0127be20
+	void ConstructCurrentPlanFromPlan(CreaturePlan& plan, int param_2);
+	// BW1W120 004f1600 BW1M119 0127bcc0
+	void CopyPlanToPreviousContext(int param_1);
 	// BW1W120 00490950 BW1M119 011ec1c0
 	void SetInCreatureHand(Creature* creature);
 	// BW1W120 00490910 BW1M119 011ec210
@@ -701,10 +790,11 @@ public:
 	// BW1W120 004dfbe0 BW1M119 01264bb0
 	bool32_t FindClearArea(MapCoords* coords, float radius, int param_3);
 	// BW1W120 004c4450 BW1M119 01235990
-	void ForceActivityAndForceAction(CREATURE_DESIRES param_1, CreatureBelief* param_2, CREATURE_ACTION param_3,
-	                                 CreatureBelief* param_4, CreatureBelief* param_5, int param_6, int param_7);
+	void ForceActivityAndForceAction(CREATURE_DESIRES desire, CreatureBelief* activity_object, CREATURE_ACTION action,
+	                                 CreatureBelief* object_to_act_on, CreatureBelief* object_to_use, int param_6,
+	                                 int param_7);
 	// BW1W120 004c44b0 BW1M119 01235820
-	void ForceActivityAndForceAction(CreaturePlan& param_1, int param_2, int param_3);
+	void ForceActivityAndForceAction(CreaturePlan& plan, int param_2, int param_3);
 	// BW1W120 004c84b0 BW1M119 0123b450
 	void SetFaceForMoodFrightened();
 	// BW1W120 004c8500 BW1M119 0123b3a0
@@ -883,8 +973,28 @@ public:
 	bool32_t NothingScareyNearMe(CreaturePlan& plan, CREATURE_ACTION action);
 	// BW1W120 004e4680 BW1M119 015ecc10
 	bool32_t CanCastAmusingSpellOnCreature(CreaturePlan& plan, CREATURE_ACTION action);
-	// BW1W120 004ea670 BW1M119 0127da80
+	// BW1W120 004f0810 BW1M119 0127da80
 	void DecideOnNewPlan(CreaturePlan& param_1);
+	// BW1W120 004e9f40 BW1M119 01273670
+	void ProcessMimicState();
+	// BW1W120 004ea0a0 BW1M119 01273550
+	CREATURE_ACTION GetMimickingAction(DETECTED_PLAYER_ACTION action, unsigned long index, MAGIC_TYPE magic_type);
+	// BW1W120 004ea0e0 BW1M119 01273430
+	void MimicForceNoticingAction();
+	// BW1W120 004ea130 BW1M119 01272f60
+	void MimicForceCopyingAction();
+	// BW1W120 004ea540 BW1M119 01272dc0
+	void MimicForceDesire();
+	// BW1W120 004ea670 BW1M119 012729e0
+	void MimicPlayer(DETECTED_PLAYER_ACTION action, GameThingWithPos* object, MAGIC_TYPE magic_type);
+	// BW1W120 004f0f70 BW1M119 0127cb00
+	bool32_t FindBestObjectOfSameMimicTypeFromAction(CreaturePlan& plan);
+	// BW1W120 004f10a0 BW1M119 0127c940
+	bool32_t FindBestObjectToActOnFromAction(CreaturePlan& plan, CREATURE_BELIEF_TYPE belief_type);
+	// BW1W120 004f11b0 BW1M119 0127c830
+	bool32_t FindBestObjectToUseIfNecessary(CreaturePlan& plan);
+	// BW1W120 004f1b60 BW1M119 0127b370
+	bool32_t CanCreatureCurrentlyPerformAction(CREATURE_ACTION action, CreaturePlan& plan);
 	// BW1W120 004f6a90 BW1M119 0128d560
 	void PrepareCreatureForScriptedAction(int stop_moving);
 	// BW1W120 004f8b80 BW1M119 0128e470
@@ -909,12 +1019,140 @@ public:
 	bool32_t IsAnimIndividual(unsigned long anim);
 	// BW1W120 004f6850 BW1M119 0128d9d0
 	void SetFocus(GameThingWithPos* thing);
+	// BW1W120 004f7060 BW1M119 0128ce00
+	void ScriptReleaseFromScript();
 	// BW1W120 004f6b60 BW1M119 0128d220
 	void ScriptMoveToPos(LHPoint* pos, float speed);
 	// BW1W120 004f6e30 BW1M119 0128d0e0
 	void ScriptPlayIndividualAnimation(unsigned long anim);
 	// BW1W120 004f6f10 BW1M119 0128cfa0
 	void ScriptPlayStaticAnimation(unsigned long anim, float param_2);
+	// BW1W120 0047b1c0 BW1M119 011dc140
+	bool32_t IsFighting();
+	// BW1W120 004d8bb0 BW1M119 01255f50
+	CreatureBelief* AddBeliefAboutAssociatedObject(CreatureBelief* belief);
+	// BW1W120 004f8ca0 BW1M119 0128e390
+	float NumTimesMagicActionMustBeSeenBeforeItIsLearnt(unsigned long magic_type);
+	// BW1W120 0047cda0 BW1M119 011d7fe0
+	void CreateLightbulb(float progress);
+	// BW1W120 004e29d0 BW1M119 01269a50
+	bool32_t PossibilityOfErrorFromLackOfSkill(CREATURE_ACTION action);
+	// BW1W120 004e0de0 BW1M119 01267e80
+	void LearnLessonFromLeashInstruction(Object* object);
+	// BW1W120 004f8850 BW1M119 0128ecd0
+	void ForceActionCastSpellOnObject(MAGIC_TYPE magic_type, Object* object);
+	// BW1W120 004f2930 BW1M119 012817f0
+	bool32_t LearnActionFromReaction(CREATURE_ACTION_LEARNING_TYPE type, unsigned long action);
+	// BW1W120 004f30b0 BW1M119 01280120
+	void SetupReactToNiceMagic(Reaction* reaction, MAGIC_TYPE magic_type, GameThingWithPos* thing);
+	// BW1W120 004f3210 BW1M119 0127fd10
+	void SetupReactToNastyMagic(Reaction* reaction, MAGIC_TYPE magic_type, GameThingWithPos* thing);
+	// BW1W120 00479440 BW1M119 011df8e0
+	bool32_t IsInGathering();
+	// BW1W120 004dc9a0 BW1M119 0125dc30
+	void MakeDesireFullyDominantAndChangeSource(unsigned long desire, const CreatureInfo* info);
+	// BW1W120 004df090 BW1M119 015eb350
+	bool32_t IsReadyToExplore();
+	// BW1W120 004df0c0 BW1M119 015eb2a0
+	bool32_t IsPlayerIgnoringMe();
+	// BW1W120 004df110 BW1M119 015eb240
+	bool32_t IsCreatureCold();
+	// BW1W120 004df130 BW1M119 015eb1e0
+	bool32_t IsCreatureWarm();
+	// BW1W120 004df150 BW1M119 015eb180
+	bool32_t HasPlayerBeenNasty();
+	// BW1W120 004df180 BW1M119 015eb140
+	bool32_t IsCreatureReadyForRest();
+	// BW1W120 004df190 BW1M119 015eb0e0
+	bool32_t HasNoticedActionWorthMimicking();
+	// BW1W120 004df1b0 BW1M119 015eb0a0
+	bool32_t CanCreatureBeFrightened();
+	// BW1W120 004df1c0 BW1M119 015eb020
+	bool32_t IsCreatureNearHome();
+	// BW1W120 004de8e0 BW1M119 01264190
+	float GetHungerSourceFromEnergy();
+	// BW1W120 004de8f0 BW1M119 01264110
+	void SetEnergyFromHungerSource(float value);
+	// BW1W120 004de940 BW1M119 012640c0
+	float GetPooSourceFromAmountOfPoo();
+	// BW1W120 004de950 BW1M119 01264070
+	void SetAmountOfPooFromPooSource(float value);
+	// BW1W120 004de960 BW1M119 01264020
+	float GetTirednessSourceFromExhaustion();
+	// BW1W120 004de970 BW1M119 01263f90
+	float GetTirednessSourceFromNightTime();
+	// BW1W120 004de990 BW1M119 01263f40
+	void SetExhaustionFromTirednessSource(float value);
+	// BW1W120 004de9a0 BW1M119 01263ef0
+	float GetThirstSourceFromDehydration();
+	// BW1W120 004de9b0 BW1M119 01263ea0
+	void SetDehydrationFromThirstSource(float value);
+	// BW1W120 004de9c0 BW1M119 01263e20
+	float GetRestoreHealthSourceFromLife();
+	// BW1W120 004de9d0 BW1M119 01263dc0
+	float GetSadnessSource();
+	// BW1W120 004de9f0 BW1M119 01263d40
+	void SetLifeFromRestoreHealthSource(float value);
+	// BW1W120 004dea10 BW1M119 01263c80
+	float GetAttractPlayerSourceFromLoneliness();
+	// BW1W120 004dea80 BW1M119 01263bc0
+	void SetLonelinessFromAttractPlayerSource(float value);
+	// BW1W120 004dead0 BW1M119 01263b00
+	float GetAttractPlayerSourceFromLackOfInteraction();
+	// BW1W120 004deb40 BW1M119 01263a30
+	void SetAmountOfInteractionFromAttractPlayerSource(float value);
+	// BW1W120 004deb90 BW1M119 012639a0
+	float GetManifestStateSourceFromUnsatisfiedDesires();
+	// BW1W120 004debd0 BW1M119 01263920
+	float GetWarmerSourceFromPhysicalWarmth();
+	// BW1W120 004dec10 BW1M119 012638a0
+	float GetColderSourceFromPhysicalWarmth();
+	// BW1W120 004dec50 BW1M119 01263840
+	float GetScratchSourceFromPhysicalItchiness();
+	// BW1W120 004dec60 BW1M119 012637c0
+	float GetRunAwayFromPlayerSource();
+	// BW1W120 004deca0 BW1M119 01263700
+	float GetGoHomeSource();
+	// BW1W120 004ded00 BW1M119 01263650
+	float GetHangAroundAtHomeSource();
+	// BW1W120 004ded60 BW1M119 012635d0
+	float GetUrgeToGetHigh();
+	// BW1W120 004deda0 BW1M119 01263590
+	void SetUrgeToGetHigh(float value);
+	// BW1W120 004dedb0 BW1M119 01263520
+	float GetSourceForCraziness();
+	// BW1W120 004dede0 BW1M119 01263440
+	float GetSourceForMissFriend();
+	// BW1W120 004dee60 BW1M119 01263320
+	float GetHowInterestingPlayerIsBeing();
+	// BW1W120 004deef0 BW1M119 012632c0
+	void SetHowInterestingPlayerIsBeing(float value);
+	// BW1W120 004def10 BW1M119 01263270
+	float GetInnateNicenessSource();
+	// BW1W120 004def20 BW1M119 01263210
+	float GetDesireToImpressFromVillagersWhoNeedIt();
+	// BW1W120 004def30 BW1M119 012631c0
+	float GetInnateAggressionSource();
+	// BW1W120 004def40 BW1M119 01263170
+	float GetInnateLethargySource();
+	// BW1W120 004def50 BW1M119 01263120
+	float GetInnateFriendlinessSource();
+	// BW1W120 004def60 BW1M119 012630d0
+	float GetInnateCommunicativenessSource();
+	// BW1W120 004def70 BW1M119 01263080
+	void SetInnateNicenessSource(float value);
+	// BW1W120 004def90 BW1M119 01263030
+	void SetInnateAggressionSource(float value);
+	// BW1W120 004defb0 BW1M119 01262fe0
+	void SetInnateLethargySource(float value);
+	// BW1W120 004defd0 BW1M119 01262f90
+	void SetInnateFriendlinessSource(float value);
+	// BW1W120 004deff0 BW1M119 01262f40
+	void SetInnateCommunicativenessSource(float value);
+	// BW1W120 004f6930 BW1M119 0128d940
+	void ScriptTurnOffAllDesires();
+	// BW1W120 004f78c0 BW1M119 0128e310
+	static float SigmoidThreshold(float threshold, float value);
 };
 
 class Creed : public MobileObject
@@ -941,9 +1179,9 @@ public:
 	// BW1W120 0050b360 BW1M119 010c3800
 	virtual char* GetDebugText();
 	// BW1W120 0050b4e0 BW1M119 010c3890
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 0050b4c0 BW1M119 010c38f0
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0050b350 BW1M119 010c37d0
 	virtual uint32_t GetSaveType();
 	// BW1W120 0050b4a0 BW1M119 010c3950

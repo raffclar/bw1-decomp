@@ -2,6 +2,7 @@
 #include "Villager.h"
 
 #include "ColourConstants.h" /* For White */
+#include "Dance.h"
 #include "DanceGroup.h"
 #include "GameThingWithPos.h"
 #include "GroupBehaviour.h"
@@ -40,14 +41,14 @@ Villager* Villager::FindImmediateNeighbour()
 // BW1W120 00759930 BW1M119 0157f6b0
 bool32_t Villager::DanceForEditingPurposes()
 {
-	PerformDance(dance_group->behaviour->Pos, VILLAGER_STATE_DANCE_FOR_EDITING_PURPOSES, dance_group->field_0x5c);
+	PerformDance(dance_group->behaviour->Pos, VILLAGER_STATE_DANCE_FOR_EDITING_PURPOSES, dance_group->Action.Kind);
 	return 1;
 }
 
 // BW1W120 00759960 BW1M119 0157f640
 bool32_t Villager::DanceButNotWorship()
 {
-	PerformDance(dance_group->behaviour->Pos, VILLAGER_STATE_DANCE_BUT_NOT_WORSHIP, dance_group->field_0x5c);
+	PerformDance(dance_group->behaviour->Pos, VILLAGER_STATE_DANCE_BUT_NOT_WORSHIP, dance_group->Action.Kind);
 	return 1;
 }
 
@@ -113,7 +114,7 @@ bool32_t Villager::ExitControlledByCreature(unsigned char state)
 		// TODO: see unnamed-global blocker above — the creature participant-list removal is not
 		// yet representable in source. Only the tail (IsDancing/RemoveFromDance) is written.
 		if (IsDancing())
-			RemoveFromDance(1);
+			RemoveFromDance(true);
 	}
 	else if (state != VILLAGER_STATE_CONTROLLED_BY_CREATURE && state != VILLAGER_STATE_WORSHIPPING_CREATURE &&
 	         state != VILLAGER_STATE_DECIDE_WHAT_TO_DO)

@@ -20,7 +20,7 @@ class CreatureSubAction : public Base
 {
 public:
 	CREATURE_SUB_STATE_ACTIONS Action;
-	uint32_t                   field_0xc;
+	CreatureBelief*            Belief;
 	uint8_t                    field_0x10[0x4];
 	LHPoint                    field_0x14;
 	uint8_t                    field_0x20[0xc];
@@ -59,7 +59,7 @@ public:
 	uint32_t          field_0xc34;
 	uint32_t          field_0xc38;
 	uint32_t          field_0xc3c;
-	uint32_t          field_0xc40;
+	Creature*         Partner;
 	uint32_t          field_0xc44;
 	uint32_t          field_0xc48;
 	uint32_t          field_0xc4c;

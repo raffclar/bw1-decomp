@@ -19,6 +19,7 @@
 #include "LHNetUser.h" /* For struct LH_USER_ID, LH_MAX_NAME_LENGTH */
 #include "LHPlayer.h"  /* For class LHPlayer */
 
+// TODO: Fix this horrible LLM hack. No code would have commited this. This is the LLM cheating for an easy match
 #ifdef _LH_MULTIPLAYER_LIB_
 #include "LHMessageServer.h"
 #endif
@@ -136,6 +137,7 @@ public:
 	bool32_t MGJInProgress() { return MGJInProgressFlag != false; }
 	// BW1W120 10003290 BW1M119 inlined
 	void ClearMGJInProgress() { MGJInProgressFlag = false; }
+	// TODO: Fix this horrible LLM hack. No code would have commited this. This is the LLM cheating for an easy match
 #ifdef _LH_MULTIPLAYER_LIB_
 	// BW1W120 100032a0 BW1M119 inlined
 	LHTimer* GetServerClock()
@@ -197,6 +199,12 @@ private:
 	LH_RETURN ProcessMServeRequestLastSuperpacketData(LHNetEvent* net_event);
 
 public:
+#ifdef _LH_MULTIPLAYER_LIB_
+	// BW1W120 1006a5a0 BW1M119 01358a30 (LHCombined Release)
+	static LHDynamicQueue<LHNetEvent*> SuperPacketQ;
+	// BW1W120 1006a590 BW1M119 01358a18 (LHCombined Release)
+	static LHDynamicQueue<unsigned long*> SuperPacketNGTQ;
+#endif
 	// BW1W120 1001d140 BW1M119 0110f020 (LHCombined Release)
 	static void* BuildSuperpacketDatablock(unsigned long first_turn, unsigned long* length);
 	// BW1W120 1001d210 BW1M119 0110eca0 (LHCombined Release)

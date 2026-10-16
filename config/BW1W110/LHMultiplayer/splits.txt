@@ -226,10 +226,15 @@ Lionhead/LHMultiplayer/ver4.0/LHTransport.cpp:
 	.bss        start:0x1006A5BC end:0x1006A5C0
 
 Lionhead/LHMultiplayer/ver4.0/LHTransportInfo.cpp:
-	.text       start:0x100242A0 end:0x100243F0
-	.CRT$XCU    start:0x1006108C end:0x10061094 align:4
+	.text       start:0x100242A0 end:0x100243A0
+	.CRT$XCU    start:0x1006108C end:0x10061090 align:4
+	.bss        start:0x1006A5C0 end:0x1006A5C4
+
+Lionhead/LHMultiplayer/ver4.0/Version.cpp:
+	.text       start:0x100243A0 end:0x100243F0
+	.CRT$XCU    start:0x10061090 end:0x10061094 align:4
 	.data       start:0x10062AF8 end:0x10062C8C
-	.bss        start:0x1006A5C0 end:0x1006A768
+	.bss        start:0x1006A5C8 end:0x1006A768
 
 LHMultiplayer/delayimp/delayhlp.cpp:
 	.text       start:0x1002471C end:0x100249D0
@@ -932,7 +937,7 @@ GameSpy/Peer/peerPing.c:
 GameSpy/Peer/peerPlayers.c:
 	.text       start:0x10041EB0 end:0x10042450
 
-GameSpy/qr/gqueryreporting.c:
+GameSpy/queryreporting/gqueryreporting.c:
 	.text       start:0x10042450 end:0x100434A0
 	.data       start:0x10067C18 end:0x10067E28
 	.bss        start:0x1006AC50 end:0x1006AF68

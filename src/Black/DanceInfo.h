@@ -16,18 +16,17 @@ class Base;
 class GDanceInfo : public GBaseInfo
 {
 public:
-	uint32_t field_0x10;
+	uint32_t Duration;
 	uint32_t field_0x14;
 	uint8_t  field_0x18[0x8c];
 	uint32_t field_0xa4;
-	uint8_t  field_0xa8[0x8];
+	uint32_t MaximumDancers;
+	float    Impressiveness;
 
 	// Override methods
 
-	// BW1W120 0050b670 BW1M119 012abf40
-	virtual ~GDanceInfo();
 	// BW1W120 0050b600 BW1M119 012ad780
-	virtual GBaseInfo* GetBaseInfo(uint32_t& param_1);
+	virtual GBaseInfo* GetBaseInfo(uint32_t& num_infos);
 
 	// Static data
 
@@ -40,7 +39,7 @@ public:
 	static GDanceInfo* GetInfo() { return Infos; }
 
 	// TODO(#377): The original declared this class in Dance.h.
-	INFO_DATA_BLOCK(field_0x10, field_0xa8)
+	INFO_DATA_BLOCK(Duration, Impressiveness)
 	INFO_ROOT_LOADERS("Dance.h", 39)
 };
 

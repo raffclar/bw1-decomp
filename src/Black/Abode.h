@@ -19,6 +19,13 @@
 #include "Object.h"           /* For struct Object */
 #include "Villager.h"         /* For struct Villager */
 
+enum ABODE_BEING_BUILT
+{
+	ABODE_BEING_BUILT_IS_BEING_BUILT,
+	ABODE_BEING_BUILT_IS_NOT_BEING_BUILT,
+	ABODE_BEING_BUILT_LAST
+};
+
 enum ABODE_EPP
 {
 	ABODE_EPP_LANTERN = 0x0,
@@ -87,12 +94,22 @@ public:
 	// BW1W120 00c4cc6c BW1M119 01a086bc
 	static Town* KnockedTown;
 
-	// Override methods
+	// Virtual methods
 
 	// BW1W120 00401650 BW1M119 01176c50
 	virtual bool32_t GetShouldNotBeAddedToPlanned() { return ShouldNotBeAddedToPlanned; }
 	// BW1W120 00401660 BW1M119 0111a380
 	virtual void SetShouldNotBeAddedToPlanned(bool32_t value) { ShouldNotBeAddedToPlanned = value; }
+	// BW1W120 00404520 BW1M119 011771d0
+	virtual bool32_t MoveAbodeToPlannedAbodes();
+	// BW1W120 00403f00 BW1M119 01418d70
+	virtual void DeleteDependancys();
+	// BW1W120 004047e0 BW1M119 013c6f80
+	virtual void MakeFunctional();
+	// BW1W120 004073c0 BW1M119 013759d0
+	virtual void StopBeingFunctional(GPlayer* player);
+	// BW1W120 00401680 BW1M119 0135aaf0
+	virtual void RestartBeingFunctional() {}
 	// BW1W120 00401690 BW1M119 01119c70
 	virtual void SetTown(Town* _town) { town = _town; }
 	// BW1W120 004016a0 BW1M119 01069320
@@ -106,6 +123,8 @@ public:
 		}
 		return GetPercentBuilt() >= 1.0f;
 	}
+	// BW1W120 004016f0 BW1M119 01333fc0
+	virtual bool32_t CausesTownEmergencyIfDamaged() { return false; }
 	// BW1W120 00401700 BW1M119 011747d0
 	virtual FragMesh* GetDestructionMesh() { return DestructionMesh; }
 	// BW1W120 00401710 BW1M119 01099040
@@ -154,9 +173,9 @@ public:
 	// BW1W120 00406200 BW1M119 01062690
 	virtual bool32_t IsFunctional();
 	// BW1W120 00406d20 BW1M119 011d3810
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 00406a10 BW1M119 01245790
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 00407200 BW1M119 0108caf0
 	virtual bool32_t IsInteractable();
 	// BW1W120 004e43f0 BW1M119 015ed310
@@ -200,7 +219,7 @@ public:
 	// BW1W120 00406830 BW1M119 01112a30
 	virtual uint32_t InterfaceTap(GInterfaceStatus* status);
 	// BW1W120 00402dc0 BW1M119 01590910
-	virtual uint32_t GetPhysicsConstantsType();
+	virtual PHYSICS_CONSTANTS_TYPE GetPhysicsConstantsType();
 	// BW1W120 00402dd0 BW1M119 011501a0
 	virtual void SetUpPhysOb(PhysOb* obj);
 	// BW1W120 00406230 BW1M119 013ed2a0
@@ -244,21 +263,6 @@ public:
 	virtual uint32_t DoResourceRemoving(RESOURCE_TYPE type, uint32_t amount, GInterfaceStatus* iface, bool* poisoned);
 	// BW1W120 00405050 BW1M119 01370a40
 	virtual PlannedMultiMapFixed* ConvertToPlanned();
-
-	// Virtual methods
-
-	// BW1W120 00404520 BW1M119 011771d0
-	virtual bool32_t MoveAbodeToPlannedAbodes();
-	// BW1W120 00403f00 BW1M119 01418d70
-	virtual void DeleteDependancys();
-	// BW1W120 004047e0 BW1M119 013c6f80
-	virtual void MakeFunctional();
-	// BW1W120 004073c0 BW1M119 013759d0
-	virtual void StopBeingFunctional(GPlayer* player);
-	// BW1W120 00401680 BW1M119 0135aaf0
-	virtual void RestartBeingFunctional() {}
-	// BW1W120 004016f0 BW1M119 01333fc0
-	virtual bool32_t CausesTownEmergencyIfDamaged() { return false; }
 	// BW1W120 00407280 BW1M119 0111b170
 	virtual bool32_t CanBeHiddenIn();
 	// BW1W120 00405f50 BW1M119 01331980
@@ -323,7 +327,7 @@ public:
 	uint32_t GetMaxVillagersNeededToBuild();
 	// BW1W120 004046c0 BW1M119 013435f0
 	bool32_t IsTooCrowded();
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 	// BW1W120 00404960 BW1M119 null
 	void CheckForCompleteNewTown();
 #endif
@@ -358,7 +362,7 @@ public:
 	MapCoords GetResourcePos(RESOURCE_TYPE type, uint32_t param_2);
 	// BW1W120 004072e0 BW1M119 0100f890
 	MapCoords GetPosOutside(float divisions, float min_dist, float rand_dist);
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 	// BW1W120 004073f0 BW1M119 null
 	void AddSmashedCondition(GPlayer* player);
 #endif

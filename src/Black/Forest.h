@@ -12,6 +12,14 @@
 
 // Forward Declares
 
+enum FOREST_SIZE
+{
+	FOREST_SIZE_SMALL,
+	FOREST_SIZE_MEDIUM,
+	FOREST_SIZE_LARGE,
+	FOREST_SIZE_LAST
+};
+
 class Base;
 class Creature;
 class GFootpath;
@@ -56,17 +64,17 @@ public:
 	// BW1W120 0053ad60 BW1M119 010f99b0
 	virtual void UseFootpathIfNecessary(Living* param_1, const MapCoords& param_2, unsigned char param_3);
 	// BW1W120 0053ac50 BW1M119 010f9cf0
-	virtual uint32_t AddFootpath(GFootpath* param_1);
+	virtual bool32_t AddFootpath(GFootpath* footpath);
 	// BW1W120 0053acc0 BW1M119 010f9c40
-	virtual uint32_t RemoveFootpath(GFootpath* param_1);
+	virtual bool32_t RemoveFootpath(GFootpath* footpath);
 	// BW1W120 00539a60 BW1M119 010f8830
 	virtual bool32_t IsFunctional();
 	// BW1W120 00539b10 BW1M119 010f8b60
 	virtual char* GetDebugText();
 	// BW1W120 0053b070 BW1M119 010f8ce0
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 0053ae40 BW1M119 010f91b0
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 00539b00 BW1M119 010f8b20
 	virtual uint32_t GetSaveType();
 	// BW1W120 00539a80 BW1M119 010f8910
@@ -91,6 +99,8 @@ public:
 
 	// Non-virtual methods
 
+	// BW1W120 0053a5b0 BW1M119 010fa800
+	Tree* GetTree(unsigned long index);
 	// BW1W120 0053a220 BW1M119 010facd0
 	void RemoveTree(Tree* tree);
 	// BW1W120 0053a310 BW1M119 010fab00
@@ -101,6 +111,10 @@ public:
 	MapCoords GetNearestEdgeToPos(const MapCoords& pos);
 	// BW1W120 0053b280 BW1M119 010f8bf0
 	float GetWoodValue();
+	// BW1W120 0053ae10 BW1M119 010f97b0
+	static void RemoveForestFromTowns(Forest* forest);
+	// BW1W120 0053a1a0 BW1M119 010faf60
+	static Forest* FindClosestForest(const MapCoords& pos, float max_distance, bool32_t empty_only);
 };
 
 #endif /* BW1_DECOMP_FOREST_INCLUDED_H */

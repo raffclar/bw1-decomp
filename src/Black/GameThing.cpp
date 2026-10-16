@@ -21,11 +21,11 @@
 // fabricated: unreferenced 4-byte .bss slot at 0x00d0607c; real name unknown
 static float unused;
 
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 static_assert(offsetof(Town, belief) == 0x798, "Town belief offset is incorrect");
 #elif defined(VERSION_BW1W110)
 static_assert(offsetof(Town, belief) == 0x794, "Town belief offset is incorrect");
-#else
+#elif defined(VERSION_BW1W100)
 static_assert(offsetof(Town, belief) == 0x790, "Town belief offset is incorrect");
 #endif
 
@@ -49,9 +49,9 @@ GameThing::~GameThing()
 
 void GameThing::ProcessDead(int param_1)
 {
-	if ((Flags & GAME_THING_FLAG_0x00000002) == 0 && param_1 == 0)
+	if ((Flags & GAME_THING_FLAG_DEAD) == 0 && param_1 == 0)
 	{
-		Flags |= GAME_THING_FLAG_0x00000002;
+		Flags |= GAME_THING_FLAG_DEAD;
 		return;
 	}
 
@@ -76,7 +76,7 @@ void GameThing::ProcessDead(int param_1)
 		}
 	}
 
-	Flags |= GAME_THING_FLAG_0x00000002;
+	Flags |= GAME_THING_FLAG_DEAD;
 	Delete();
 }
 
@@ -112,7 +112,7 @@ void GameThing::ToBeDeleted(int param_1)
 			return;
 		}
 
-		Flags &= ~GAME_THING_FLAG_0x00000002;
+		Flags &= ~GAME_THING_FLAG_DEAD;
 		next.Set(NULL);
 
 		if (GGame::g_game->GameLists.GameThings.Find(this) == NULL)
@@ -125,7 +125,7 @@ void GameThing::ToBeDeleted(int param_1)
 	}
 }
 
-uint32_t GameThing::Save(GameOSFile& file)
+bool32_t GameThing::Save(GameOSFile& file)
 {
 	uint32_t saveType = GetSaveType();
 	WRITE_SAFE(file, saveType);
@@ -135,12 +135,12 @@ uint32_t GameThing::Save(GameOSFile& file)
 		file.WriteCheckSum(this);
 		WRITE_SAFE(file, destroyed);
 		WRITE_SAFE(file, Flags);
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
-uint32_t GameThing::Load(GameOSFile& file)
+bool32_t GameThing::Load(GameOSFile& file)
 {
 	RenderLoadingFrame(true);
 	file.ReadCheckSum(this);
@@ -148,7 +148,7 @@ uint32_t GameThing::Load(GameOSFile& file)
 	file.ReadSafe(destroyed);
 	file.ReadSafe(Flags);
 
-	return 1;
+	return true;
 }
 
 uint32_t GameThing::GetSaveType()
@@ -293,7 +293,7 @@ SCRIPT_OBJECT_TYPE GameThingWithPos::GetScriptObjectType()
 	return SCRIPT_OBJECT_TYPE_NONE;
 }
 
-void GameThingWithPos::SetSpeedInMetres(float param_1, int param_2) {}
+void GameThingWithPos::SetSpeedInMetres(float speed_in_metres, bool32_t scale_speed) {}
 
 float GameThingWithPos::GetSpeedInMetres() const
 {
@@ -380,18 +380,18 @@ uint32_t GameThingWithPos::GetFOVHelpCondition()
 	return 0;
 }
 
-uint32_t GameThingWithPos::Save(GameOSFile& file)
+bool32_t GameThingWithPos::Save(GameOSFile& file)
 {
 	if (GameThing::Save(file))
 	{
 		WRITE_SAFE(file, Pos);
 		WRITE_SAFE(file, Flags);
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
-uint32_t GameThingWithPos::Load(GameOSFile& file)
+bool32_t GameThingWithPos::Load(GameOSFile& file)
 {
 	if (GameThing::Load(file))
 	{
@@ -399,15 +399,15 @@ uint32_t GameThingWithPos::Load(GameOSFile& file)
 		file.ReadSafe(Pos);
 		file.ReadSafe(Flags);
 
-		Flags &= ~GAME_THING_WITH_POS_FLAG_0x00000200;
+		Flags &= ~GAME_THING_WITH_POS_FLAG_0x00000100;
 		if ((Flags & GAME_THING_WITH_POS_FLAG_IN_MAP) != 0)
 		{
 			Flags &= ~GAME_THING_WITH_POS_FLAG_IN_MAP;
 		}
 
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 uint32_t GameThingWithPos::GetSaveType()

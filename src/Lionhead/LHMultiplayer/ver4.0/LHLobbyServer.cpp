@@ -302,7 +302,7 @@ void LHLobbyServer::CheckMGJStatus(LHLobbyServerChannel* channel, LHNetEvent* ev
 void LHLobbyServer::SendMGJConnect(LHLobbyServerChannel* channel)
 {
 	LHNetEvent* event = LHNetEvent::VCreate(LH_NETEVENT_TYPE_LOBBY_CONNECT_TO_MSERVE, GetUserID(), channel->Name,
-	                                        LH_ALL_USERS.Number, &channel->TransportInfo, channel->MServeName, true,
+	                                        LH_EVERYONE.Number, &channel->TransportInfo, channel->MServeName, true,
 	                                        channel->GetGameDataLength(), channel->GetGameData());
 	channel->SendEventCopyToMGJUser(event);
 	delete event;
@@ -329,22 +329,22 @@ LH_RETURN LHLobbyServer::ProcessBroadcastLobbyAddress(LHNetEvent* event)
 	if (event->VDecode(LH_NETEVENT_TYPE_BROADCAST_LOBBY_ADDRESS, &info) != LH_OK)
 		return LH_FAIL;
 
-	if (info.ConnectionAcceptor.Compare(GetConnectionAcceptorInfo()) != 0)
+	if (info.ConnectionAcceptor.Compare(GetConnectionAcceptorInfo()) == 0)
+		return LH_OK;
+
+	LHLocalLobbyInfo* newLobby;
+	LHLocalLobbyInfo* lobby = FindLocalLobby(&info.ConnectionAcceptor);
+	if (lobby == NULL)
 	{
-		LHLocalLobbyInfo* newLobby;
-		LHLocalLobbyInfo* lobby = FindLocalLobby(&info.ConnectionAcceptor);
+		newLobby = new LHLocalLobbyInfo(&info);
+		LocalLobbyList.Add(newLobby);
+		lobbyEvent = LH_LOBBYSERVER_EVENT_ADDED;
+	}
+	if (lobby == NULL || lobby->UpdateLocalLobbyInfoDetails(&info))
+	{
 		if (lobby == NULL)
-		{
-			newLobby = new LHLocalLobbyInfo(&info);
-			LocalLobbyList.Add(newLobby);
-			lobbyEvent = LH_LOBBYSERVER_EVENT_ADDED;
-		}
-		if (lobby == NULL || lobby->UpdateLocalLobbyInfoDetails(&info))
-		{
-			if (lobby == NULL)
-				lobby = newLobby;
-			SendInternalLocalLobbyMessage(lobby, lobbyEvent);
-		}
+			lobby = newLobby;
+		SendInternalLocalLobbyMessage(lobby, lobbyEvent);
 	}
 	return LH_OK;
 }
@@ -941,7 +941,7 @@ void LHLobbyServerChannel::ClearAllData()
 {
 	LHChannel::ClearAllData();
 	MServeStarted = false;
-	MGJUser = LH_ALL_USERS;
+	MGJUser = LH_EVERYONE;
 	MServeIdleTime = -1;
 	memset(MServeName, 0, sizeof(MServeName));
 }
@@ -1001,7 +1001,7 @@ void LHLobbyServerChannel::SetMGJInProgress(LH_USER_ID user_id)
 
 void LHLobbyServerChannel::ClearMGJInProgress()
 {
-	MGJUser = LH_ALL_USERS;
+	MGJUser = LH_EVERYONE;
 	for (LHPlayer* player = GetNextPlayer(NULL); player != NULL; player = GetNextPlayer(player))
 	{
 		LHLobbyServerSysInfo* info = GetSysInfo(player);

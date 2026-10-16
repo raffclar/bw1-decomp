@@ -31,8 +31,6 @@ public:
 
 	// Override methods
 
-	// BW1W120 0072c050 BW1M119 01538d40
-	virtual ~MapShield();
 	// BW1W120 0072c0f0 BW1M119 0153a0c0
 	virtual void ToBeDeleted(int param_1);
 	// BW1W120 0072c150 BW1M119 0153a050
@@ -40,9 +38,9 @@ public:
 	// BW1W120 0072c040 BW1M119 0153ccf0
 	virtual char* GetDebugText();
 	// BW1W120 0072c350 BW1M119 015399e0
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 0072c390 BW1M119 01539940
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0072c030 BW1M119 0153ccb0
 	virtual uint32_t GetSaveType();
 	// BW1W120 0072c010 BW1M119 0153caf0
@@ -66,6 +64,13 @@ public:
 
 	// BW1W120 0072c070 BW1M119 0153a280
 	MapShield(MapCoords* coords, GMapShieldInfo* info, SpellShield* spell);
+	// BW1W120 0072bfc0 BW1M119 0153a3b0
+	MapShield();
+
+	// Non-virtual methods
+
+	// BW1W120 0072c0e0 BW1M119 0153a210
+	void SetToZero();
 };
 
 #endif /* BW1_DECOMP_MAP_SHIELD_INCLUDED_H */

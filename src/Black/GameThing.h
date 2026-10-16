@@ -71,7 +71,7 @@ enum GAME_THING_TYPE
 	GAME_THING_TYPE_PLANNED_MULTI_MAP_FIXED = 0x38,
 	GAME_THING_TYPE_PLANNED_TOWN_CITADEL_HEART = 0x39,
 	GAME_THING_TYPE_CITADEL_HEART_1 = 0x3a,
-	GAME_THING_TYPE_CITADEL_HEART_2 = 0x3b,
+	GAME_THING_TYPE_PLANNED_WORSHIP_SITE = 0x3b,
 	GAME_THING_TYPE_WORSHIP_SITE = 0x3c,
 	GAME_THING_TYPE_SHOW_NEEDS_VISUALS = 0x3d,
 	GAME_THING_TYPE_SHOW_NEEDS = 0x3e,
@@ -318,11 +318,11 @@ class Villager;
 enum GAME_THING_FLAGS
 {
 	GAME_THING_FLAG_UNAVAILABLE = 1 << 0,
-	GAME_THING_FLAG_0x00000002 = 1 << 1, // TODO(#343)
+	GAME_THING_FLAG_DEAD = 1 << 1,
 	GAME_THING_FLAG_NO_BURN_DAMAGE = 1 << 2,
 	GAME_THING_FLAG_FIREPROOF = 1 << 3,
 	GAME_THING_FLAG_PSYS_FLYING = 1 << 4,
-	GAME_THING_FLAG_0x0000020 = 1 << 5, // TODO(#343)
+	GAME_THING_FLAG_0x00000020 = 1 << 5,
 	GAME_THING_FLAG_NAME_HIDDEN = 1 << 6,
 };
 
@@ -402,9 +402,9 @@ public:
 	// BW1W120 00570330 BW1M119 011c2750
 	virtual void UseFootpathIfNecessary(Living* living, const MapCoords& coords, uint8_t state);
 	// BW1W120 00405190 BW1M119 011a3bd0
-	virtual uint32_t AddFootpath(GFootpath* param_1);
+	virtual bool32_t AddFootpath(GFootpath* footpath);
 	// BW1W120 004051a0 BW1M119 011a2f70
-	virtual uint32_t RemoveFootpath(GFootpath* param_1);
+	virtual bool32_t RemoveFootpath(GFootpath* footpath);
 	// BW1W120 005705f0 BW1M119 0111a5c0
 	virtual uint32_t JustAddResource(RESOURCE_TYPE type, uint32_t amount, bool param_3);
 	// BW1W120 00570600 BW1M119 010e8c60
@@ -453,9 +453,9 @@ public:
 	// BW1W120 00401930 BW1M119 011cfde0
 	virtual uint32_t GetShowNeedsPos(uint32_t need, MapCoords* pos) { return 0; }
 	// BW1W120 0056fcf0 BW1M119 011063a0
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 0056fbe0 BW1M119 013e4fb0
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0056fd90 BW1M119 011af720
 	virtual uint32_t GetSaveType();
 	// BW1W120 0056fda0 BW1M119 013fd010

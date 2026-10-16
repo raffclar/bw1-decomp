@@ -42,6 +42,45 @@ enum IMPACT_SOUND_EVENT
 	IMPACT_SOUND_EVENT_KICK = 150,
 };
 
+enum SPELL_DIALOGUE_SAMPLE
+{
+	SPELL_DIALOGUE_SAMPLE_ANNOUNCER_VOICE_BEAM_EXPLOSION = 1,
+	SPELL_DIALOGUE_SAMPLE_ANNOUNCER_VOICE_FIREBALL = 2,
+	SPELL_DIALOGUE_SAMPLE_ANNOUNCER_VOICE_FLOCK_FLYING = 3,
+	SPELL_DIALOGUE_SAMPLE_ANNOUNCER_VOICE_FLOCK_GROUND = 4,
+	SPELL_DIALOGUE_SAMPLE_ANNOUNCER_VOICE_FOOD = 5,
+	SPELL_DIALOGUE_SAMPLE_ANNOUNCER_VOICE_FOREST = 6,
+	SPELL_DIALOGUE_SAMPLE_ANNOUNCER_VOICE_HEAL = 7,
+	SPELL_DIALOGUE_SAMPLE_ANNOUNCER_VOICE_LIGHTNING = 8,
+	SPELL_DIALOGUE_SAMPLE_ANNOUNCER_VOICE_PHYSICAL_SHIELD = 9,
+	SPELL_DIALOGUE_SAMPLE_ANNOUNCER_VOICE_POWERUP_01 = 10,
+	SPELL_DIALOGUE_SAMPLE_ANNOUNCER_VOICE_POWERUP_02 = 11,
+	SPELL_DIALOGUE_SAMPLE_ANNOUNCER_VOICE_POWERUP_03 = 12,
+	SPELL_DIALOGUE_SAMPLE_ANNOUNCER_VOICE_SHIELD = 13,
+	SPELL_DIALOGUE_SAMPLE_ANNOUNCER_VOICE_STORM = 14,
+	SPELL_DIALOGUE_SAMPLE_ANNOUNCER_VOICE_TELEPORT = 15,
+	SPELL_DIALOGUE_SAMPLE_ANNOUNCER_VOICE_WATER = 16,
+	SPELL_DIALOGUE_SAMPLE_ANNOUNCER_VOICE_WOOD = 17,
+	SPELL_DIALOGUE_SAMPLE_CREATURE_SPELL_ANGRY = 18,
+	SPELL_DIALOGUE_SAMPLE_CREATURE_SPELL_BIG = 19,
+	SPELL_DIALOGUE_SAMPLE_CREATURE_SPELL_COMPASSION = 20,
+	SPELL_DIALOGUE_SAMPLE_CREATURE_SPELL_FREEZE = 21,
+	SPELL_DIALOGUE_SAMPLE_CREATURE_SPELL_INVISIBLE = 22,
+	SPELL_DIALOGUE_SAMPLE_CREATURE_SPELL_ITCHY = 23,
+	SPELL_DIALOGUE_SAMPLE_CREATURE_SPELL_SMALL = 24,
+	SPELL_DIALOGUE_SAMPLE_CREATURE_SPELL_STRONG = 25,
+	SPELL_DIALOGUE_SAMPLE_CREATURE_SPELL_WEAK = 26,
+	SPELL_DIALOGUE_SAMPLE_TRIBEPOWER_01 = 27,
+	SPELL_DIALOGUE_SAMPLE_TRIBEPOWER_02 = 28,
+	SPELL_DIALOGUE_SAMPLE_TRIBEPOWER_03 = 29,
+	SPELL_DIALOGUE_SAMPLE_TRIBEPOWER_04 = 30,
+	SPELL_DIALOGUE_SAMPLE_TRIBEPOWER_05 = 31,
+	SPELL_DIALOGUE_SAMPLE_TRIBEPOWER_06 = 32,
+	SPELL_DIALOGUE_SAMPLE_TRIBEPOWER_07 = 33,
+	SPELL_DIALOGUE_SAMPLE_TRIBEPOWER_08 = 34,
+	SPELL_DIALOGUE_SAMPLE_TRIBEPOWER_09 = 35,
+};
+
 enum ANIM_SOUND_VOICE
 {
 	ANIM_SOUND_VOICE_MALE = 1,
@@ -72,10 +111,19 @@ enum ANIM_SOUND_EVENT
 
 #define NUM_ATMOS_TYPES 14
 
+#define MUSIC_DEFAULT_PLAY_DISTANCE 100.0f
+
+enum THING_MUSIC_RESULT
+{
+	THING_MUSIC_RESULT_NONE = 0,
+	THING_MUSIC_RESULT_IN_RANGE = 1,
+};
+
 // Forward Declares
 
 class Base;
 class GameOSFile;
+class GameThingWithPos;
 class LH_AudioBank;
 class LH_AudioSystem;
 class LH_MusicPlayOptions;
@@ -126,9 +174,9 @@ public:
 	// BW1W120 00426fe0 BW1M119 01184460
 	virtual void ToBeDeleted(int delete_now);
 	// BW1W120 00428480 BW1M119 011828a0
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 00428310 BW1M119 01182e00
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 
 	// Non-virtual methods
 
@@ -225,8 +273,34 @@ public:
 	// BW1W120 00429100 BW1M119 0108dc20
 	void CalculateAtmosTargetVolumes();
 
+	// BW1W120 00429180 BW1M119 010a2570
+	ThingMusicInfo* GetThingMusicInfo(GameThingWithPos* thing);
 	// BW1W120 004291b0 BW1M119 01187100
 	void ReleaseAllThingMusicInfo();
+	// BW1W120 00429230 BW1M119 01186e90
+	void AddThingMusic(MUSIC_TYPE type, GameThingWithPos* thing);
+	// BW1W120 00429340 BW1M119 01000910
+	void RemoveThingMusic(GameThingWithPos* thing);
+	// BW1W120 004293e0 BW1M119 01186c90
+	float GetPlayDistance(MUSIC_TYPE type);
+	// BW1W120 004293b0 BW1M119 01186d20
+	float GetPlayDistance(GameThingWithPos* thing);
+	// BW1W120 00429420 BW1M119 01186ac0
+	bool32_t ThingMusicInRange(MUSIC_TYPE type, GameThingWithPos* thing);
+	// BW1W120 00429500 BW1M119 01186770
+	bool32_t ProcessThingMusic(ThingMusicInfo* info, GameThingWithPos* thing);
+	// BW1W120 00429680 BW1M119 inlined
+	bool32_t IsThingMusicPlaying(ThingMusicInfo* info);
+	// BW1W120 004296c0 BW1M119 01186660
+	void StopMusic(ThingMusicInfo* info, int fade);
+	// BW1W120 00429880 BW1M119 011864f0
+	void SwapThingMusic(GameThingWithPos* thing, GameThingWithPos* other);
+	// BW1W120 004298a0 BW1M119 01186460
+	void EnableMusicThing(GameThingWithPos* thing, int enable);
+	// BW1W120 004298c0 BW1M119 011863c0
+	void SetPlayPosition(GameThingWithPos* thing, const MapCoords& coords);
+	// BW1W120 004298f0 BW1M119 01186340
+	bool32_t IsMusicThingFinished(GameThingWithPos* thing);
 	// BW1W120 00429700 BW1M119 0108ead0
 	void ValidateThingMusic();
 	// BW1W120 00429790 BW1M119 0108ec10
@@ -236,26 +310,35 @@ public:
 	// BW1W120 0042a370 BW1M119 011876f0
 	void ReleaseSFXBanks();
 	// BW1W120 00429d60 BW1M119 010001c0
-	void PlaySoundEffect(Base* param_1, uint32_t param_2, uint32_t param_3, uint32_t param_4, int param_5, int param_6,
-	                     AUDIO_SFX_BANK_TYPE param_7);
+	void PlaySoundEffect(Base* object, uint32_t sample, uint32_t priority, uint32_t volume, int distance,
+	                     int positional, AUDIO_SFX_BANK_TYPE bank_type);
 	// BW1W120 00429da0 BW1M119 01000240
-	void PlaySoundEffect(Base* param_1, unsigned long param_2, unsigned long param_3, unsigned long param_4,
-	                     int param_5, int param_6, LH_AudioBank* bank);
+	void PlaySoundEffect(Base* object, unsigned long sample, unsigned long priority, unsigned long volume, int distance,
+	                     int positional, LH_AudioBank* bank);
 	// BW1W120 00429e30 BW1M119 010230f0
 	void PlaySoundEffect(LH_SamplePlayOptions* options);
+	// BW1W120 0042a040 BW1M119 010004c0
+	void PlaySoundEffect(Base* object, const LHPoint& pos, uint32_t sample, uint32_t priority, uint32_t volume,
+	                     int distance, int positional, LH_AudioBank* bank);
 	// BW1W120 0042a000 BW1M119 01187f00
-	void PlaySoundEffect(Base* param_1, const LHPoint& pos, uint32_t param_3, uint32_t param_4, uint32_t param_5,
-	                     int param_6, int param_7, AUDIO_SFX_BANK_TYPE param_8);
+	void PlaySoundEffect(Base* object, const LHPoint& pos, uint32_t sample, uint32_t priority, uint32_t volume,
+	                     int distance, int positional, AUDIO_SFX_BANK_TYPE bank_type);
 	// BW1W120 0042a4b0 BW1M119 01062bd0
 	uint32_t SamplePlayAnimEffect(void* object, float distance, long* sound, int param_4, LH_AudioBank* bank,
 	                              int param_6, float param_7, float param_8);
+	// BW1W120 0042a430 BW1M119 01187520
+	float GetGSFXSampleMaxDistance(uint32_t sample, LH_AudioBank* bank) const;
 	// BW1W120 0042a210 BW1M119 01187ba0
-	void StopPlayingSoundEffect(uint32_t param_1, uint32_t param_2, AUDIO_SFX_BANK_TYPE type) const;
+	void StopPlayingSoundEffect(uint32_t sample, uint32_t object, AUDIO_SFX_BANK_TYPE type) const;
 	// BW1W120 0042a330 BW1M119 011877f0
 	void ReleaseLoopOnSoundEffect(Base* param_1, uint32_t param_2, AUDIO_SFX_BANK_TYPE type) const;
 	// BW1W120 inlined BW1M119 011878b0
 	LH_AudioBank* GetBank(AUDIO_SFX_BANK_TYPE type) const { return AudioBanks[type]; }
 };
+#ifdef VERSION_BW1WCI
+static_assert(sizeof(GAudio) == 0x3fc, "Data type is of wrong size");
+#else
 static_assert(sizeof(GAudio) == 0x3d4, "Data type is of wrong size");
+#endif
 
 #endif /* BW1_DECOMP_AUDIO_INCLUDED_H */

@@ -49,7 +49,7 @@ struct LHKeyEvent
 
 struct LHKeyboard
 {
-	// Same lock formerly named gKeyboardCritSec in LHSystem.cpp.
+	// Same lock formerly named gKeyboardCritSec in LHWin.cpp.
 	// TODO: Descriptive name; original class/file scope is unknown.
 	// BW1W120 00e8c118
 	static CRITICAL_SECTION CriticalSection;
@@ -146,7 +146,7 @@ struct CharRing
 
 namespace slim
 {
-// The IME helper, constructed on window creation (LHSystem.cpp).
+// The IME helper, constructed on window creation (LHWin.cpp).
 struct TbIME
 {
 	void* field_0x0;
@@ -233,7 +233,7 @@ struct LHSys
 	// BW1W120 007db800 BW1M119 inlined
 	LHSys();
 
-	// The one instance, at 0xE85040, built by LHSystem.cpp's static-init constructor.
+	// The one instance, at 0xE85040, built by LHWin.cpp's static-init constructor.
 	static LHSys TheSystem;
 
 	// Static inline accessors — the binary has no getters (neighbour TUs compile to
@@ -264,6 +264,37 @@ inline void LHPixel16::Set(LHColor color)
 	value = ((uint8_t)(color.b >> LHSys::TheSystem.screen.BlueScale) << LHSys::TheSystem.screen.BlueShift) +
 	        ((uint8_t)(color.g >> LHSys::TheSystem.screen.GreenScale) << LHSys::TheSystem.screen.GreenShift) +
 	        ((uint8_t)(color.r >> LHSys::TheSystem.screen.redScale) << LHSys::TheSystem.screen.RedShift);
+}
+
+inline LHPixel16::LHPixel16(LHColor color)
+{
+	value = ((uint8_t)(color.b >> LHSys::TheSystem.screen.BlueScale) << LHSys::TheSystem.screen.BlueShift) +
+	        ((uint8_t)(color.g >> LHSys::TheSystem.screen.GreenScale) << LHSys::TheSystem.screen.GreenShift) +
+	        ((uint8_t)(color.r >> LHSys::TheSystem.screen.redScale) << LHSys::TheSystem.screen.RedShift);
+}
+
+inline int LHDraw::Line(long x0, long y0, long x1, long y1, LHColor color, unsigned long mode)
+{
+	if (LHSys::GetScreen().depth == 16)
+	{
+		LHPixel16 pixel;
+		pixel.Set(color);
+		return Line16(x0, y0, x1, y1, pixel, mode, (LHPixel16*)LHSys::GetScreen().backAddress,
+		              LHSys::GetScreen().backPixelPitch);
+	}
+	return Line24(x0, y0, x1, y1, color, mode, (LHColor*)LHSys::GetScreen().backAddress,
+	              LHSys::GetScreen().backPixelPitch);
+}
+
+inline int LHDraw::Pixel(unsigned long x, unsigned long y, LHColor color, unsigned long mode)
+{
+	if (LHSys::GetScreen().depth == 16)
+	{
+		LHPixel16 pixel;
+		pixel.Set(color);
+		return Pixel16(x, y, pixel, mode);
+	}
+	return Pixel24(x, y, color, mode);
 }
 
 #endif /* BW1_DECOMP_LH_SYSTEM_INCLUDED_H */

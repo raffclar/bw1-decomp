@@ -28,6 +28,7 @@ class PhysicsObject;
 class Reaction;
 class Town;
 class Game3DObject;
+class GScaffoldInfo;
 class PlannedAbode;
 
 enum PLANNED_TYPE
@@ -41,7 +42,7 @@ class Scaffold : public MobileObject
 public:
 	uint32_t             field_0x68;
 	PlannedAbode*        Planned;
-	PlannedAbode*        field_0x70;
+	PlannedAbode*        SecondPlanned;
 	Game3DObject*        HandObject;
 	uint32_t             FadeTime;
 	uint32_t             field_0x7c;
@@ -72,9 +73,9 @@ public:
 	// BW1W120 0055e140 BW1M119 01146ad0
 	virtual char* GetDebugText() { return "Scaffold:"; }
 	// BW1W120 006ea3d0 BW1M119 011483d0
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 006ea240 BW1M119 01148610
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0055e130 BW1M119 01146a90
 	virtual uint32_t GetSaveType() { return GAME_THING_TYPE_SCAFFOLD; }
 	// BW1W120 006ea560 BW1M119 01148290
@@ -134,7 +135,7 @@ public:
 	virtual PhysicsInitialisation InitialisePhysics(const LHPoint& param_1, const LHPoint& param_2, Object* param_3,
 	                                                bool param_4, GInterfaceStatus* param_5);
 	// BW1W120 006e8770 BW1M119 0114b930
-	virtual uint32_t GetPhysicsConstantsType();
+	virtual PHYSICS_CONSTANTS_TYPE GetPhysicsConstantsType();
 	// BW1W120 006e8780 BW1M119 0114b790
 	virtual Object* EndPhysics(PhysicsObject* param_1, bool param_2);
 	// BW1W120 0055e110 BW1M119 01146a10
@@ -150,19 +151,39 @@ public:
 
 	// BW1W120 inlined BW1M119 inlined
 	Scaffold() { SetToZero(); }
+	// BW1W120 006e8390 BW1M119 0114c140
+	Scaffold(const MapCoords& coords, const GScaffoldInfo* info, Object* parent, float y_angle, float scale);
+
+	// Static methods
+
+	// BW1W120 006e8460 BW1M119 0114be20
+	static Scaffold* Create(const MapCoords& coords, const GScaffoldInfo* info, Town* town, Object* parent,
+	                        float y_angle, float scale);
 
 	// Non-virtual methods
 
+	// BW1W120 006e8ed0 BW1M119 0114aba0
+	Town* GetCombinedTown(Scaffold* other);
+	// BW1W120 006e8f50 BW1M119 0114ab20
+	void SetCombinedTown(Scaffold* other);
 	// BW1W120 006e8500 BW1M119 0114bdb0
 	void SetToZero();
 	// BW1W120 006e8860 BW1M119 0114b700
 	void ForceBuildBuilding(GPlayer* player);
 	// BW1W120 006ea950 BW1M119 01147a60
 	bool32_t IsPlannedValid(PLANNED_TYPE type);
+	// BW1W120 006e8c60 BW1M119 0114b120
+	void SwapPlannedAbodes();
+	// BW1W120 006ea9f0 BW1M119 01147810
+	void SetPlannedAbode(PlannedAbode* planned);
+	// BW1W120 006e9060 BW1M119 0114a920
+	PlannedAbode* GetPlannedAbodeForBuilding(Town* town);
 	// BW1W120 006e9610 BW1M119 01149e90
 	void RemoveOldBuildingSite();
 	// BW1W120 inlined BW1M119 010c7770
 	uint8_t GetWorkshopPosition() { return WorkshopPosition; }
+	// BW1W120 006e8b10 BW1M119 0114b420
+	bool32_t IsAvailableToBeBuiltWith();
 };
 
 #endif /* BW1_DECOMP_SCAFFOLD_INCLUDED_H */

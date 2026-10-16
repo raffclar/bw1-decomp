@@ -13,7 +13,7 @@
 #include "Town.h"
 #include "Game.h"
 
-extern GVillagerStateTableInfo g_GVillagerStateTableInfos[VILLAGER_STATE_LAST_STATE];
+#define FILEPATH "C:\\dev\\MP\\Black\\VillagerHome.cpp"
 
 // BW1W120 0075bb60
 float __stdcall POWER(float base);
@@ -31,12 +31,10 @@ bool32_t Villager::HomeDecideWhatToDo()
 		return true;
 	}
 	// TODO: target zero-extends Flags (`xor ecx,ecx` before `mov cx`); ours drops the dead xor
-	uint32_t flags = Flags;
-	uint8_t  disciple_flags = flags >> 9;
-	if (disciple_flags & 1)
+	if (IsDisciple())
 	{
 		uint32_t disciple = DiscipleType;
-		if (GVillagerInfo::GetDiscipleInfo()[(uint8_t)disciple].field_0xc == 1)
+		if (GVillagerInfo::GetDiscipleInfo()[(uint8_t)disciple].UsesNothingToDoState == true)
 		{
 			if ((uint8_t)disciple == VILLAGER_DISCIPLE_BREEDER)
 			{
@@ -51,7 +49,7 @@ bool32_t Villager::HomeDecideWhatToDo()
 			return DecideWhatToDo();
 		}
 	}
-	if (CheckNeededForSomething() == 1)
+	if (CheckNeededForSomething() == true)
 	{
 		return true;
 	}
@@ -77,15 +75,13 @@ bool32_t Villager::HomeNothingToDo()
 {
 	if (Flags & 4)
 	{
-		if (GRand::GameRand(4, __FILE__, __LINE__) == 0)
+		if (GRand::GameRand(4, FILEPATH, 75) == 0)
 		{
 			TurnsUntilNextStateChange = 0;
 			SetTopState(VILLAGER_STATE_GOTO_BED_AT_HOME);
 			return true;
 		}
 	}
-	// TODO: GameRand __FILE__/__LINE__ can't match in a split TU (original line 75,
-	// original file path); costs the two arg pushes. Rest matches.
 	SetupNothingToDo();
 	return true;
 }
@@ -107,7 +103,7 @@ bool32_t Villager::CheckNeededForSpecial()
 	{
 		return true;
 	}
-	return CheckSatisfyOwnDesire(((const GVillagerInfo*)info)->OwnDesireThreshold) == 1;
+	return CheckSatisfyOwnDesire(GetInfo()->OwnDesireThreshold) == 1;
 }
 
 // BW1W120 00760110 BW1M119 0100f140
@@ -126,10 +122,8 @@ bool32_t Villager::CheckNeedsAtHome()
 	}
 	// TODO: the target reloads `info` fresh in the max() re-evaluation arms; ours either
 	// reloads or caches it everywhere
-	uint32_t flags = Flags;
-	uint8_t  disciple_flags = flags >> 9;
-	float    desire;
-	if ((disciple_flags & 1) && GVillagerInfo::GetDiscipleInfo()[DiscipleType].field_0xc == 1)
+	float desire;
+	if (IsDisciple() && GVillagerInfo::GetDiscipleInfo()[DiscipleType].UsesNothingToDoState == true)
 	{
 		const GVillagerInfo* vi = (const GVillagerInfo*)info;
 		desire = max(GetLifeDesireFromLife(vi->DamageThresholdToGoHome), POWER(vi->StarvingForFood));
@@ -203,28 +197,27 @@ bool32_t Villager::DoGoingHome(VILLAGER_STATES arrive_state, VILLAGER_STATES ten
 	Town* town = GetTown();
 	if (town != NULL)
 	{
-		// TODO: callee-save register allocation is swapped vs the target; GameFloatRand
-		// __FILE__/__LINE__ cannot match in a split TU; the distance callee is the unnamed
-		// GetDistanceInMetres twin at 0x74cd50
+		// TODO: callee-save register allocation is swapped vs the target; the distance callee
+		// is the unnamed GetDistanceInMetres twin at 0x74cd50
 		MapCoords pos = Pos;
 		uint32_t  end_state;
 		if (GUtils::GetDistanceInMetres(Pos, GetTown()->Pos) > 100.0f)
 		{
 			end_state = action.states[LIVING_ACTION_INDEX_TOP];
-			float angle = GRand::GameFloatRand(1.5707964f, __FILE__, __LINE__) - 0.78539819f +
+			float angle = GRand::GameFloatRand(1.5707964f, FILEPATH, 295) - 0.78539819f +
 			              GUtils::Get3DAngleFromXZ(Pos, town->Pos);
-			float dist = GRand::GameFloatRand(25.0f, __FILE__, __LINE__) + 10.0f;
+			float dist = (GRand::GameFloatRand(25.0f, FILEPATH, 296)) + 10.0f;
 			pos = town->Pos + GUtils::GetPosFromAngle(angle, dist);
 		}
 		else
 		{
-			pos += GUtils::GetPosFromAngle(GRand::GameFloatRand(6.2831855f, __FILE__, __LINE__),
-			                               GRand::GameFloatRand(8.0f, __FILE__, __LINE__) + 2.0f);
+			pos += GUtils::GetPosFromAngle(GRand::GameFloatRand(6.2831855f, FILEPATH, 300),
+			                               GRand::GameFloatRand(8.0f, FILEPATH, 300) + 2.0f);
 			if (GetTentPos(pos) == NULL)
 			{
 				end_state = action.states[LIVING_ACTION_INDEX_TOP];
-				pos += GUtils::GetPosFromAngle(GRand::GameFloatRand(6.2831855f, __FILE__, __LINE__),
-				                               GRand::GameFloatRand(20.0f, __FILE__, __LINE__) + 10.0f);
+				pos += GUtils::GetPosFromAngle(GRand::GameFloatRand(6.2831855f, FILEPATH, 304),
+				                               GRand::GameFloatRand(20.0f, FILEPATH, 304) + 10.0f);
 			}
 			else
 			{
@@ -251,13 +244,13 @@ bool32_t Villager::ArrivesHome()
 		{
 			if (abode->IsBuilt() == 0 || abode->IsRepaired() == 0)
 			{
-				if (GetLife() < ((const GVillagerInfo*)info)->DamageThresholdToGoHome)
+				if (GetLife() < GetInfo()->DamageThresholdToGoHome)
 				{
 					if (abode->IsFunctional() == 0)
 					{
-						float angle = 0.39269909f - GRand::GameFloatRand(0.78539819f, __FILE__, __LINE__);
+						float angle = 0.39269909f - GRand::GameFloatRand(0.78539819f, FILEPATH, 465);
 						angle += GUtils::Get3DAngleFromXZ(Pos, abode->Pos);
-						float     dist = GRand::GameFloatRand(5.0f, __FILE__, __LINE__) + 5.0f;
+						float     dist = (GRand::GameFloatRand(5.0f, FILEPATH, 466)) + 5.0f;
 						MapCoords spot = Pos + GUtils::GetPosFromAngle(angle, dist);
 						if (GetTentPos(spot) != NULL)
 						{
@@ -371,17 +364,16 @@ bool32_t Villager::CheckDeathFromOldAge()
 	const GVillagerInfo* vi = (const GVillagerInfo*)info;
 	if (GetAge() > vi->MiddleAge)
 	{
-		// TODO: GameRand __FILE__/__LINE__ cannot match in a split TU; loop-body FPU
-		// scheduling also differs
+		// TODO: loop-body FPU scheduling differs
 		const GVillagerInfo* vi2 = (const GVillagerInfo*)info;
 		uint32_t             range = vi2->OldAge - vi2->MiddleAge;
-		float                rnd = GRand::GameFloatRand(1.0f, __FILE__, __LINE__);
+		float                rnd = GRand::GameFloatRand(1.0f, FILEPATH, 600);
 		float                acc = rnd;
 		for (int i = 0; i < 2; i++)
 		{
 			acc *= rnd;
 		}
-		int extra = GRand::GameRand((uint32_t)(acc * range), __FILE__, __LINE__);
+		int extra = GRand::GameRand((uint32_t)(acc * range), FILEPATH, 602);
 
 		const GVillagerInfo* vi3 = (const GVillagerInfo*)info;
 		if (GetAge() + extra > vi3->OldAge)
@@ -476,7 +468,7 @@ bool32_t Villager::HavingSex()
 		if (((const GVillagerInfo*)info)->sex == SEX_FEMALE && IsSexuallyActive() != 0)
 		{
 			const GVillagerInfo* vi = (const GVillagerInfo*)info;
-			if (GRand::GameFloatRand(1.0f, __FILE__, __LINE__) < vi->PregnancyChance)
+			if (GRand::GameFloatRand(1.0f, FILEPATH, 691) < vi->PregnancyChance)
 			{
 				HousewifeGetsPregnant(NULL);
 			}
@@ -586,8 +578,7 @@ bool32_t Villager::IsSexuallyActive()
 // BW1W120 007610d0 BW1M119 0158efd0
 bool32_t Villager::IsPromiscious()
 {
-	// TODO: GameFloatRand __FILE__/__LINE__ cannot match in a split TU
-	if (GRand::GameFloatRand(1.0f, __FILE__, __LINE__) < GetPromiscuity())
+	if (GRand::GameFloatRand(1.0f, FILEPATH, 845) < GetPromiscuity())
 	{
 		return true;
 	}
@@ -697,10 +688,6 @@ bool Villager::MakeHomelessNoStateChange()
 bool32_t Villager::HomelessStart()
 {
 	GetTown();
-	// TODO: 99.8% - target compares CheckHungry()'s bool result full-width
-	// (`cmp eax,1`); our build emits `cmp al,1`. bool-return width tie-break
-	// (CheckHungry is _N/bool and extern to this TU). int-local zext trick tried,
-	// does not force widening.
 	if (CheckHungry() != 1 && CheckNeededForSomething() != 1 && CheckHomelessMoveIntoAbode() == 0)
 	{
 		SetupNothingToDo();
@@ -800,7 +787,7 @@ bool32_t Villager::ArtifactDance()
 			return true;
 		}
 	}
-	PerformDance(dance_group->behaviour->Pos, VILLAGER_STATE_ARTIFACT_DANCE, dance_group->field_0x5c);
+	PerformDance(dance_group->behaviour->Pos, VILLAGER_STATE_ARTIFACT_DANCE, dance_group->Action.Kind);
 	return true;
 }
 
@@ -867,9 +854,9 @@ bool32_t Villager::ExitGoHomeAndChange(unsigned char state)
 	{
 		Town*      town = GetTown();
 		TRIBE_TYPE tribe = town != NULL ? town->tribe_type : ((const GVillagerInfo*)info)->TribeType;
-		// TODO: only a reloc-form diff remains (raw address vs g_GVillagerStateTableInfos
+		// TODO: only a reloc-form diff remains (raw address vs GVillagerStateTableInfo::Infos
 		// symbol); byte-identical after link
-		ChangeTribeIfRequired(tribe, g_GVillagerStateTableInfos[state].field_0xd0 == 0);
+		ChangeTribeIfRequired(tribe, GVillagerStateTableInfo::Infos[state].field_0xd0 == 0);
 	}
 	if (DiscipleType == VILLAGER_DISCIPLE_CHANGE_HOUSE)
 	{
@@ -907,7 +894,7 @@ bool32_t Villager::SleepInTent()
 // BW1W120 00761b40 BW1M119 01097740
 bool32_t Villager::ExitAtHome(unsigned char state)
 {
-	if (g_GVillagerStateTableInfos[state].field_0xd0 == 0)
+	if (GVillagerStateTableInfo::Infos[state].field_0xd0 == 0)
 	{
 		LeaveHome();
 	}

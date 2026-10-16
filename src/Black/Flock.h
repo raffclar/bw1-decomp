@@ -27,6 +27,8 @@ class GameThingWithPos;
 class Living;
 class Town;
 
+#define FLOCK_MAGIC 0xaba52
+
 class Flock : public Container
 {
 public:
@@ -36,8 +38,8 @@ public:
 	SLL<Living, &Living::FlockOrder> Members;
 	uint32_t                         field_0x4c;
 	uint16_t                         DomainRadius;
-	uint16_t                         field_0x52;
-	uint32_t                         field_0x54;
+	uint16_t                         FlockDistance;
+	float                            FlyingHeight;
 	uint32_t                         field_0x58;
 	uint32_t                         field_0x5c;
 	MapCoords                        SavedDomainCentre;
@@ -60,9 +62,9 @@ public:
 	// BW1W120 0052f910 BW1M119 010e7c10
 	virtual char* GetDebugText();
 	// BW1W120 00530930 BW1M119 010e7cf0
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 005305a0 BW1M119 010e8590
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0052f900 BW1M119 010e7be0
 	virtual uint32_t GetSaveType();
 	// BW1W120 0052f8a0 BW1M119 010e79f0
@@ -96,6 +98,13 @@ public:
 	Flock(Living* param_1);
 
 	// Non-virtual methods
+
+	// BW1W120 00530140 BW1M119 010e9710
+	void DeleteAllLivingInFlock();
+	// BW1W120 00530ca0 BW1M119 010e7cb0
+	void ResetForIteration();
+	// BW1W120 00530cb0 BW1M119 010e7c50
+	Living* IterateToNext();
 
 	// BW1W120 005302e0 BW1M119 010e9370
 	void SetToZero();

@@ -30,9 +30,9 @@ public:
 	// BW1W120 00560fd0 BW1M119 0114fc50
 	virtual char* GetDebugText() { return "SpecialVillager:"; }
 	// BW1W120 0071f5d0 BW1M119 0114ef00
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 0071f560 BW1M119 0114efe0
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 00560fc0 BW1M119 0114fc10
 	virtual uint32_t GetSaveType() { return GAME_THING_TYPE_SPECIAL_VILLAGER; }
 	// BW1W120 0071f3d0 BW1M119 0102ff00
@@ -51,7 +51,7 @@ public:
 
 	// BW1W120 0071f1a0 BW1M119 0114f3c0
 	static SpecialVillager* Create(const MapCoords& coords, const GVillagerInfo* villager_info, uint32_t age,
-	                               bool skeleton, GSpecialVillagerInfo* info);
+	                               bool32_t skeleton, GSpecialVillagerInfo* info);
 
 	// Non-virtual methods
 

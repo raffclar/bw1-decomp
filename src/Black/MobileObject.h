@@ -51,9 +51,9 @@ public:
 	// BW1W120 00425be0 BW1M119 010b07e0
 	virtual char* GetDebugText();
 	// BW1W120 00607d00 BW1M119 013c3760
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 00607c40 BW1M119 013c38a0
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 00425bd0 BW1M119 010b07a0
 	virtual uint32_t GetSaveType();
 	// BW1W120 00607ab0 BW1M119 013c3d80
@@ -117,7 +117,7 @@ public:
 	// BW1W120 00607bc0 BW1M119 013c3b60
 	virtual uint32_t ApplyThisToObject(GInterfaceStatus* status, Object* target, GestureSystemPacketData* packet);
 	// BW1W120 006079f0 BW1M119 013c4080
-	virtual uint32_t GetPhysicsConstantsType();
+	virtual PHYSICS_CONSTANTS_TYPE GetPhysicsConstantsType();
 	// BW1W120 00607a20 BW1M119 013c3f30
 	virtual void ReactToPhysicsImpact(PhysicsObject* physics_object, bool unused);
 	// BW1W120 00607aa0 BW1M119 013c3ee0

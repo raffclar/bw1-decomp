@@ -60,6 +60,7 @@
 #include "SoundGuidance.h"
 #include "SpellSeedInfo.h"
 #include "StoragePit.h"
+#include "Utils.h"
 #include "Totem.h"
 #include "TotemStatue.h"
 #include "TownCentre.h"
@@ -69,11 +70,11 @@
 #include "TownInfo.h"
 #include "Tree.h"
 #include "TribeInfo.h"
-#include "Utils.h"
 #include "VillagerInfo.h"
 #include "Wonder.h"
 #include "Workshop.h"
 #include "WorshipSite.h"
+#include "MapCoordsMeters.h" /* For MapCoords::MetersX */
 
 #if defined(VERSION_BW1W100)
 #define TOWN_SOURCE_FILE "C:\\dev\\black\\Town.cpp"
@@ -89,26 +90,6 @@
 #define TOWN_SOURCE_FILE "C:\\dev\\MP\\Black\\Town.cpp"
 #define TOWN_LINE(line)  (line)
 #endif
-
-inline float MapCoords::MetersX() const
-{
-	return (float)(WholeX() * MetresPerMapCell / (float)0x10000);
-}
-
-inline float MapCoords::MetersZ() const
-{
-	return (float)(WholeZ() * MetresPerMapCell / (float)0x10000);
-}
-
-inline void MapCoords::SetMetersX(float meters)
-{
-	SetWholeX((long)(meters * (float)0x10000 / MetresPerMapCell));
-}
-
-inline void MapCoords::SetMetersZ(float meters)
-{
-	SetWholeZ((long)(meters * (float)0x10000 / MetresPerMapCell));
-}
 
 inline MapCoords::MapCoords(float meters_x, float meters_z)
 {
@@ -251,7 +232,7 @@ void Town::AddStructureToTown(MultiMapFixed* structure)
 	if (abode != NULL)
 	{
 		AbodeList.AddToFirst(abode);
-		stats.field_0xe0 = GGame::g_game->data.GameTurn;
+		stats.LastAbodeAddedTurn = GGame::g_game->data.GameTurn;
 	}
 	if (playtime != NULL)
 	{
@@ -877,9 +858,8 @@ void Town::ResetAllDiscipleStates()
 	{
 		FOREACH_LH_LIST_HEAD(Villager, villager, abode->villagers)
 		{
-			uint32_t flags = villager->Flags;
-			uint8_t  discipleFlags = flags >> 9;
-			if ((discipleFlags & 1) && GVillagerInfo::GetDiscipleInfo()[villager->DiscipleType].field_0xc == 1)
+			if (villager->IsDisciple() &&
+			    GVillagerInfo::GetDiscipleInfo()[villager->DiscipleType].UsesNothingToDoState == true)
 			{
 				villager->SetVillagerDisciple(NULL, VILLAGER_DISCIPLE_NONE, 0);
 			}
@@ -947,22 +927,22 @@ void Town::SetTownArea(Object* object)
 	float minX = object->Pos.MetersX() - object->GetRadius();
 	if (minX < AreaMin.MetersX())
 	{
-		AreaMin.SetWholeX((long)(minX * (float)0x10000 / MetresPerMapCell));
+		AreaMin.SetMetersX(minX);
 	}
 	float maxX = object->Pos.MetersX() + object->GetRadius();
 	if (maxX > AreaMax.MetersX())
 	{
-		AreaMax.SetWholeX((long)(maxX * (float)0x10000 / MetresPerMapCell));
+		AreaMax.SetMetersX(maxX);
 	}
 	float minZ = object->Pos.MetersZ() - object->GetRadius();
 	if (minZ < AreaMin.MetersZ())
 	{
-		AreaMin.SetWholeZ((long)(minZ * (float)0x10000 / MetresPerMapCell));
+		AreaMin.SetMetersZ(minZ);
 	}
 	float maxZ = object->Pos.MetersZ() + object->GetRadius();
 	if (maxZ > AreaMax.MetersZ())
 	{
-		AreaMax.SetWholeZ((long)(maxZ * (float)0x10000 / MetresPerMapCell));
+		AreaMax.SetMetersZ(maxZ);
 	}
 }
 
@@ -1073,7 +1053,7 @@ Town* Town::GetNearestTownToPos(const MapCoords& coords, TRIBE_TYPE tribe_type, 
 	{
 		FOREACH_LH_LIST_HEAD(Town, town, player->towns)
 		{
-			float dist = GUtils::GetDistanceInMetres_0074cd50(coords, town->Pos);
+			float dist = GUtils::GetDistanceInMetres(&coords, &town->Pos);
 			if (dist < bestDist)
 			{
 				if (tribe_type == town->GetTribe()->type || tribe_type == TRIBE_TYPE_NONE)
@@ -1713,7 +1693,7 @@ void Town::SetToZero()
 {
 	NumVillagersOnWayToWorshipSite = 0;
 	worship_percentage = 0.0f;
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 	CompleteNewTownBuilt = false;
 #endif
 	WorshipCount = 0;
@@ -2415,7 +2395,7 @@ bool32_t Town::TryToCreateNewBuildingAt(PlannedAbode** planned, const MapCoords&
                                         TRIBE_TYPE tribe_type, Object* ignore_object, long abode_number,
                                         int skip_suitability_check)
 {
-	float angle = GRand::GameFloatRand(TWO_PI, TOWN_SOURCE_FILE, TOWN_LINE(2865));
+	float angle = (GRand::GameFloatRand(TWO_PI, TOWN_SOURCE_FILE, TOWN_LINE(2865)));
 	for (unsigned long i = 0; i < 8; i++)
 	{
 		if (GetNewPlannedBuilding(planned, pos, angle, 1.0f, num_scaffolds, ignore_object, tribe_type, abode_number,
@@ -2879,7 +2859,10 @@ FishFarm* Town::FindBestFishFarm(Villager* villager, float* score)
 	{
 		FishFarm* fishFarm = node->payload;
 		float     distance = fishFarm->Pos.GetDistance(villager->Pos);
-		float fishFarmScore = (float)fishFarm->GetDesireToBeFished() * GUtils::GetDistanceModifier(distance, 500.0f);
+		// Keep the desire as its own statement. Written as one expression, which call MSVC emits first is a tie-break
+		// that flips with the number of declarations in the unit (BW1W110 broke when unrelated headers grew).
+		float desire = (float)fishFarm->GetDesireToBeFished();
+		float fishFarmScore = desire * GUtils::GetDistanceModifier(distance, 500.0f);
 		if (fishFarmScore > bestScore)
 		{
 			bestScore = fishFarmScore;
@@ -3065,7 +3048,7 @@ Forest* Town::FindNearestForestToPos(const MapCoords& pos)
 	return best != NULL ? best : bestScenic;
 }
 
-uint32_t Town::Save(GameOSFile& file)
+bool32_t Town::Save(GameOSFile& file)
 {
 	if (Container::Save(file))
 	{
@@ -3134,7 +3117,7 @@ uint32_t Town::Save(GameOSFile& file)
 	return false;
 }
 
-uint32_t Town::Load(GameOSFile& file)
+bool32_t Town::Load(GameOSFile& file)
 {
 	if (Container::Load(file))
 	{

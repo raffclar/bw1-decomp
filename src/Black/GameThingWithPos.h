@@ -4,7 +4,7 @@
 /* Unused here; emits the guarded atexit registration of std::ctype<wchar_t>::id
    (.CRT$XCU thunk -> mov cl,[0xFAC934]; push 0x407870; call atexit) that every
    object derived from this one ends with. */
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 #include <string>
 #endif
 
@@ -19,8 +19,9 @@
 #include <Lionhead/LHLib/ver5.0/LHFastPointer.h> /* For LHFastPointer */
 #include <Lionhead/LHLib/ver5.0/LHListNode.h>    /* For LHListNode */
 
-#include "GameThing.h" /* For struct GameThing, struct GameThingVftable */
-#include "MapCoords.h" /* For struct MapCoords */
+#include "CreatureBeliefType.h" /* For enum CREATURE_BELIEF_TYPE */
+#include "GameThing.h"          /* For struct GameThing, struct GameThingVftable */
+#include "MapCoords.h"          /* For struct MapCoords */
 
 // Forward Declares
 
@@ -33,6 +34,7 @@ struct LHPoint;
 class Living;
 class Object;
 class Reaction;
+class SpellShield;
 class WorshipSite;
 
 // fabricated: selector returned by GetCreatureBeliefListType, which picks which of a creature's
@@ -42,26 +44,28 @@ enum CREATURE_BELIEF_LIST_TYPE
 	CREATURE_BELIEF_LIST_TYPE_OBJECT = 1
 };
 
-enum CREATURE_BELIEF_TYPE
+enum TOWN_ATTITUDE_TO_CREATURE
 {
-	CREATURE_BELIEF_TYPE_ABODE = 3,
-	CREATURE_BELIEF_TYPE_TREE = 5,
-	CREATURE_BELIEF_TYPE_VILLAGER = 6,
-	CREATURE_BELIEF_TYPE_SPELL = 10,
-	CREATURE_BELIEF_TYPE_POO = 13,
-	CREATURE_BELIEF_TYPE_MAGIC_FOOD = 14,
-	CREATURE_BELIEF_TYPE_POT = 16,
-	CREATURE_BELIEF_TYPE_SPELL_ICON = 17,
-	CREATURE_BELIEF_TYPE_MIST = 18,
-	CREATURE_BELIEF_TYPE_MOBILE_OBJECT = 19,
-	CREATURE_BELIEF_TYPE_TOTEM_STATUE = 23
+	TOWN_ATTITUDE_TO_CREATURE_NEVER_SEEN = 0,
+	TOWN_ATTITUDE_TO_CREATURE_NONE = 1,
+	TOWN_ATTITUDE_TO_CREATURE_CURIOUS = 2,
+	TOWN_ATTITUDE_TO_CREATURE_FEAR = 3,
+	TOWN_ATTITUDE_TO_CREATURE_RESPECT = 4,
 };
 
 enum CREATURE_MIMIC_TYPE
 {
+	CREATURE_MIMIC_TYPE_MALE_VILLAGER = 0,
+	CREATURE_MIMIC_TYPE_FEMALE_VILLAGER = 1,
+	CREATURE_MIMIC_TYPE_CHILD = 2,
+	CREATURE_MIMIC_TYPE_NICE_ANIMAL = 3,
+	CREATURE_MIMIC_TYPE_NASTY_ANIMAL = 4,
 	CREATURE_MIMIC_TYPE_ABODE = 5,
 	CREATURE_MIMIC_TYPE_TREE = 6,
-	CREATURE_MIMIC_TYPE_MOBILE_OBJECT = 8
+	CREATURE_MIMIC_TYPE_ROCK = 7,
+	CREATURE_MIMIC_TYPE_MOBILE_OBJECT = 8,
+	CREATURE_MIMIC_TYPE_CREATURE = 9,
+	CREATURE_MIMIC_TYPE_LAST = 10
 };
 
 enum OBJECT_ORIGIN
@@ -85,12 +89,12 @@ enum GAME_THING_WITH_POS_FLAGS
 	GAME_THING_WITH_POS_FLAG_IN_MAP = 1 << 0,
 	GAME_THING_WITH_POS_FLAG_FIXED = 1 << 1,
 	GAME_THING_WITH_POS_FLAG_UNAVAILABLE_FOR_STATE_CHANGE = 1 << 2,
-	GAME_THING_WITH_POS_FLAG_0x00000008 = 1 << 3, // TODO(#343)
+	GAME_THING_WITH_POS_FLAG_0x00000008 = 1 << 3,
 	GAME_THING_WITH_POS_FLAG_INTERACTING = 1 << 4,
 	GAME_THING_WITH_POS_FLAG_LOCKED_SELECT = 1 << 5,
 	GAME_THING_WITH_POS_FLAG_IN_PHYSICS = 1 << 6,
 	GAME_THING_WITH_POS_FLAG_ON_STRUCTURE = 1 << 7,
-	GAME_THING_WITH_POS_FLAG_0x00000200 = 1 << 8, // TODO(#343)
+	GAME_THING_WITH_POS_FLAG_0x00000100 = 1 << 8,
 	GAME_THING_WITH_POS_FLAG_IN_SCRIPT = 1 << 9,
 	GAME_THING_WITH_POS_FLAG_CONTROLLED_BY_SCRIPT = 1 << 10,
 	GAME_THING_WITH_POS_FLAG_DRAGGED_BY_LEASH = 1 << 11,
@@ -129,9 +133,9 @@ public:
 	// BW1W120 004178f0 BW1M119 011c6dc0
 	virtual char* GetDebugText();
 	// BW1W120 005704a0 BW1M119 0149aaf0
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 005703f0 BW1M119 013ec380
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 00570560 BW1M119 0114f380
 	virtual uint32_t GetSaveType();
 	// BW1W120 00401940 BW1M119 0104f9a0
@@ -143,13 +147,13 @@ public:
 	// BW1W120 00401980 BW1M119 0142f120
 	virtual void PhysicsEditorCreate(int type) { Pos.altitude = 0.0f; }
 	// BW1W120 00405280 BW1M119 015685e0
-	virtual uint32_t GetCreatureBeliefType();
+	virtual uint32_t GetCreatureBeliefType() { return CREATURE_BELIEF_TYPE_SMALL_OBJECT; }
 	// BW1W120 00401990 BW1M119 01365f90
 	virtual uint32_t GetCreatureBeliefListType() { return CREATURE_BELIEF_LIST_TYPE_OBJECT; }
 	// BW1W120 004019a0 BW1M119 0111bad0
 	virtual Citadel* GetCitadel() { return NULL; }
 	// BW1W120 00405290 BW1M119 015699d0
-	virtual uint32_t GetOrigin();
+	virtual uint32_t GetOrigin() { return 0; }
 	// BW1W120 004052a0 BW1M119 010d87d0
 	virtual float GetLife();
 	// BW1W120 004247e0 BW1M119 013f9550
@@ -163,7 +167,7 @@ public:
 	// BW1W120 00570220 BW1M119 01168c00
 	virtual float GetSpeedInMetres() const;
 	// BW1W120 00570210 BW1M119 016d59d4
-	virtual void SetSpeedInMetres(float speed, int scale);
+	virtual void SetSpeedInMetres(float speed_in_metres, bool32_t scale_speed);
 	// BW1W120 00570230 BW1M119 01105840
 	virtual float GetRunningSpeedInMetres();
 	// BW1W120 005702b0 BW1M119 01435340
@@ -199,7 +203,7 @@ public:
 	// BW1W120 004052c0 BW1M119 013e0960
 	virtual bool32_t IsObjectInMap();
 	// BW1W120 004052d0 BW1M119 011ac2d0
-	virtual bool32_t IsDrowning();
+	virtual bool32_t IsDrowning() { return false; }
 	// BW1W120 00401a10 BW1M119 013e0a00
 	virtual bool32_t IsCannotBePickedUp() const { return (Flags & GAME_THING_WITH_POS_FLAG_CANNOT_BE_PICKED_UP) != 0; }
 	// BW1W120 00570590 BW1M119 015686e0
@@ -220,9 +224,9 @@ public:
 	// BW1W120 005705c0 BW1M119 0136a880
 	virtual uint32_t GetOverwriteTapToolTip();
 	// BW1W120 004052e0 BW1M119 013e0a50
-	virtual bool32_t IsCastShadowAtNight();
+	virtual bool32_t IsCastShadowAtNight() { return false; }
 	// BW1W120 004052f0 BW1M119 010c66d0
-	virtual void CleanupWhenDeleted(int param_1);
+	virtual void CleanupWhenDeleted(int param_1) {}
 	// BW1W120 0056ff70 BW1M119 01388a80
 	virtual IMPRESSIVE_TYPE GetImpressiveType();
 	// BW1W120 00401a40 BW1M119 0111bb10
@@ -233,8 +237,6 @@ public:
 	virtual float GetUpdateOfBoredomValue(Reaction* param_1, GameThingWithPos* param_2);
 	// BW1W120 00401a50 BW1M119 015efff0
 	virtual bool32_t IsTown(Creature* creature) { return false; }
-	// BW1W120 00401ae0 BW1M119 0102dd00
-	virtual bool32_t IsTown() { return false; }
 	// BW1W120 00401a60 BW1M119 01568460
 	virtual bool32_t IsActivityObjectWhichAngerAppliesTo(Creature* creature) { return false; }
 	// BW1W120 00401a70 BW1M119 015efed0
@@ -251,6 +253,8 @@ public:
 	virtual bool32_t IsNotLiving() { return true; }
 	// BW1W120 00401ad0 BW1M119 010ca610
 	virtual bool32_t IsSuitableForCreatureActivity() { return false; }
+	// BW1W120 00401ae0 BW1M119 0102dd00
+	virtual bool32_t IsTown() { return false; }
 	// BW1W120 00401af0 BW1M119 01096120
 	virtual bool32_t IsTownCentre() { return false; }
 	// BW1W120 00401b00 BW1M119 0138a430
@@ -259,8 +263,6 @@ public:
 	virtual bool32_t IsTownDesireFlag() { return false; }
 	// BW1W120 00401b20 BW1M119 01566900
 	virtual bool32_t IsRock() { return false; }
-	// BW1W120 00401f50 BW1M119 01559b10
-	virtual bool32_t IsRock(Creature* creature) { return IsRock(); }
 	// BW1W120 00401b30 BW1M119 01558730
 	virtual bool32_t IsSpellDispenser() { return false; }
 	// BW1W120 00401b40 BW1M119 01363340
@@ -272,17 +274,15 @@ public:
 	// BW1W120 00401b70 BW1M119 012ffbb0
 	virtual bool32_t IsStreetLantern() { return false; }
 	// BW1W120 00405310 BW1M119 0109c880
-	virtual bool32_t IsAbode();
+	virtual bool32_t IsAbode() { return false; }
 	// BW1W120 00401b80 BW1M119 012ffef0
 	virtual bool32_t IsField() { return false; }
-	// BW1W120 00401e40 BW1M119 010cfa60
-	virtual bool32_t IsField(Creature* creature) { return false; }
 	// BW1W120 00405320 BW1M119 01569a10
-	virtual bool32_t IsBuildingMaterial();
+	virtual bool32_t IsBuildingMaterial() { return false; }
 	// BW1W120 00401b90 BW1M119 010a0bd0
 	virtual bool32_t IsMagicFireBall() { return false; }
 	// BW1W120 00405330 BW1M119 0116d760
-	virtual bool32_t IsSuitableForCreatureAction();
+	virtual bool32_t IsSuitableForCreatureAction() { return false; }
 	// BW1W120 00401ba0 BW1M119 0117dee0
 	virtual bool32_t IsCitadelHeart() { return false; }
 	// BW1W120 00401bb0 BW1M119 0116e550
@@ -290,43 +290,43 @@ public:
 	// BW1W120 00401bd0 BW1M119 01502940
 	virtual bool32_t CanBeHealedByCreature(Creature* creature) { return false; }
 	// BW1W120 00405340 BW1M119 015029d0
-	virtual bool32_t CanBeEatenByCreature(Creature* creature);
+	virtual bool32_t CanBeEatenByCreature(Creature* creature) { return false; }
 	// BW1W120 004e4b90 BW1M119 015eba90
 	virtual bool32_t CanCreatureEatMe(Creature* creature);
 	// BW1W120 00405350 BW1M119 011ce580
-	virtual bool32_t CanBeAttackedByCreature(Creature* creature);
+	virtual bool32_t CanBeAttackedByCreature(Creature* creature) { return false; }
 	// BW1W120 00405360 BW1M119 010d9460
-	virtual bool32_t CanBeFrighteningToCreature(Creature* creature);
+	virtual bool32_t CanBeFrighteningToCreature(Creature* creature) { return false; }
 	// BW1W120 00405370 BW1M119 01391bf0
-	virtual bool32_t CanBeHelpedByCreature(Creature* creature);
+	virtual bool32_t CanBeHelpedByCreature(Creature* creature) { return false; }
 	// BW1W120 00405380 BW1M119 015e5c90
-	virtual bool32_t CanBePlayedWithByCreature(Creature* creature);
+	virtual bool32_t CanBePlayedWithByCreature(Creature* creature) { return false; }
 	// BW1W120 00405390 BW1M119 015e5c30
-	virtual bool32_t CanBeImpressedByCreature(Creature* creature);
+	virtual bool32_t CanBeImpressedByCreature(Creature* creature) { return false; }
 	// BW1W120 004053a0 BW1M119 015e5cf0
-	virtual bool32_t CanBeInspectedByCreature(Creature* creature);
+	virtual bool32_t CanBeInspectedByCreature(Creature* creature) { return false; }
 	// BW1W120 004053b0 BW1M119 013e4bd0
-	virtual bool32_t CanBePoodUponByCreature(Creature* creature);
+	virtual bool32_t CanBePoodUponByCreature(Creature* creature) { return false; }
 	// BW1W120 00401be0 BW1M119 013e9190
 	virtual bool32_t CanBeBefriendedByCreature(Creature* creature) { return false; }
 	// BW1W120 004053c0 BW1M119 0142fb60
-	virtual bool32_t CanBeSleptNextToByCreature(Creature* creature);
+	virtual bool32_t CanBeSleptNextToByCreature(Creature* creature) { return false; }
 	// BW1W120 004053d0 BW1M119 01376c50
 	virtual bool32_t CanBePickedUpByCreature(Creature* creature);
 	// BW1W120 004053e0 BW1M119 0155e2f0
-	virtual bool32_t CanBeStrokedByCreature(Creature* creature);
+	virtual bool32_t CanBeStrokedByCreature(Creature* creature) { return false; }
 	// BW1W120 00401bf0 BW1M119 0136a6f0
 	virtual bool32_t CanBeKissedByCreature(Creature* creature) { return false; }
 	// BW1W120 004053f0 BW1M119 010abd60
-	virtual bool32_t CanBeSetOnFire(Creature* creature);
+	virtual bool32_t CanBeSetOnFire(Creature* creature) { return false; }
 	// BW1W120 00405400 BW1M119 010c1960
-	virtual bool32_t CanBeStompedOnByCreature(Creature* creature);
+	virtual bool32_t CanBeStompedOnByCreature(Creature* creature) { return false; }
 	// BW1W120 00405410 BW1M119 013f9780
-	virtual bool32_t CanBeThrownByCreature(Creature* creature);
+	virtual bool32_t CanBeThrownByCreature(Creature* creature) { return false; }
 	// BW1W120 00401c00 BW1M119 013f9730
 	virtual bool32_t CanBeGivenToVillager(Creature* creature) { return false; }
 	// BW1W120 00405420 BW1M119 011adb00
-	virtual bool32_t CanBePutInAStoragePit(Creature* creature);
+	virtual bool32_t CanBePutInAStoragePit(Creature* creature) { return false; }
 	// BW1W120 00405430 BW1M119 0156d460
 	virtual bool32_t CanBeDestroyedByStoning(Creature* creature);
 	// BW1W120 00401c10 BW1M119 01410920
@@ -335,7 +335,7 @@ public:
 		return CanBePickedUpByCreature(creature) && CanBeDestroyedByStoning(creature);
 	}
 	// BW1W120 00405440 BW1M119 01582fd0
-	virtual bool32_t CanBeExaminedByCreature(Creature* creature);
+	virtual bool32_t CanBeExaminedByCreature(Creature* creature) { return false; }
 	// BW1W120 00401c50 BW1M119 013e99e0
 	virtual bool32_t CanBeFoughtByCreature(Creature* creature) { return false; }
 	// BW1W120 00401c60 BW1M119 010c8a30
@@ -343,11 +343,11 @@ public:
 	// BW1W120 00401c70 BW1M119 014808e0
 	virtual bool32_t CanActAsAContainer(Creature* creature) { return false; }
 	// BW1W120 00405450 BW1M119 01376160
-	virtual bool32_t IsBeingBuilt(Creature* creature);
+	virtual bool32_t IsBeingBuilt(Creature* creature) { return false; }
 	// BW1W120 00405460 BW1M119 010a7d00
-	virtual bool32_t NeedsRepair(Creature* creature);
+	virtual bool32_t NeedsRepair(Creature* creature) { return false; }
 	// BW1W120 00405470 BW1M119 01376cb0
-	virtual bool32_t IsOnFire(Creature* creature);
+	virtual bool32_t IsOnFire(Creature* creature) { return false; }
 	// BW1W120 00401c80 BW1M119 0111a050
 	virtual bool32_t IsNotOnFire(Creature* creature) { return !IsOnFire(creature); }
 	// BW1W120 00401ca0 BW1M119 015691e0
@@ -361,15 +361,15 @@ public:
 	// BW1W120 00401ce0 BW1M119 011054e0
 	virtual bool32_t CanBeUsedToHoldWater(Creature* creature) { return false; }
 	// BW1W120 00405480 BW1M119 013d1830
-	virtual bool32_t CanBePutInFoodPile(Creature* creature);
+	virtual bool32_t CanBePutInFoodPile(Creature* creature) { return false; }
 	// BW1W120 00405490 BW1M119 010edce0
-	virtual bool32_t CanBePutInWoodPile(Creature* creature);
+	virtual bool32_t CanBePutInWoodPile(Creature* creature) { return false; }
 	// BW1W120 00401cf0 BW1M119 013d14f0
 	virtual bool32_t CanHaveMagicFoodCastOnMe(Creature* creature) { return false; }
 	// BW1W120 00401d00 BW1M119 010f2a50
 	virtual bool32_t CanHaveMagicWoodCastOnMe(Creature* creature) { return false; }
 	// BW1W120 004054a0 BW1M119 013dce70
-	virtual bool32_t CanBeBroughtBackToCitadel(Creature* creature);
+	virtual bool32_t CanBeBroughtBackToCitadel(Creature* creature) { return false; }
 	// BW1W120 00401d10 BW1M119 01093f70
 	virtual bool32_t IsVillager(Creature* creature) { return false; }
 	// BW1W120 00401d20 BW1M119 0113f470
@@ -383,7 +383,7 @@ public:
 	// BW1W120 00401d60 BW1M119 0149dcd0
 	virtual bool32_t IsCow(Creature* creature) { return false; }
 	// BW1W120 004054b0 BW1M119 01497850
-	virtual bool32_t CanBePoodOn(Creature* creature);
+	virtual bool32_t CanBePoodOn(Creature* creature) { return false; }
 	// BW1W120 00401d70 BW1M119 01559160
 	virtual bool32_t IsVillagerWhoHasNotBeenImpressedRecently(Creature* creature) { return false; }
 	// BW1W120 00401d80 BW1M119 01558e50
@@ -408,12 +408,12 @@ public:
 	virtual WorshipSite* GetWorshipSite() { return NULL; }
 	// BW1W120 00401e20 BW1M119 01567720
 	virtual bool32_t IsWorkshop(Creature* creature) { return false; }
-	// BW1W120 004023b0 BW1M119 0102f210
-	virtual bool32_t IsWorkshop() { return false; }
 	// BW1W120 004054c0 BW1M119 01567f80
-	virtual bool32_t IsBuildingWhichIsBeingBuilt(Creature* creature);
+	virtual bool32_t IsBuildingWhichIsBeingBuilt(Creature* creature) { return false; }
 	// BW1W120 00401e30 BW1M119 01566d50
 	virtual bool32_t IsStoragePitWithFoodInIt(Creature* creature) { return false; }
+	// BW1W120 00401e40 BW1M119 010cfa60
+	virtual bool32_t IsField(Creature* creature) { return false; }
 	// BW1W120 00401e50 BW1M119 01567c50
 	virtual bool32_t IsFieldWhichNeedsWatering(Creature* creature) { return false; }
 	// BW1W120 00401e60 BW1M119 01566bf0
@@ -428,8 +428,6 @@ public:
 	virtual bool32_t BenefitsFromHavingWaterSprinkledOnIt(Creature* creature) { return false; }
 	// BW1W120 00401eb0 BW1M119 0156e0a0
 	virtual bool32_t IsTree(Creature* creature) { return false; }
-	// BW1W120 00402320 BW1M119 01370d80
-	virtual bool32_t IsTree() { return false; }
 	// BW1W120 00401ec0 BW1M119 013d17d0
 	virtual bool32_t IsTreeNotTooNearPlannedForest(Creature* creature) { return false; }
 	// BW1W120 00401ed0 BW1M119 013d1770
@@ -445,12 +443,12 @@ public:
 	{
 		return IsRock() && CanBeUsedForBuilding(creature) && !IsInsideCreatureHome(creature);
 	}
+	// BW1W120 00401f50 BW1M119 01559b10
+	virtual bool32_t IsRock(Creature* creature) { return IsRock(); }
 	// BW1W120 00401f60 BW1M119 010e4430
 	virtual bool32_t IsPickupableRock(Creature* creature) { return IsRock() && CanBePickedUpByCreature(creature); }
 	// BW1W120 00401fa0 BW1M119 010bf8e0
 	virtual bool32_t IsCitadelPart(Creature* creature) { return false; }
-	// BW1W120 00402360 BW1M119 0159ff10
-	virtual bool32_t IsCitadelPart() { return false; }
 	// BW1W120 00401fb0 BW1M119 010bfb80
 	virtual bool32_t IsPlayingFootball(Creature* creature) { return false; }
 	// BW1W120 00401fc0 BW1M119 014dc5b0
@@ -472,7 +470,7 @@ public:
 	// BW1W120 00402030 BW1M119 01187420
 	virtual bool32_t IsOneOffSpellToRestoreHealth(Creature* creature) { return false; }
 	// BW1W120 004054d0 BW1M119 015684c0
-	virtual bool32_t CanBeKickedByCreature(Creature* creature);
+	virtual bool32_t CanBeKickedByCreature(Creature* creature) { return false; }
 	// BW1W120 00402040 BW1M119 01558780
 	virtual bool32_t CanBeStolenByCreature(Creature* creature) { return false; }
 	// BW1W120 004e4210 BW1M119 015ed7e0
@@ -501,8 +499,6 @@ public:
 	virtual bool32_t IsToyCuddly(Creature* creature) { return false; }
 	// BW1W120 00402100 BW1M119 013530e0
 	virtual bool32_t IsLiving(Creature* creature) { return IsLiving(); }
-	// BW1W120 00402350 BW1M119 015759c0
-	virtual bool32_t IsLiving() { return false; }
 	// BW1W120 00402110 BW1M119 010815c0
 	virtual bool32_t IsFence() { return false; }
 	// BW1W120 00402120 BW1M119 0130daf0
@@ -579,7 +575,7 @@ public:
 	// BW1W120 004022c0 BW1M119 01388c10
 	virtual bool32_t IsAChild() { return false; }
 	// BW1W120 00405540 BW1M119 013ca060
-	virtual bool32_t IsHouse();
+	virtual bool32_t IsHouse() { return false; }
 	// BW1W120 00405550 BW1M119 011a68b0
 	virtual bool32_t IsObject() const;
 	// BW1W120 004022d0 BW1M119 010e1d20
@@ -592,10 +588,16 @@ public:
 	virtual bool32_t IsMobileObject() { return false; }
 	// BW1W120 00402310 BW1M119 015792a0
 	virtual bool32_t IsMobileStatic() { return false; }
+	// BW1W120 00402320 BW1M119 01370d80
+	virtual bool32_t IsTree() { return false; }
 	// BW1W120 00402330 BW1M119 0116e680
 	virtual bool32_t IsAnyKindOfTree() { return false; }
 	// BW1W120 00402340 BW1M119 0136d6d0
 	virtual bool32_t IsDeadTree() { return false; }
+	// BW1W120 00402350 BW1M119 015759c0
+	virtual bool32_t IsLiving() { return false; }
+	// BW1W120 00402360 BW1M119 0159ff10
+	virtual bool32_t IsCitadelPart() { return false; }
 	// BW1W120 00402370 BW1M119 010ca5d0
 	virtual bool32_t IsPileFood() { return false; }
 	// BW1W120 00402380 BW1M119 0157a150
@@ -604,6 +606,8 @@ public:
 	virtual bool32_t IsScriptMarker() { return false; }
 	// BW1W120 004023a0 BW1M119 01000870
 	virtual bool32_t IsScriptHighlight() { return false; }
+	// BW1W120 004023b0 BW1M119 0102f210
+	virtual bool32_t IsWorkshop() { return false; }
 	// BW1W120 004178d0 BW1M119 01300cf0
 	virtual bool32_t IsWonder();
 	// BW1W120 004023c0 BW1M119 01301910
@@ -629,11 +633,11 @@ public:
 	// BW1W120 005701c0 BW1M119 01381500
 	virtual bool32_t CanBeThrownByPlayer();
 	// BW1W120 00402460 BW1M119 01553e40
-	virtual void SetSkeleton(int index) {}
+	virtual void SetSkeleton(bool32_t skeleton) {}
 	// BW1W120 00402470 BW1M119 0107d710
 	virtual bool32_t IsSpellSeed() { return false; }
 	// BW1W120 00402480 BW1M119 010a7c40
-	virtual bool32_t IsSpellShield() { return false; }
+	virtual SpellShield* IsSpellShield() { return NULL; }
 	// BW1W120 00402490 BW1M119 010a6f40
 	virtual bool32_t IsPileResource() { return false; }
 	// BW1W120 004024a0 BW1M119 013f97d0
@@ -641,9 +645,9 @@ public:
 	// BW1W120 004178e0 BW1M119 013e3d40
 	virtual BuildingSite* CreateBuildingSite();
 	// BW1W120 00405560 BW1M119 01516bb0
-	virtual HELP_TEXT GetQueryFirstEnumText();
+	virtual HELP_TEXT GetQueryFirstEnumText() { return HELP_TEXT_NONE; }
 	// BW1W120 00405570 BW1M119 011c6c60
-	virtual HELP_TEXT GetQueryLastEnumText();
+	virtual HELP_TEXT GetQueryLastEnumText() { return HELP_TEXT_NONE; }
 	// BW1W120 005703d0 BW1M119 01433260
 	virtual uint32_t GetFOVHelpMessageSet();
 	// BW1W120 005703e0 BW1M119 0135fda0
@@ -682,6 +686,8 @@ public:
 
 	// BW1W120 004e35c0 BW1M119 015eb4c0
 	float MultiplyUsefulnessIfInteresting(Creature* creature);
+	// BW1W120 004e35f0 BW1M119 015eb3e0
+	float MultiplyUsefulnessForPlayfulness(Creature* creature);
 	// BW1W120 004e3ee0 BW1M119 015ee310
 	bool32_t IsInsideCreatureHome(Creature* creature);
 	// BW1W120 0056fe70 BW1M119 013cb710

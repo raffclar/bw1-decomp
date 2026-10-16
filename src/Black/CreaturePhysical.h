@@ -29,7 +29,7 @@ public:
 class CreaturePhysical : public Base
 {
 public:
-	uint32_t          field_0x8;
+	uint32_t          Age;
 	float             strength;
 	uint32_t          field_0x10;
 	float             field_0x14;
@@ -44,8 +44,8 @@ public:
 	float             Exhaustion;
 	uint32_t          field_0x34;
 	uint32_t          field_0x38;
-	float             field_0x3c;
-	uint32_t          field_0x40;
+	float             DefaultSpeedInMetres;
+	float             RunningSpeedInMetres;
 	uint32_t          field_0x44;
 	float             field_0x48;
 	uint32_t          field_0x4c;
@@ -68,6 +68,10 @@ public:
 
 	// Non-virtual methods
 
+	// BW1W120 004ef4f0 BW1M119 0127a570
+	float GetUserSize();
+	// BW1W120 004efc70 BW1M119 01279b30
+	uint32_t GetVisionRange();
 	// BW1W120 inlined BW1M119 011e9d60
 	Object* GetObjectCarried() { return ObjectCarried; }
 	// BW1W120 inlined BW1M119 01509240

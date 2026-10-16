@@ -152,7 +152,7 @@ static float MaxDistance = 500.0f;
 // BW1W120 009ce6ac
 static float MaxHeight = 500.0f;
 // BW1W120 009ce6b0
-static bool32_t UseExclusions = true;
+bool32_t CameraExclusion::UseExclusions = true;
 // BW1W120 00c5e14c
 static bool32_t UseMaxHeight;
 // BW1W120 00c5e148
@@ -977,17 +977,17 @@ void CameraModeNew3::Initialise()
 		TriconSprite->SetSize(2.0f);
 		TriconSprite->colour = LH3DColor(0xffffffff);
 		TriconSprite->Frame = 12;
-		TriconSprite->field_0x30 = 4;
+		TriconSprite->FramesPerRow = 4;
 		LH3DRender::RegisterFinishFrameCallback(1000, true, tricondraw, NULL);
 		ForceField = new ("C:\\dev\\MP\\Black\\CameraModeNew3.cpp", 956) LightSheet();
 		ForceField->Init(256);
-		ForceField->field_0x2c = 0x808080;
+		ForceField->Colour = 0x808080;
 		ForceField->ResetPulses();
 		ForceField->SetScaleFac(1.0f);
 		ForceFieldTexture = LH3DTexture::Create("data\\textures\\forcefield.raw", 0x41, 0, NULL);
 		ForceFieldMaterial = LH3DRender::CreateMaterial(LH3DMaterial::LH3D_MATERIAL_RENDER_MODE_0xd, ForceFieldTexture);
-		ForceFieldMaterial->cull_mode |= 4;
-		ForceFieldMaterial->cull_mode |= 1;
+		ForceFieldMaterial->Flags |= LH3DMaterial::FLAG_NEED_TILLING;
+		ForceFieldMaterial->Flags |= LH3DMaterial::FLAG_DOUBLE_SIDED;
 	}
 }
 
@@ -1053,7 +1053,7 @@ void CameraModeNew3::DrawHandTricon()
 	TriconSprite->colour = colour;
 	int time = GetTickCount();
 	TriconSprite->angle = 0.0f;
-	TriconSprite->field_0x30 = 8;
+	TriconSprite->FramesPerRow = 8;
 	// TriconSprite->SetMaterial(BlobMaterial);
 	TriconSprite->SetSize(size * 0.75f);
 	TriconSprite->Frame = (time / 50) & 0xf;
@@ -1061,7 +1061,7 @@ void CameraModeNew3::DrawHandTricon()
 	TriconSprite->SetSize(size * 0.5f);
 	TriconSprite->Frame = 15 - ((time / 100) & 0xf);
 	TriconSprite->Draw();
-	TriconSprite->field_0x30 = 4;
+	TriconSprite->FramesPerRow = 4;
 }
 
 // BW1W120 009ce6bc
@@ -1922,7 +1922,7 @@ void CameraModeNew3::UpdateClickParams(LHPoint& pos, LHPoint& focus, bool grab)
 float CameraModeNew3::GetAltitude(LHPoint& pos)
 {
 	float altitude = LH3DIsland::GetAltitude(LH3DMapCoords(pos.x, pos.z));
-	if (UseExclusions)
+	if (CameraExclusion::UseExclusions)
 	{
 		for (CameraExclusion* exclusion = NearbyExclusions; exclusion != NULL; exclusion = exclusion->NextNearby)
 		{
@@ -3558,7 +3558,7 @@ void CameraModeNew3::Update()
 	matrix._31 = margin * forward.x;
 	matrix._32 = margin * forward.y;
 	matrix._33 = margin * forward.z;
-	if (UseExclusions)
+	if (CameraExclusion::UseExclusions)
 	{
 		for (CameraExclusion* exclusion = NearbyExclusions; exclusion != NULL; exclusion = exclusion->NextNearby)
 		{
@@ -3719,7 +3719,7 @@ void CameraModeNew3::Update()
 		originDest.y = groundAltitude;
 		pushed = true;
 	}
-	if (UseExclusions && originDest.y > maxAltitude)
+	if (CameraExclusion::UseExclusions && originDest.y > maxAltitude)
 	{
 		float   over = originDest.y - maxAltitude;
 		LHPoint direction = focusDest - originDest;

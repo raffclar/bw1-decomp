@@ -62,9 +62,9 @@ public:
 	// BW1W120 0071be20 BW1M119 015176f0
 	virtual uint32_t GetGuidanceResourceType();
 	// BW1W120 0074c2a0 BW1M119 0115e2b0
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 0074c1b0 BW1M119 0115e420
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0055da20 BW1M119 01161da0
 	virtual uint32_t GetSaveType() { return GAME_THING_TYPE_TREE; }
 	// BW1W120 0055d950 BW1M119 01161a40
@@ -158,7 +158,7 @@ public:
 	virtual uint32_t ApplyThisToMapCoord(GInterfaceStatus* status, const MapCoords& coords,
 	                                     GestureSystemPacketData* param_3);
 	// BW1W120 0074b640 BW1M119 0115fd70
-	virtual uint32_t GetPhysicsConstantsType();
+	virtual PHYSICS_CONSTANTS_TYPE GetPhysicsConstantsType();
 	// BW1W120 0074b650 BW1M119 0115fc80
 	virtual void SetUpPhysOb(PhysOb* param_1);
 	// BW1W120 0074b830 BW1M119 0115f260
@@ -198,6 +198,8 @@ public:
 	// BW1W120 00749ee0 BW1M119 01161270
 	static Tree* Create(const MapCoords& coords, const GTreeInfo* info, Forest* forest, float param_4, float param_5,
 	                    float param_6);
+	// BW1W120 0074c180 BW1M119 0115e5a0
+	static bool32_t IsOkToCreateAtPos(MapCoords& coords);
 
 	// Constructors
 
@@ -208,6 +210,11 @@ public:
 
 	// BW1W120 00749f60 BW1M119 01161230
 	void SetToZero();
+
+	// Non-virtual methods
+
+	// BW1W120 0074a3a0 BW1M119 01160a20
+	float Decay(float amount);
 };
 
 #endif /* BW1_DECOMP_TREE_INCLUDED_H */

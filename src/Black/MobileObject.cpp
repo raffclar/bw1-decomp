@@ -377,7 +377,7 @@ int MobileObject::HasFinishedPath()
 	return HasReachedPathPercentage(Path->field_0x1c);
 }
 
-uint32_t Poo::GetPhysicsConstantsType()
+PHYSICS_CONSTANTS_TYPE Poo::GetPhysicsConstantsType()
 {
 	return PHYSICS_CONSTANTS_TYPE_POO;
 }
@@ -392,7 +392,7 @@ bool MobileObject::IsPoisoned()
 	return info == &GMobileObjectInfo::GetInfo()[MOBILE_OBJECT_INFO_TOADSTOOL] ? true : false;
 }
 
-uint32_t MobileObject::GetPhysicsConstantsType()
+PHYSICS_CONSTANTS_TYPE MobileObject::GetPhysicsConstantsType()
 {
 	if (info == &GMobileObjectInfo::GetInfo()[MOBILE_OBJECT_INFO_CHAMPI])
 	{
@@ -509,7 +509,7 @@ RESOURCE_TYPE MobileObject::GetResourceType()
 	return RESOURCE_TYPE_NONE;
 }
 
-uint32_t MobileObject::Save(GameOSFile& file)
+bool32_t MobileObject::Save(GameOSFile& file)
 {
 	if (Mobile::Save(file))
 	{
@@ -518,12 +518,12 @@ uint32_t MobileObject::Save(GameOSFile& file)
 		WRITE_SAFE(file, (uint32_t&)XAngle);
 		WRITE_SAFE(file, (uint32_t&)ZAngle);
 		file.WritePtr(Path);
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
-uint32_t MobileObject::Load(GameOSFile& file)
+bool32_t MobileObject::Load(GameOSFile& file)
 {
 	if (Mobile::Load(file))
 	{
@@ -531,9 +531,9 @@ uint32_t MobileObject::Load(GameOSFile& file)
 		file.ReadSafe((uint32_t&)XAngle);
 		file.ReadSafe((uint32_t&)ZAngle);
 		file.ReadPtr((GameThing**)&Path);
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 // FieldCrop (and some Poo) methods were written in this file, not FieldCrop.cpp: FieldCrop::Create passes
@@ -668,9 +668,9 @@ bool32_t FieldCrop::CanBecomeAPhysicsObject()
 	return true;
 }
 
-uint32_t FieldCrop::GetPhysicsConstantsType()
+PHYSICS_CONSTANTS_TYPE FieldCrop::GetPhysicsConstantsType()
 {
-	return PHYSICS_CONSTANTS_TYPE_CROP;
+	return PHYSICS_CONSTANTS_TYPE_TREE;
 }
 
 void FieldCrop::SetUpPhysOb(PhysOb* phys_ob)

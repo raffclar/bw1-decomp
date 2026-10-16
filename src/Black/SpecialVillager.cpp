@@ -2,6 +2,10 @@
 #include "SpecialVillager.h"
 
 #include "GameThing.h"
+#include "SpecialVillagerInfo.h"
+#include "GameOSFile.h" /* For class GameOSFile */
+
+GSpecialVillagerInfo GSpecialVillagerInfo::Infos[SPECIAL_VILLAGER_INFO_LAST];
 
 // BW1W120 0071f0c0 BW1M119 0114f770
 // TODO: 79.5% (body correct; ~90% once wchar_t enabled) — blocked on the native-wchar_t
@@ -31,3 +35,31 @@ bool SpecialVillager::CanShowName()
 		return false;
 	return (GameThing::Flags & GAME_THING_FLAG_NAME_HIDDEN) == 0;
 }
+
+bool32_t SpecialVillager::Load(GameOSFile& file)
+{
+	if (Villager::Load(file))
+	{
+		file.ReadIt(InfoIndex);
+		return true;
+	}
+	return false;
+}
+
+bool32_t SpecialVillager::Save(GameOSFile& file)
+{
+	if (Villager::Save(file))
+	{
+		file.WriteIt(InfoIndex);
+		return true;
+	}
+	return false;
+}
+
+GBaseInfo* GSpecialVillagerInfo::GetBaseInfo(uint32_t& info_count)
+{
+	info_count = SPECIAL_VILLAGER_INFO_LAST;
+	return Infos;
+}
+
+GSpecialVillagerInfo::~GSpecialVillagerInfo() {}

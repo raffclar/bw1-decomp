@@ -73,4 +73,23 @@ uint32_t LHSaveData(char* path, void* data, uint32_t length, uint32_t* written);
 // BW1W120 007bd0c0 BW1M119 01164690 (LHCombined Release)
 uint32_t LHLoadDataToMemory(char* path, void** buffer, uint32_t* length);
 
+#define LH_FILE_SERIALISE(file, data, size, saving)                                                                    \
+	{                                                                                                                  \
+		size_t done;                                                                                                   \
+		if ((saving) == false)                                                                                         \
+		{                                                                                                              \
+			if ((file)->Read((data), (size), &done) != LH_FILE_RESULT_OK && done != (size))                            \
+			{                                                                                                          \
+				return LH_FILE_RESULT_ERROR;                                                                           \
+			}                                                                                                          \
+		}                                                                                                              \
+		else                                                                                                           \
+		{                                                                                                              \
+			if ((file)->Write((data), (size), &done) != LH_FILE_RESULT_OK && done != (size))                           \
+			{                                                                                                          \
+				return LH_FILE_RESULT_ERROR;                                                                           \
+			}                                                                                                          \
+		}                                                                                                              \
+	}
+
 #endif /* BW1_DECOMP_LHOS_FILE_INCLUDED_H */

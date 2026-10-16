@@ -78,19 +78,30 @@ public:
 	uint8_t              field_0xc8[0x7c];
 	LHListNode<Football> next;
 	uint32_t             field_0x148;
-	MapCoords            field_0x14c[12];
+	LH3DMapCoords        field_0x14c[12];
+	uint32_t             Functional;
+	uint8_t              field_0x1e0[0x20];
+	FOOTBALL_STATES      PlayState;
 #if defined(VERSION_BW1W100)
-	uint8_t field_0x1dc[0x44];
+	uint8_t field_0x204[0x1c];
 #else
-	uint8_t field_0x1dc[0x48];
+	uint8_t field_0x204[0x20];
 #endif
 	LHLinkedList<Villager*> HomeTeam;
 	LHLinkedList<Villager*> AwayTeam;
 	LHLinkedList<Villager*> field_0x234[2];
 	Object*                 MarkTargets[2];
-	uint8_t                 field_0x24c[0x10];
+	uint8_t                 field_0x24c[0x8];
+	Villager*               BallChaser;
+	Ball*                   TheBall;
 	LHPTR<Villager>         MexicanWave[40];
-	uint8_t                 field_0x2fc[0x1c];
+	uint32_t                field_0x2fc;
+	uint32_t                GoalTimer;
+	uint32_t                field_0x304;
+	uint32_t                PlayStateTimer;
+	float                   field_0x30c;
+	uint32_t                field_0x310;
+	uint32_t                field_0x314;
 
 	// Override methods
 
@@ -100,8 +111,6 @@ public:
 	virtual void MakeFunctional();
 	// BW1W120 00531300 BW1M119 012bc180
 	virtual bool32_t CanBeHiddenIn();
-	// BW1W120 00531330 BW1M119 012bbf00
-	virtual ~Football();
 	// BW1W120 00531360 BW1M119 012c0c20
 	virtual void ToBeDeleted(int param_1);
 	// BW1W120 00532220 BW1M119 012bf2b0
@@ -111,9 +120,9 @@ public:
 	// BW1W120 00531320 BW1M119 012bc200
 	virtual char* GetDebugText();
 	// BW1W120 005336e0 BW1M119 012bc370
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 005332a0 BW1M119 012bcc70
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 00531310 BW1M119 012bc1c0
 	virtual uint32_t GetSaveType();
 	// BW1W120 00531180 BW1M119 012c0e50
@@ -143,6 +152,9 @@ public:
 
 	// BW1W120 inlined BW1M119 inlined
 	Football() : SavedThing(NULL) {}
+	// BW1W120 00531190 BW1M119 012c0ca0
+	Football(const MapCoords& coords, const GAbodeInfo* info, Town* town, float y_angle, float scale, float food,
+	         int wood);
 
 	// Static methods
 
@@ -152,6 +164,8 @@ public:
 
 	// Non-virtual methods
 
+	// BW1W120 005313e0 BW1M119 012c0aa0
+	void CreateBall();
 	// BW1W120 00531410 BW1M119 012c0a10
 	Ball* GetBall();
 	// BW1W120 005325d0 BW1M119 012bebf0
@@ -170,6 +184,8 @@ public:
 	int GetHowCloseToGoalIndex(Villager* villager);
 	// BW1W120 00534860 BW1M119 012c1840
 	void SetPlayState(FOOTBALL_STATES state);
+	// BW1W120 00531ce0 BW1M119 012bfa80
+	void SetToZero();
 };
 
 #endif /* BW1_DECOMP_FOOTBALL_INCLUDED_H */

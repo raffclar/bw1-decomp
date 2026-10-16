@@ -6,10 +6,13 @@
 
 #include <Lionhead/LHLib/ver5.0/LHTimer.inl>
 #include <Lionhead/LHLog/ver4.0/LHLogger.h>
-#include "LHNetLog.h"
+#include "LHNetErrors.h"
 #include "LHNetEvent.h"
 #include "LHPacket.h"
 #include "LHTransportInfo.h"
+
+static LHErrorCode* LHLogErrorCodes = LH_NET_Errors;
+static char*        LHLogLibraryName = "MultiplayerLib";
 
 enum
 {
@@ -219,7 +222,7 @@ LHNetEvent* LHTransport::Read(unsigned long timeout)
 void LHTransport::SetLastEventReadToBeIgnored()
 {
 	if (LastEventRead != NULL)
-		LastEventRead->SetPacketHeader(LH_NETEVENT_TYPE_IGNORE, LH_ALL_USERS);
+		LastEventRead->SetPacketHeader(LH_NETEVENT_TYPE_IGNORE, LH_EVERYONE);
 }
 
 LHNetEvent* LHTransport::Peek(unsigned long timeout)
@@ -879,7 +882,7 @@ LH_RETURN LHTransportRemote::WriteAllOutgoingQEvents()
 
 void LHTransportRemote::WriteInternalCloseConnectionEvent()
 {
-	LHNetEvent* event = LHNetEvent::CreateSimple(LH_NETEVENT_TYPE_REMOVE_CONNECTION, LH_ALL_USERS, 0, NULL);
+	LHNetEvent* event = LHNetEvent::CreateSimple(LH_NETEVENT_TYPE_REMOVE_CONNECTION, LH_EVERYONE, 0, NULL);
 	LockIncomingQ();
 	IncomingEventQ->Add(event);
 	UnLockIncomingQ();

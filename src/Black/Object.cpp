@@ -49,6 +49,7 @@
 #include "LandFeature.h"
 #include "Landscape.h"
 #include "Map.h"
+#include "MapCoordsMeters.h"
 #include "PhysicsObject.h"
 #include "PhysicsSaveInfo.h"
 #include "Player.h"
@@ -96,16 +97,15 @@ GObjectInfo GObjectInfo::Definitions[OBJECT_TYPE_LAST];
 
 // TODO: fabricated; unrecovered counter slots that move DefaultAIPlayerObjectInfo's destructor
 // guard to a number whose name hashes into DefaultAIPlayerObjectInfo's .bss bucket, ahead of it
-// ($S200), while Definitions' guard ($S144) stays ahead of Definitions. The static data members
+// ($S200), while Definitions' guard ($S164) stays ahead of Definitions. The static data members
 // declared by Player.h, PlayerInfo.h, Reward.h, Network.h, LH3DMesh.h, LH3DObject.h, LH3DIsland.h,
-// LHCollide.h, Abode.h and Game.h already put Definitions' guard 15 slots later than the original's
-// $S129, so the original pair ($S129/$S140) is out of reach.
+// LH3DTech.h, LH3DRender.h, LH3DPrimitive.h, LH3DSubMesh.h, LH3DLandscape.h, LHCollide.h, Abode.h
+// and Game.h already put Definitions' guard 35 slots later than the original's $S129, so the
+// original pair ($S129/$S140) is out of reach.
 struct ObjectCounterPadBetween
 {
 	static int Pad0, Pad1, Pad2, Pad3, Pad4, Pad5, Pad6, Pad7, Pad8, Pad9, Pad10, Pad11, Pad12, Pad13, Pad14, Pad15,
-		Pad16, Pad17, Pad18, Pad19, Pad20, Pad21, Pad22, Pad23, Pad24, Pad25, Pad26, Pad27, Pad28, Pad29, Pad30, Pad31,
-		Pad32, Pad33, Pad34, Pad35, Pad36, Pad37, Pad38, Pad39, Pad40, Pad41, Pad42, Pad43, Pad44, Pad45, Pad46, Pad47,
-		Pad48, Pad49;
+		Pad16, Pad17, Pad18, Pad19, Pad20, Pad21, Pad22, Pad23, Pad24, Pad25, Pad26, Pad27, Pad28, Pad29;
 };
 
 GObjectInfo GObjectInfo::DefaultAIPlayerObjectInfo;
@@ -413,9 +413,7 @@ void Object::Create3DObjectAtPos()
 	const MapCoords& pos = Pos;
 	LH3DObject*      object3d = Game3dObject;
 	LHPoint          position;
-	position.x = pos.WholeX() * (10.0f / (float)0x10000);
-	position.z = pos.WholeZ() * (10.0f / (float)0x10000);
-	position.y = pos.Altitude();
+	GLandscape::ConvertAbsoluteMapCoordToLandscapePoint(pos, position);
 	position.y += LH3DIsland::GetAltitudeAndSetColorSpecular(pos, (unsigned long*)&object3d->color,
 	                                                         (unsigned long*)&object3d->specular);
 	object3d->LH3DObject::SetPosition(position, 0.0f, 1.0f);
@@ -444,9 +442,7 @@ LHPoint Object::GetNearestEdgeOfObject(Object* object)
 {
 	MapCoords coords = GetNearestPosOfObject(object);
 	LHPoint   point;
-	point.y = coords.Altitude() + LH3DIsland::GetAltitude(coords);
-	point.x = coords.WholeX() * (10.0f / (float)0x10000);
-	point.z = coords.WholeZ() * (10.0f / (float)0x10000);
+	GLandscape::ConvertMapCoordToLandscapePoint(coords, point);
 	return point;
 }
 
@@ -605,8 +601,7 @@ PhysicsObject* Object::InitialisePhysicsFromHand(LHPoint& velocity, LHPoint& ang
 		{
 			GInterfaceStatus* myStatus = GGame::g_game->MyInterfaceStatus();
 			Villager*         villager = (Villager*)this;
-			// TODO: field_0x10c doubles as the last disciple type here; see VillagerStates.cpp.
-			if (myStatus == status && *(uint32_t*)&villager->field_0x10c != villager->DiscipleType)
+			if (myStatus == status && villager->DiscipleOnPickUp != villager->DiscipleType)
 			{
 				GGuidance::MakeDiscipleSFX(*myStatus, (VILLAGER_DISCIPLE)villager->DiscipleType);
 			}
@@ -769,9 +764,10 @@ SOUND_COLLISION_TYPE Object::GetCollideSoundType()
 	return info->CollideSound;
 }
 
-uint32_t Object::GetPhysicsConstantsType()
+PHYSICS_CONSTANTS_TYPE Object::GetPhysicsConstantsType()
 {
-	return CanBecomeAPhysicsObject() != false;
+	return CanBecomeAPhysicsObject() ? PHYSICS_CONSTANTS_TYPE_DEFAULT_MOVABLE
+	                                 : PHYSICS_CONSTANTS_TYPE_DEFAULT_UNMOVABLE;
 }
 
 void Object::SetUpPhysOb(PhysOb* phys_ob)
@@ -795,9 +791,7 @@ void Object::GetBoundingSphere(LHPoint& center, float& radius)
 	float radius2D = Get2DRadius();
 	radius = (float)sqrt(radius2D * radius2D + halfHeight * halfHeight);
 	const MapCoords& pos = Pos;
-	center.y = pos.Altitude() + LH3DIsland::GetAltitude(pos);
-	center.x = pos.WholeX() * (10.0f / (float)0x10000);
-	center.z = pos.WholeZ() * (10.0f / (float)0x10000);
+	GLandscape::ConvertMapCoordToLandscapePoint(pos, center);
 	center.y = center.y + halfHeight;
 }
 
@@ -1042,22 +1036,22 @@ bool32_t Object::IsTouching(const MapCoords& coords)
 
 bool32_t Object::IsTouching(const MapCoords& corner1, const MapCoords& corner2)
 {
-	float x1 = corner1.WholeX() * MetresPerMapCell * (1.0f / (float)0x10000);
-	float x2 = corner2.WholeX() * MetresPerMapCell * (1.0f / (float)0x10000);
+	float x1 = corner1.MetersX();
+	float x2 = corner2.MetersX();
 	float minX = min(x1, x2);
-	float z1 = corner1.WholeZ() * MetresPerMapCell * (1.0f / (float)0x10000);
-	float z2 = corner2.WholeZ() * MetresPerMapCell * (1.0f / (float)0x10000);
+	float z1 = corner1.MetersZ();
+	float z2 = corner2.MetersZ();
 	float minZ = min(z1, z2);
 	float maxX = max(x1, x2);
 	float maxZ = max(z1, z2);
 
 	float radius = Get2DRadius();
-	float myX = Pos.WholeX() * MetresPerMapCell * (1.0f / (float)0x10000);
+	float myX = Pos.MetersX();
 	if (myX + radius < minX || myX - radius > maxX)
 	{
 		return false;
 	}
-	float myZ = Pos.WholeZ() * MetresPerMapCell * (1.0f / (float)0x10000);
+	float myZ = Pos.MetersZ();
 	if (myZ + radius < minZ || myZ - radius > maxZ)
 	{
 		return false;
@@ -1580,9 +1574,7 @@ void Object::DrawValue(int param_1, float param_2)
 	{
 		const MapCoords& pos = Pos;
 		LHPoint          point;
-		point.y = pos.Altitude() + LH3DIsland::GetAltitude(pos);
-		point.x = pos.WholeX() * (10.0f / (float)0x10000);
-		point.z = pos.WholeZ() * (10.0f / (float)0x10000);
+		GLandscape::ConvertMapCoordToLandscapePoint(pos, point);
 		point.y += GetHeight();
 		if (GGame::g_game->GameFlags & GAME_FLAG_DRAW_VALUE_SPINNERS)
 		{
@@ -1854,7 +1846,7 @@ uint32_t Object::GetDiscipleStateIfInteractedWith(GInterfaceStatus* status, Vill
 	return 0;
 }
 
-uint32_t Object::Save(GameOSFile& file)
+bool32_t Object::Save(GameOSFile& file)
 {
 	if (GameThingWithPos::Save(file))
 	{
@@ -1888,12 +1880,12 @@ uint32_t Object::Save(GameOSFile& file)
 			WRITE_SAFE(file, velocity);
 			WRITE_SAFE(file, point);
 		}
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
-uint32_t Object::Load(GameOSFile& file)
+bool32_t Object::Load(GameOSFile& file)
 {
 	if (GameThingWithPos::Load(file))
 	{
@@ -1909,9 +1901,9 @@ uint32_t Object::Load(GameOSFile& file)
 		{
 			PhysicsSaveInfo::ReadInfo(file);
 		}
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 void Object::ResolveLoad()

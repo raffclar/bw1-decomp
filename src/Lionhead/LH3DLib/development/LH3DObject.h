@@ -21,6 +21,7 @@ struct LHPoint;
 enum LH3D_OBJECT_FLAGS2
 {
 	LH3D_OBJECT_FLAGS2_OUT_OF_MAP = 0x40,
+	LH3D_OBJECT_FLAGS2_NO_BUILD_OUTLINE = 0x200,
 };
 
 class LH3DObject
@@ -72,6 +73,10 @@ public:
 	static bool32_t g_b_last_on_screen;
 	// BW1W120 00ea1af4 BW1M119 012b1ed4 (LHCombined Release)
 	static float g_last_distance;
+	// BW1W120 00c37ea0 BW1M119 011cfb50 (LHCombined Release)
+	static float g_last_radius;
+	// BW1W120 00ea1ae8 BW1M119 012b1ee0 (LHCombined Release)
+	static LH3DObject* g_current_object_in_draw;
 
 	// Virtual functions
 
@@ -158,9 +163,9 @@ public:
 	virtual bool32_t            IsInBuild();
 	virtual void                SetInBuild(int param_1);
 	virtual bool32_t            IsHumanShadowed(); /* 0xc0 */
-	virtual void __fastcall     SetHumanShadowed(int param_1);
+	virtual void __fastcall     SetHumanShadowed(bool32_t human_shadowed);
 	virtual bool32_t            IsGlowing();
-	virtual void                SetIsGlowing(int param_1);
+	virtual void __fastcall     SetIsGlowing(bool32_t is_glowing);
 	virtual bool32_t            IsSuperSortedPolys(); /* 0xd0 */
 	virtual void                SetSuperSortedPolys(int param_1);
 	virtual bool32_t            IsFastBlending();
@@ -227,7 +232,7 @@ public:
 	virtual bool32_t __fastcall GetExtraPos(int param_1, LHMatrix* matrix);
 	virtual void                SetLod(int lod); /* 0x1d0 */
 	virtual float               GetLod();
-	virtual void                SetStatus(int status);
+	virtual void __fastcall     SetStatus(int status);
 	virtual float               GetStatus();
 	virtual void                CheckTriangleCollide(); /* 0x1e0 */
 	virtual void                CheckPixelCollide();
@@ -266,5 +271,13 @@ public:
 	// BW1W120 0080bf10 BW1M119 0107f4f0 (LHCombined Release)
 	void __fastcall CombineColorWithCurrent(unsigned long color, unsigned long specular);
 };
+
+// TODO(bwrsandman): These externs stay until we find a correct declaration. Two other ways did not work:
+// - As LH3DObject static members, they move the Object.cpp .bss and runblack.exe fails in 1.00, 1.10 and 1.20.
+// - Without them, TempleLeash::TempleLeash and CitadelHeart::DrawCreaturePen do not match.
+// BW1W120 00ea1abc BW1M119 012b3710 (LHCombined Release)
+extern LH3DMaterial* g_smoke_mat;
+// BW1W120 00ea1ac4 BW1M119 012b3708 (LHCombined Release)
+extern LH3DMaterial* g_smoke_additif_mat;
 
 #endif /* BW1_DECOMP_LH3D_OBJECT_INCLUDED_H */

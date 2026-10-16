@@ -7,7 +7,9 @@
 
 #include <re_common.h> /* For bool32_t */
 
-#include <chlasm/GStates.h> /* For VILLAGER_STATE_LAST_STATE */
+#include <chlasm/Enum.h>          /* For enum CREATURE_ACTION_KNOWN_ABOUT */
+#include <chlasm/GStates.h>       /* For VILLAGER_STATE_LAST_STATE */
+#include <chlasm/HelpTextEnums.h> /* For enum HELP_TEXT */
 
 #include <Lionhead/LHFile/ver3.0/LHFile.h> /* For struct LHFile */
 #include <Lionhead/LHLib/ver5.0/LHWin.h>   /* For operator new(size_t, const char*, uint32_t) */
@@ -23,40 +25,40 @@ public:
 	// BW1W120 00db9e68 BW1M119 01b9a988
 	static GVillagerStateTableInfo Infos[VILLAGER_STATE_LAST_STATE];
 
-	int      Anim;
-	int      field_0x14;
-	float    field_0x18;
-	bool32_t isFinalState;
-	int      field_0x20;
-	uint32_t field_0x24;
-	uint32_t isScriptState;
-	uint32_t isScriptInterruptableState;
-	int      field_0x30;
-	uint32_t field_0x34;
-	char     name[0x80];
-	int      field_0xb8;
-	uint32_t field_0xbc;
-	uint32_t field_0xc0;
-	uint32_t field_0xc4;
-	int      field_0xc8;
-	uint32_t field_0xcc;
-	int      field_0xd0;
-	int      field_0xd4;
-	float    field_0xd8;
-	float    field_0xdc;
-	uint32_t field_0xe0;
-	uint32_t field_0xe4;
-	uint32_t field_0xe8;
-	int      field_0xec;
-	uint32_t field_0xf0;
-	uint32_t field_0xf4;
-	uint32_t field_0xf8;
-	uint32_t field_0xfc;
-	uint32_t field_0x100;
-	uint32_t field_0x104;
-	float    field_0x108;
-	uint32_t StateHelpText;
-	uint32_t field_0x110;
+	int                         Anim;
+	int                         TownDesireType;
+	float                       TownDesireAmount;
+	bool32_t                    isFinalState;
+	bool32_t                    isTransientState;
+	bool32_t                    isMovingForAnimation;
+	uint32_t                    isScriptState;
+	uint32_t                    isScriptInterruptableState;
+	int                         ReturnState;
+	uint32_t                    SpeedId;
+	char                        name[0x80];
+	int                         AvailableState;
+	uint32_t                    field_0xbc;
+	bool32_t                    CanBeCalledToDinner;
+	uint32_t                    field_0xc4;
+	bool32_t                    isReactiveState;
+	uint32_t                    field_0xcc;
+	int                         field_0xd0;
+	bool32_t                    CanPauseForASecond;
+	float                       FoodInterestMultiplier;
+	float                       WoodInterestMultiplier;
+	uint32_t                    field_0xe0;
+	uint32_t                    field_0xe4;
+	bool32_t                    IsWorshipState;
+	int                         CarriedObject;
+	CREATURE_ACTION_KNOWN_ABOUT ActionKnownAbout;
+	bool32_t                    PerformsLivingChecks;
+	bool32_t                    CanGoHomeWhenHurt;
+	bool32_t                    canReact;
+	bool32_t                    SkipOutofAnimation;
+	uint32_t                    field_0x104;
+	float                       LifeReductionPerTurn;
+	uint32_t                    StateHelpText;
+	HELP_TEXT                   QueryHelpText;
 
 	// Override methods
 
@@ -71,7 +73,7 @@ public:
 	static GVillagerStateTableInfo* GetInfo() { return Infos; }
 
 	// TODO(#377): The original declared this class in VillagerStates.h.
-	INFO_DATA_BLOCK(Anim, field_0x110)
+	INFO_DATA_BLOCK(Anim, QueryHelpText)
 	INFO_ROOT_LOADERS("VillagerStates.h", 23)
 };
 

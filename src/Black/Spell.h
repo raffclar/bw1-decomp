@@ -10,6 +10,7 @@
 #include <Lionhead/LHLib/ver5.0/LHListNode.h>     /* For struct LHListNode */
 
 #include "GameThingWithPos.h" /* For struct GameThingWithPos, struct GameThingWithPosVftable */
+#include "LHPTR.h"            /* For class LHPTR */
 #include "MapCoords.h"        /* For struct MapCoords */
 
 // Forward Declares
@@ -24,6 +25,7 @@ class GameThing;
 class Living;
 class Object;
 struct PSysProcessInfo;
+class SpellSeed;
 class Reaction;
 class SpellSeedGraphic;
 struct SpellCastData;
@@ -37,7 +39,7 @@ public:
 	static void ProcessSpells();
 	static void DrawSpells(); // 007203f0
 
-	uint32_t          field_0x28;
+	LHPTR<Reaction>   SpellReaction;
 	float             field_0x2c;
 	uint32_t          field_0x30;
 	uint32_t          field_0x34;
@@ -63,7 +65,7 @@ public:
 	GameThing*        creator;
 	GPlayer*          Player;
 	GameThing*        InterfaceStatus;
-	GameThing*        field_0xac;
+	SpellSeed*        SpellSeedLink;
 	uint32_t          field_0xb0;
 	MAGIC_TYPE        magic_type;
 	float             field_0xb8;
@@ -89,9 +91,9 @@ public:
 	// BW1W120 0071bc30 BW1M119 015179f0
 	virtual uint32_t GetSampleForAttack();
 	// BW1W120 00721cd0 BW1M119 0151c7f0
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 00721930 BW1M119 0151cef0
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0071faf0 BW1M119 0151c780
 	virtual uint32_t GetSaveType();
 	// BW1W120 0055cec0 BW1M119 013b9ef0
@@ -187,6 +189,10 @@ public:
 	Spell(MAGIC_TYPE type, GameThing* creator);
 	// BW1W120 007218e0 BW1M119 0151d760
 	GInterfaceStatus* GetInterfaceStatus();
+	// BW1W120 007218f0 BW1M119 0151d6e0
+	void SetHasAlreadyBeenLearnedFrom(bool learned);
+	// BW1W120 00721910 BW1M119 0151d660
+	bool GetHasAlreadyBeenLearnedFrom();
 	// BW1W120 007201d0 BW1M119 01520760
 	GMagicInfo* GetMagicInfo() const;
 	// BW1W120 0079ddf0 BW1M119 015aed70
@@ -197,6 +203,8 @@ public:
 	void CoreCloseDown();
 	// BW1W120 00720750 BW1M119 0151f9f0
 	float GetSpellStrength();
+	// BW1W120 007213b0 BW1M119 0151e1d0
+	void ClearSpellSeedLink();
 };
 
 #endif /* BW1_DECOMP_SPELL_INCLUDED_H */

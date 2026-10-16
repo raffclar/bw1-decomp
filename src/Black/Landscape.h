@@ -1,8 +1,9 @@
 #ifndef BW1_DECOMP_LANDSCAPE_INCLUDED_H
 #define BW1_DECOMP_LANDSCAPE_INCLUDED_H
 
-#include <assert.h> /* For static_assert */
-#include <stdint.h> /* For uint32_t */
+#include <assert.h>    /* For static_assert */
+#include <stdint.h>    /* For uint32_t */
+#include <re_common.h> /* For bool32_t */
 
 #include "MapCoords.h" /* For struct MapCoords */
 
@@ -14,6 +15,7 @@
 
 struct LH3DMaterial;
 struct LH3DTexture;
+struct LHCoord;
 struct LHPoint;
 struct MapCoords;
 class Object;
@@ -48,15 +50,15 @@ struct GLandscape
 	// BW1W120 006137f0 BW1M119 0101c4a0
 	static void ConvertLandscapePointToMapCoord(const LHPoint& point, MapCoords& coords)
 	{
-		coords.x = (LH3DMapCoordsFull)(point.x / (10.0f / (float)0x10000));
-		coords.z = (LH3DMapCoordsFull)(point.z / (10.0f / (float)0x10000));
+		coords.x = (LH3DMapCoordsFull)(point.x / (MAP_COORDS_METRES_PER_CELL / MAP_COORDS_UNITS_PER_CELL));
+		coords.z = (LH3DMapCoordsFull)(point.z / (MAP_COORDS_METRES_PER_CELL / MAP_COORDS_UNITS_PER_CELL));
 		coords.altitude = 0.0f;
 	}
 	// BW1W120 inlined BW1M119 010aab80
 	static void ConvertAbsoluteMapCoordToLandscapePoint(const MapCoords& coords, LHPoint& point)
 	{
-		point.x = ((const LH3DMapCoords&)coords).WholeX() * (10.0f / (float)0x10000);
-		point.z = ((const LH3DMapCoords&)coords).WholeZ() * (10.0f / (float)0x10000);
+		point.x = ((const LH3DMapCoords&)coords).WholeX() * (MAP_COORDS_METRES_PER_CELL / MAP_COORDS_UNITS_PER_CELL);
+		point.z = ((const LH3DMapCoords&)coords).WholeZ() * (MAP_COORDS_METRES_PER_CELL / MAP_COORDS_UNITS_PER_CELL);
 		point.y = coords.Altitude();
 	}
 	// BW1W120 005e3f60 BW1M119 010204d0
@@ -77,8 +79,8 @@ struct GLandscape
 
 		altitude = coords.Altitude();
 		point.y = altitude + LH3DIsland::GetAltitude((const LH3DMapCoords&)coords);
-		point.x = ((const LH3DMapCoords&)coords).WholeX() * (10.0f / (float)0x10000);
-		point.z = ((const LH3DMapCoords&)coords).WholeZ() * (10.0f / (float)0x10000);
+		point.x = ((const LH3DMapCoords&)coords).WholeX() * (MAP_COORDS_METRES_PER_CELL / MAP_COORDS_UNITS_PER_CELL);
+		point.z = ((const LH3DMapCoords&)coords).WholeZ() * (MAP_COORDS_METRES_PER_CELL / MAP_COORDS_UNITS_PER_CELL);
 		return &point;
 	}
 
@@ -88,6 +90,8 @@ struct GLandscape
 	void Draw();
 	// BW1W120 005e52e0 BW1M119 01381950
 	void Open(char* path);
+	// BW1W120 005e5620 BW1M119 0102bc30
+	bool32_t __fastcall GetLHPointFromScreenCoord(LHCoord* coord, LHPoint* point, float* param_3);
 };
 
 // Free functions

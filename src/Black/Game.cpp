@@ -186,12 +186,12 @@ static_assert(offsetof(ValueSpinner, point) == 8, "ValueSpinner position offset 
 static_assert(offsetof(VillagerName, next) == 0x460, "VillagerName link offset is incorrect");
 static_assert(offsetof(TempleRoom, name) == 4, "TempleRoom vptr is missing");
 static_assert(offsetof(GScript, FocusPos) == 0x40, "Script timer fields changed its layout");
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 static_assert(offsetof(GGame, setup) == 0x205a58, "GGame setup offset is incorrect");
 static_assert(offsetof(GGame, PlayerIndex) == 0x205a59, "GGame player index offset is incorrect");
 static_assert(offsetof(GPlayer, Conditions) == 0xf8, "GPlayer condition map offset is incorrect");
 static_assert(offsetof(GPlayer, type) == 0x8e0, "GPlayer condition map changed its layout");
-#else
+#elif defined(VERSION_BW1W100) || defined(VERSION_BW1W110)
 static_assert(offsetof(GGame, setup) == 0x201b14, "GGame setup offset is incorrect");
 static_assert(offsetof(GGame, PlayerIndex) == 0x201b15, "GGame player index offset is incorrect");
 static_assert(offsetof(GPlayer, type) == 0xf8, "GPlayer layout is incorrect");
@@ -199,7 +199,7 @@ static_assert(offsetof(GPlayer, type) == 0xf8, "GPlayer layout is incorrect");
 static_assert(offsetof(ChannelBox, ConditionEnabled) == 0xac4, "ChannelBox condition offset is incorrect");
 static_assert(sizeof(ChannelBox) == 0xad4, "ChannelBox size is incorrect");
 static_assert(offsetof(MPFEData, ActiveDialog) == 0xa64, "MPFEData dialog offset is incorrect");
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 static_assert(offsetof(MPFEData, Conditions) == 0x15d4, "MPFEData condition offset is incorrect");
 #endif
 
@@ -409,7 +409,7 @@ bool32_t GGame::Init()
 		}
 		_unlink("oos.txt");
 		_unlink("oos.lnd");
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 		MultiplayerTimeLimit *= 600;
 		for (GPlayer* player = GetNextActivePlayer(NULL); player; player = GetNextActivePlayer(player))
 		{
@@ -560,7 +560,7 @@ void GGame::LoadMap(char* map_path)
 		g_game->ClearMap();
 		LH3DLandscape::Release();
 		LH3DIsland::Release();
-		g_game->data.MapLoadCount = 0;
+		g_game->data.InteractDesire = 0.0f;
 		GSetup::LoadMapFeatures(map_path);
 		Town::AsssignTownFeature();
 	}
@@ -848,7 +848,7 @@ uint32_t GGame::InitOneTimeOnly()
 	{
 		internetOptions = 2;
 	}
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 	MultiplayerTimeLimit = 30;
 #endif
 	Report3D__FPCce("LHCheckForInternetConnection\n");
@@ -1171,7 +1171,7 @@ void GGame::ClearVariables()
 	field_0x5318[0] = 0;
 	field_0x2502d0 = NULL;
 	field_0x2502d4 = NULL;
-	field_0x2502d8 = NULL;
+	TownDesireLogFile = NULL;
 	field_0x2502dc = NULL;
 	field_0x2502e0 = NULL;
 	field_0x2502e4 = NULL;
@@ -1198,7 +1198,7 @@ void GGame::ToBeDeleted(int delete_now)
 	delete SoundMap;
 	fclose(field_0x2502d0);
 	fclose(field_0x2502d4);
-	fclose(field_0x2502d8);
+	fclose(TownDesireLogFile);
 	fclose(field_0x2502dc);
 	fclose(field_0x2502e0);
 	fclose(field_0x2502e4);
@@ -1228,7 +1228,7 @@ bool32_t GGame::Close()
 {
 	ClearMap();
 	climate = NULL;
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 	MultiplayerTimeLimit = 30;
 #endif
 	GameThing::ProcessDeadList(1);
@@ -1305,7 +1305,7 @@ void GGame::ClearMap()
 {
 	LHResetFPU();
 	g_game->GameFlags |= GAME_FLAG_CLEARING_MAP;
-	GameFlags &= ~(GAME_FLAG_UNKNOWN_0x20000 | GAME_FLAG_UNKNOWN_0x200000);
+	GameFlags &= ~(GAME_FLAG_UNKNOWN_0x20000 | GAME_FLAG_SHOW_VILLAGER_INFO);
 	field_0x205a10 = 0;
 	field_0x205a14 = 0;
 	SuperVillager* superVillager = SuperVillager::g_first;
@@ -1443,31 +1443,17 @@ GestureSystemDataList::GestureSystemDataList()
 	Data = NULL;
 	Count = 0;
 }
-// BW1W120 0054baf0 BW1M119 inlined
-GestureSystemData::GestureSystemData()
-{
-	SetToZero();
-}
 // BW1W120 0054bb40
 GestureSystem::GestureSystem()
 {
 	field_0xc94 = 1;
 }
-// BW1W120 0054bb90 BW1M119 01095b00
-void GestureSystemResult::SetToZero()
-{
-	field_0x0 = 0;
-	Reversed = 0;
-	EndSample = 0;
-	StartSample = 0;
-}
-
 static_assert(sizeof(GPacket) == 0x110, "GPacket size is incorrect");
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 static_assert(offsetof(GGame, Packet) == 0x205a60, "GPacket offset is incorrect");
 static_assert(offsetof(GGame, field_0x5978) == 0x5978, "Packet length offset is incorrect");
 static_assert(offsetof(GGame, VideoPlayer) == 0x250188, "Video player offset is incorrect");
-#else
+#elif defined(VERSION_BW1W100) || defined(VERSION_BW1W110)
 static_assert(offsetof(GGame, Packet) == 0x201b1c, "GPacket offset is incorrect");
 static_assert(offsetof(GGame, field_0x5978) == 0x1a38, "Packet length offset is incorrect");
 #ifdef VERSION_BW1W110
@@ -1478,11 +1464,11 @@ static_assert(offsetof(GGame, VideoPlayer) == 0x24c234, "Video player offset is 
 #endif
 static_assert(sizeof(GNetwork) == 0x30, "GNetwork size is incorrect");
 static_assert(sizeof(GTerrainMap) == 0x4a130, "GTerrainMap size is incorrect");
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 static_assert(sizeof(GGame) == 0x250544, "GGame size is incorrect");
 #elif defined(VERSION_BW1W110)
 static_assert(sizeof(GGame) == 0x24c600, "GGame size is incorrect");
-#else
+#elif defined(VERSION_BW1W100)
 static_assert(sizeof(GGame) == 0x24c5f0, "GGame size is incorrect");
 #endif
 static_assert(sizeof(GSoundMap) == 0x110, "GSoundMap size is incorrect");
@@ -1494,9 +1480,9 @@ static_assert(sizeof(Settings) == 0x104, "Settings size is incorrect");
 static_assert(offsetof(CreatureDanceLineInput, Analysis) == 0x28, "Line-input prefix offset is incorrect");
 static_assert(offsetof(Dance, next) == 0xec, "Dance link offset is incorrect");
 static_assert(sizeof(Dance) == 0x12c, "Dance size is incorrect");
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 static_assert(offsetof(GGame, field_0x59ac) == 0x59ac, "Game start-time offset is incorrect");
-#else
+#elif defined(VERSION_BW1W100) || defined(VERSION_BW1W110)
 static_assert(offsetof(GGame, field_0x59ac) == 0x1a68, "Game start-time offset is incorrect");
 #endif
 static_assert(offsetof(GInterfaceMessage, Collide) == 0xc, "Message collision offset is incorrect");
@@ -1507,13 +1493,13 @@ static_assert(offsetof(LHSys, mouse) + offsetof(LHMouse, CallbackArg1) == 0x314,
 
 static_assert(sizeof(GGlobal) == 0x2d500, "GGlobal size is incorrect");
 static_assert(offsetof(GGlobal, EditorMode) == 0x2d2ac, "GGlobal editor mode offset is incorrect");
-static_assert(offsetof(GGlobal, field_0x2d2e4) == 0x2d2e4, "GGlobal editor pointer offset is incorrect");
+static_assert(offsetof(GGlobal, Editor) == 0x2d2e4, "GGlobal editor pointer offset is incorrect");
 static_assert(sizeof(Prss) == 0x10, "Prss size is incorrect");
 static_assert(offsetof(GDebug, CellBoxes) == 0x2d2a0, "GDebug CellBoxes offset is incorrect");
 static_assert(sizeof(GDebug) == 0x2d2a8, "GDebug size is incorrect");
 static_assert(offsetof(GPlayer, interfaces) == 0x14, "GPlayer interfaces offset is incorrect");
 static_assert(offsetof(GGame, players) == 0x18, "GGame players offset is incorrect");
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 static_assert(sizeof(GPlayer) == 0xa60, "GPlayer stride is incorrect");
 static_assert(offsetof(GPlayer, type) == 0x8e0, "GPlayer type offset is incorrect");
 static_assert(offsetof(GPlayer, towns) == 0xa50, "GPlayer towns offset is incorrect");
@@ -1521,7 +1507,7 @@ static_assert(offsetof(GGame, PlayerIndex) == 0x205a59, "GGame player index offs
 static_assert(offsetof(GGame, field_0x205a5a) == 0x205a5a, "GGame interface index offset is incorrect");
 static_assert(offsetof(GGame, network) + offsetof(GNetwork, session) == 0x205b80, "GGame session offset is incorrect");
 static_assert(offsetof(GGame, camera) == 0x2502c0, "GGame camera offset is incorrect");
-#else
+#elif defined(VERSION_BW1W100) || defined(VERSION_BW1W110)
 static_assert(sizeof(GPlayer) == 0x278, "GPlayer stride is incorrect");
 static_assert(offsetof(GPlayer, type) == 0xf8, "GPlayer type offset is incorrect");
 static_assert(offsetof(GPlayer, towns) == 0x268, "GPlayer towns offset is incorrect");
@@ -1538,19 +1524,19 @@ static_assert(offsetof(GGame, camera) == 0x24c36c, "GGame camera offset is incor
 #endif
 #endif
 static_assert(offsetof(Town, ID) == 0x5b4, "Town ID offset is incorrect");
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 static_assert(offsetof(Town, next) == 0x75c, "Town next offset is incorrect");
 static_assert(offsetof(GGame, field_0x205a5c) == 0x205a5c, "GGame serialized byte offset is incorrect");
 #elif defined(VERSION_BW1W110)
 static_assert(offsetof(Town, next) == 0x758, "Town next offset is incorrect");
 static_assert(offsetof(GGame, field_0x205a5c) == 0x201b18, "GGame serialized byte offset is incorrect");
-#else
+#elif defined(VERSION_BW1W100)
 static_assert(offsetof(Town, next) == 0x754, "Town next offset is incorrect");
 static_assert(offsetof(GGame, field_0x205a5c) == 0x201b18, "GGame serialized byte offset is incorrect");
 #endif
 static_assert(sizeof(CMouse) == 4, "CMouse size is incorrect");
 static_assert(offsetof(GCameraEditor, field_0x10) == 0x10, "GCameraEditor flag offset is incorrect");
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 static_assert(offsetof(GGame, field_0x205ba0) == 0x205ba0, "GGame serialized word offset is incorrect");
 static_assert(offsetof(GGame, script_creature_curse) == 0x250084, "GGame curse offset is incorrect");
 static_assert(offsetof(GGame, Mouse) == 0x2502b8, "GGame mouse offset is incorrect");
@@ -1560,7 +1546,7 @@ static_assert(offsetof(GGame, key_buffer) + offsetof(GKeyBuffer, BufferedKeys) =
               "GGame key count offset is incorrect");
 static_assert(offsetof(GGame, GameLists) + offsetof(GlobalGameLists, LivingList) == 0x205bbc,
               "GGame living list offset is incorrect");
-#else
+#elif defined(VERSION_BW1W100) || defined(VERSION_BW1W110)
 // Everything after GGame::players sits 0x3f44 lower in 1.00/1.10 (see the GPlayer note above).
 static_assert(offsetof(GGame, field_0x205ba0) == 0x201c5c, "GGame serialized word offset is incorrect");
 #ifdef VERSION_BW1W110
@@ -1675,7 +1661,7 @@ bool32_t GGame::LocalTimerSaysDoATurn()
 	int elapsed =
 		(int)((float)(GetTickCount() - timer.TickCount) * timer.SpeedUpFactor + (float)(uint32_t)timer.ElapsedTime);
 	int gameTime = (int)(g_game->data.GameTurn * 100);
-	if (g_game->GameFlags & GAME_FLAG_UNKNOWN_0x400000)
+	if (g_game->GameFlags & GAME_FLAG_FORCE_GAME_TURN)
 	{
 		return true;
 	}
@@ -1754,8 +1740,8 @@ void GGame::ProcessNetworkPackets()
 			}
 			if (GGlobal::Global.EditorMode != 0)
 			{
-				GGlobal::Global.field_0x2d2e4 = GGlobal::Global.field_0x2d2e4->ProcessTurn();
-				if (GGlobal::Global.field_0x2d2e4 == NULL)
+				GGlobal::Global.Editor = GGlobal::Global.Editor->ProcessTurn();
+				if (GGlobal::Global.Editor == NULL)
 				{
 					GGlobal::Global.EditorMode = false;
 				}
@@ -2276,7 +2262,7 @@ void GGame::Process3dEngine()
 			PhysicsObject::DrawAll();
 			MyInterface()->hand.Get()->UpdateHeldObject();
 			if (GGlobal::Global.EditorMode)
-				GGlobal::Global.field_0x2d2e4->Display();
+				GGlobal::Global.Editor->Display();
 			if (hand)
 				hand->AddDrawing();
 			for (GPlayer* player = GetNextPlayer(NULL); player; player = GetNextPlayer(player))
@@ -2331,8 +2317,8 @@ void GGame::Process3dEngine()
 				CameraModeNew3::ForceField->count = CameraModeNew3::ForceFieldPointCount + 1;
 				int i;
 				for (i = 0; i < CameraModeNew3::ForceField->count - 1; ++i)
-					CameraModeNew3::ForceField->field_0x20[i] = CameraModeNew3::ForceFieldPoints[i];
-				CameraModeNew3::ForceField->field_0x20[i] = CameraModeNew3::ForceFieldPoints[0];
+					CameraModeNew3::ForceField->Points[i] = CameraModeNew3::ForceFieldPoints[i];
+				CameraModeNew3::ForceField->Points[i] = CameraModeNew3::ForceFieldPoints[0];
 				CameraModeNew3::ForceField->Update((int)LH3DTech::g_game_time_inc * 0.001f);
 				CameraModeNew3::ForceField->DoTheDrawing(CameraModeNew3::ForceFieldMaterial);
 			}
@@ -2568,8 +2554,8 @@ void GGame::EndTurn()
 	}
 	if (GGlobal::Global.EditorMode != 0)
 	{
-		GGlobal::Global.field_0x2d2e4 = GGlobal::Global.field_0x2d2e4->ProcessTurn();
-		if (GGlobal::Global.field_0x2d2e4 == NULL)
+		GGlobal::Global.Editor = GGlobal::Global.Editor->ProcessTurn();
+		if (GGlobal::Global.Editor == NULL)
 		{
 			GGlobal::Global.EditorMode = 0;
 		}
@@ -2595,7 +2581,7 @@ void GGame::EndTurn()
 	    g_game->field_0x205a14 == 1 && &g_game->players[g_game->PlayerIndex] != NULL &&
 	    g_game->players[g_game->PlayerIndex].citadel.Get() != NULL &&
 	    g_game->players[g_game->PlayerIndex].GetCitadel()->heart.Get() != NULL &&
-	    g_game->players[g_game->PlayerIndex].GetCitadel()->GetCitadelHeart()->field_0xb8 != 0)
+	    g_game->players[g_game->PlayerIndex].GetCitadel()->GetCitadelHeart()->DestructionStarted != 0)
 	{
 		field_0x205a10 = 1;
 		g_game->script->StartScript("GameOver");
@@ -2744,11 +2730,11 @@ Town* GGame::FindTownWithID(unsigned long id)
 }
 
 // BW1W120 00554090 BW1M119 01366f90
-uint32_t GGame::Save(GameOSFile& file)
+bool32_t GGame::Save(GameOSFile& file)
 {
 	if (!GameThing::Save(file))
 	{
-		return 0;
+		return false;
 	}
 	char*    revision = "$Revision: 756 $";
 	uint32_t length = strlen(revision) + 1;
@@ -2877,15 +2863,15 @@ uint32_t GGame::Save(GameOSFile& file)
 #ifndef VERSION_BW1W100
 	file.WriteIt(script_creature_curse);
 #endif
-	return 1;
+	return true;
 }
 
 // BW1W120 00554830 BW1M119 0154ca00
-uint32_t GGame::Load(GameOSFile& file)
+bool32_t GGame::Load(GameOSFile& file)
 {
 	if (!GameThing::Load(file))
 	{
-		return 0;
+		return false;
 	}
 	char revision[256];
 	if (GameOSFile::ReadEnabled)
@@ -3004,7 +2990,7 @@ uint32_t GGame::Load(GameOSFile& file)
 #ifndef VERSION_BW1W100
 	file.ReadIt(script_creature_curse);
 #endif
-	return 1;
+	return true;
 }
 
 // BW1W120 00555080 BW1M119 01367ec0

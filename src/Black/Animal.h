@@ -11,13 +11,16 @@
 
 #include <Lionhead/LH3DLib/development/Zoomer.h> /* For struct Zoomer */
 
-#include "Living.h"       /* For struct Living */
-#include "LivingAction.h" /* For struct Living__StateTableEntry */
+#include "Living.h" /* For struct Living */
 
 // Forward Declares
 
+class Animal;
 class Base;
 class Creature;
+class GAnimalInfo;
+class Flock;
+class GAnimalInfo;
 class GInterfaceStatus;
 class GPlayer;
 class GameOSFile;
@@ -33,6 +36,20 @@ class PhysicsObject;
 class Reaction;
 class Spell;
 class Town;
+
+struct AnimalStateTableEntry
+{
+	bool32_t (Animal::*State)();
+	bool32_t (Animal::*EntryState)(uint8_t current, uint8_t destination);
+	bool32_t (Animal::*ExitState)(uint8_t state);
+	bool32_t (Animal::*SaveState)(GameOSFile& file);
+	bool32_t (Animal::*LoadState)(GameOSFile& file);
+	uint32_t (Animal::*ReactToTownEmergency)();
+	uint32_t (Animal::*Animation)();
+	uint32_t (Animal::*TransitionAnimation)(uint8_t into, uint8_t state);
+	void (Animal::*Validate)();
+};
+static_assert(sizeof(AnimalStateTableEntry) == 0x90, "Data type is of wrong size");
 
 class Animal : public Living
 {
@@ -63,9 +80,9 @@ public:
 	// BW1W120 0071be10 BW1M119 01517730
 	virtual uint32_t GetGuidanceResourceType();
 	// BW1W120 0041b710 BW1M119 0116daa0
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 0041b460 BW1M119 0116de20
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0041b9a0 BW1M119 0116da50
 	virtual void ResolveLoad();
 	// BW1W120 00417840 BW1M119 01138230
@@ -115,7 +132,7 @@ public:
 	// BW1W120 0041b360 BW1M119 0116e2e0
 	virtual uint32_t ApplyThisToObject(GInterfaceStatus* param_1, Object* param_2, GestureSystemPacketData* param_3);
 	// BW1W120 005f04d0 BW1M119 0138d240
-	virtual uint32_t GetPhysicsConstantsType();
+	virtual PHYSICS_CONSTANTS_TYPE GetPhysicsConstantsType();
 	// BW1W120 005f04e0 BW1M119 0138ccb0
 	virtual void SetUpPhysOb(PhysOb* param_1);
 	// BW1W120 005f0d80 BW1M119 0138c700
@@ -185,7 +202,7 @@ public:
 	// BW1W120 00418450 BW1M119 010060e0
 	virtual uint32_t CheckNeeds();
 	// BW1W120 00417520 BW1M119 0113bc20
-	virtual uint32_t IsOkToBeShepherd();
+	virtual bool32_t IsOkToBeShepherd();
 	// BW1W120 0041a3e0 BW1M119 0116fcf0
 	virtual uint32_t AddToFlock();
 	// BW1W120 0041b0f0 BW1M119 0116ea00
@@ -261,7 +278,7 @@ public:
 	// BW1W120 00417830 BW1M119 01080ab0
 	virtual int CallOutofAnimationFunction(uint8_t state);
 	// BW1W120 0041b430 BW1M119 0116e200
-	virtual bool IsFinalState(uint8_t state);
+	virtual bool32_t IsFinalState(uint8_t state);
 	// BW1W120 00417fa0 BW1M119 01057730
 	virtual ANIM_LIST GetAnimId();
 	// BW1W120 0041a2c0 BW1M119 inlined
@@ -279,21 +296,21 @@ public:
 	// BW1W120 0041b100 BW1M119 inlined
 	virtual bool32_t IsStateExitFunctionSameAs(unsigned long state) const;
 	// BW1W120 0041b1c0 BW1M119 0116e740
-	virtual uint32_t DebugShowTime(uint32_t param_1, uint8_t param_2, uint8_t param_3);
+	virtual void DebugShowTime(uint32_t param_1, uint8_t param_2, uint8_t param_3);
 	// BW1W120 00419bc0 BW1M119 01170ad0
 	virtual bool IsInterestedInFoodObject(Object* param_1);
 	// BW1W120 0041a280 BW1M119 0116fe90
 	virtual void ResetStateAfterReacting();
 	// BW1W120 00420440 BW1M119 0117f3b0
-	virtual void SetupReactToCreature(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToCreature(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004204a0 BW1M119 0117f120
-	virtual void SetupReactToFlyingObject(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToFlyingObject(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 00420460 BW1M119 0117f330
-	virtual void SetupReactToFire(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToFire(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 00420480 BW1M119 0117f2b0
-	virtual void SetupReactToFallingTree(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToFallingTree(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 00420410 BW1M119 0117f430
-	virtual void SetupFleeFromPredator(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupFleeFromPredator(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 004175c0 BW1M119 01137710
 	virtual uint8_t FollowObjectPriority(Reaction* param_1, Reaction* param_2);
 	// BW1W120 004175d0 BW1M119 01137760
@@ -309,7 +326,7 @@ public:
 	// BW1W120 00417620 BW1M119 01137900
 	virtual uint8_t ReactToBallPriority(Reaction* param_1, Reaction* param_2);
 	// BW1W120 004203a0 BW1M119 0117f640
-	virtual uint8_t ReactToFirePriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToFirePriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 00417630 BW1M119 01137950
 	virtual uint8_t ReactToMagicShieldPriority(Reaction* param_1, Reaction* param_2);
 	// BW1W120 00417640 BW1M119 011379b0
@@ -337,15 +354,21 @@ public:
 	// BW1W120 004176f0 BW1M119 01137da0
 	virtual uint8_t ReactToConfusedPriority(Reaction* param_1, Reaction* param_2);
 	// BW1W120 004203b0 BW1M119 0117f5c0
-	virtual uint8_t ReactToFallingTreePriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToFallingTreePriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 0041bb00 BW1M119 0116d410
 	virtual bool32_t IsChild();
 	// BW1W120 00420550 BW1M119 0117edd0
-	virtual void GetFleeingPositionFromMovingObject(MapCoords* param_1, GameThingWithPos* param_2, float param_3);
+	virtual void GetFleeingPositionFromMovingObject(MapCoords* pos, GameThingWithPos* object, float distance);
 	// BW1W120 0041a240 BW1M119 0107eb10
 	virtual uint8_t GetFinalState() const;
 	// BW1W120 0041b210 BW1M119 010585e0
 	virtual bool32_t IsPosValidForTurnAngle(const MapCoords& param_1);
+
+	// Static methods
+
+	// BW1W120 00419d10 BW1M119 01170710
+	static Animal* CreateFromType(const MapCoords& coords, const GAnimalInfo* info, Town* town, Flock* flock,
+	                              unsigned long param_5);
 
 	// Non-virtual methods
 
@@ -372,6 +395,14 @@ public:
 
 	// BW1W120 0055e400 BW1M119 0130e110
 	Animal() { SetToZero(); }
+	// BW1W120 00416eb0 BW1M119 01175200
+	Animal(const MapCoords& coords, const GAnimalInfo* info, unsigned long age);
+
+	// BW1W120 00d12108
+	static AnimalStateTableEntry StateTable[ANIMAL_STATE_LAST_STATE];
+
+	// BW1W120 inlined BW1M119 0100e9e0 (Black & White Support)
+	static AnimalStateTableEntry* GetStateTable();
 
 	// BW1W120 00417900 BW1M119 01175150
 	void SetToZero();

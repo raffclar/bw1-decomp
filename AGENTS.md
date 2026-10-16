@@ -26,23 +26,24 @@ elsewhere, retain the clearest supported implementation and document the unresol
 Experiment discipline, learned the expensive way:
 
 - **Classify the difference before experimenting.** A helper inlined on one side only is an
-  inline-budget problem; the same calls in a different operand or register order is a
-  tie-break or scheduling problem; anything else is a real source difference. Each class
-  has its own procedure.
+  inline-budget problem; the same x87 operations in a different operand order inside inlined
+  bodies is a tie-break; the same integer instructions in a different order around the x87
+  chain is a scheduling problem (`tools/c2-sched-log.py`, see
+  [`docs/msvc6_scheduler.md`](docs/msvc6_scheduler.md)); anything else is a real source
+  difference. Each class has its own procedure.
 - **Prove that a knob moves the output before you sweep it.** A 5,000-build sweep over knobs
   that never touch the differing instructions finds nothing.
 - **Rank assumptions by evidence.** Mac bodies and signatures, and target call sets across
   all units, outrank guessed shapes of fabricated or hand-expanded functions. When a model
   can't fit every caller, doubt the weakest-evidence caller before rewriting shared headers.
-- **Bound the search and escalate early.** Once a residual is shown to be a compiler
+- **Bound the search and escalate early.** Once a residual is shown to be an x87 operand-order
   tie-break (see [Inline expansion](#inline-expansion)), stop hunting and ask the human
-  whether to accept a fakematch. Reverse-engineering the compiler's tie-break rule has not
-  paid off.
+  whether to accept a fakematch. Reverse-engineering that tie-break rule has not paid off.
 
 ## Repository Layout
 
 - `configure.py`        — Project configuration and generator script.
-- `config/[VERSION]`    — Configuration files for each game version (`BW1W100`, `BW1W110`, `BW1W120`, `BW1M119`).
+- `config/[VERSION]`    — Configuration files for each game version (`BW1W100`, `BW1W110`, `BW1W120`, `BW1W130`, `BW1WCI`, `BW1M119`).
     - `config.yml`      — decomp-toolkit project config
     - `symbols.txt`     — layout of the binaries, addresses, sizes, names etc for every symbol present
     - `splits.txt`      — per-TU section address ranges
@@ -54,9 +55,8 @@ Experiment discipline, learned the expensive way:
 - `tools/`              — Scripts shared between projects.
 - `docs/`               — documentation on reverse-engineering
 
-Keep detailed investigation records and task-specific handoffs in the user's disassembly
-folder (`C:\Users\Matt\Development\Disassembly\RE` in this environment), rather than
-adding them to `docs/`.
+Keep detailed investigation records and task-specific handoffs in your own notes folder
+outside the repository, rather than adding them to `docs/`.
 
 ## Build & Diff Workflow
 
@@ -128,10 +128,28 @@ executable hashes check.
 
 ### Game versions
 
-CI builds BW1W100, BW1W110 and BW1W120, including the DLL units; only BW1W120 is configured
-locally by default. Layouts can differ between versions (e.g. `LHNetUser`), so guard
-version-specific `static_assert`s and members with `#ifdef VERSION_BW1W120`, and compile
-touched units with each version's `/DBUILD_VERSION=<n> /DVERSION_<ver>` before pushing.
+CI builds BW1W100, BW1W110, BW1W120, BW1W130 and BW1WCI, including the DLL units; only BW1W120 is
+configured locally by default. Layouts can differ between versions (e.g. `LHNetUser`), so guard
+version-specific `static_assert`s and members with the version macros, and compile touched units
+with each version's `/DBUILD_VERSION=<n> /DVERSION_<ver>` before pushing. BW1W130 shares 1.20's
+layouts: guard them with `#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)`.
+
+BW1W130 was ported from BW1W120 by `tools/port_version.py`. It was built from
+`D:\Work\Games\dd\Black\` rather than `C:\dev\MP\Black\`, has some changed code and layouts,
+and stale bytes fill some of its function padding. A unit matched for 1.20 is therefore not
+automatically matched for 1.30: list the versions it really matches in an inclusive
+`MatchingFor(...)`, and keep a version out of that list rather than changing source for it.
+The same applies when matching a new unit: check BW1W130 and BW1WCI before using plain `Matching`.
+
+BW1WCI (Creature Isle) was ported from BW1W120 the same way (see
+[`docs/porting_versions.md`](docs/porting_versions.md)), and its code is further from 1.20 than
+1.30's: list it in a unit's `MatchingFor(...)` only where the unit links byte-identical there too.
+CI compiles every source for it with `/DBUILD_VERSION=4 /DVERSION_BW1WCI`. Its `GGame`, `GPlayer`
+and `Town` layouts are not modeled, so a layout check that holds for 1.00 and 1.10 names those
+versions (`#elif defined(VERSION_BW1W100) || defined(VERSION_BW1W110)`) instead of taking a bare
+`#else`; a size known for Creature Isle gets its own branch (`GAudio` is 0x3fc there).
+`config/BW1WCI/` has no hand fixes yet: regenerate it with `port_version.py` when 1.20's splits or
+names improve.
 
 The underlying utility used for splitting the binary is `dtk` (`build/tools/dtk`).
 It is already properly set up and almost never requires any meddling.
@@ -252,6 +270,10 @@ for i386 COFF/PE32. It provides evidence without automatically applying override
 python tools/decomp-relocs.py --unit Game --address 0054CE1E --symbol ProcessNetworkPackets --original orig/BW1W120/runblack-decrypted.exe --verify
 ```
 
+objdiff "extra" functions of other classes are usually COMDAT copies (inline functions, vftables, `??_G`) that the
+image keeps in an earlier unit; see [`docs/msvc6_comdat.md`](docs/msvc6_comdat.md) for the emission and link rules,
+and `tools/comdat-scan.py where --unit X` to see where each one is kept. Keep them inline in headers.
+
 ### Parallel work
 
 When parallel agents are requested, use them for independent investigations and give
@@ -272,6 +294,12 @@ Each `.o` file maps 1:1 to a `.cpp` file. The path is listed in `configure.py` u
 - `Matching` — our code compiles to byte-identical output. Linked into the final executable (`runblack.exe`).
 - `NonMatching` — work in progress. Not linked.
 - `Equivalent` — functionally equivalent but not byte-identical. Only linked with `--non-matching`.
+
+A translation unit is only **matched** when its `configure.py` entry is `Matching`. Matching
+functions inside a still-`NonMatching` unit is progress toward a matched TU, not a matched TU —
+the unit is not linked from our source until the entry is flipped. A PR that *matches a TU*
+therefore includes the `configure.py` flip; per-function work inside a `NonMatching` unit is a
+different kind of change.
 
 ### Directory structure mirrors game libraries
 
@@ -323,14 +351,14 @@ Maps each source file to its section address ranges, telling dtk how to split th
 ### Naming
 
 - **Use original names wherever possible.** The symbols from the Mac version can be mapped to Windows methods 90%+ of the time.
-- Function arguments: `snake_case` (e.g., `food_amount`, `wood_amount`, `max_dist`). Or placeholders where unsure: `param_1`, `param_2`, etc.
-- Local variables: `camelCase` (e.g., `abodeType`, `maxVillagersInAbode`). Or Hex-Rays placeholders where unsure what name to choose: `fVar1`, `fVar2`, etc.
+- Function arguments: `snake_case` (e.g., `food_amount`, `wood_amount`, `max_dist`). Placeholders (`param_1`, `param_2`) only where the signature is genuinely unknown (see [Rules from maintainer review](#rules-from-maintainer-review)).
+- Local variables: `camelCase` (e.g., `abodeType`, `maxVillagersInAbode`). Hex-Rays placeholders (`fVar1`, `fVar2`) only under the same condition.
 - Classes: `PascalCase` (e.g., `Abode`, `Villager`, `Town`, `MapCoords`).
 - Enums: type name in `SCREAMING_SNAKE_CASE`, enumerators prefixed with the type name (e.g., `TOWN_STATUS` → `TOWN_STATUS_DEFAULT`, `TOWN_STATUS_CAPTURED`).
 - Member variables: `PascalCase`, no prefix (e.g., `AttachedThing`, `PreviousStatus`, `XOffset`, `FlashOn`). Real Lionhead headers show members are consistently `PascalCase` — not `snake_case`/`camelCase`, and never `m_`-prefixed. Member names don't survive in the binary, so where the true name is unknown, pick a readable `PascalCase` name.
-- Unknown members retain placeholder names like `field_0x7c`, `field_0x94`, encoding the hex offset.
+- Members our code does not use, or only saves and loads, retain placeholder names like `field_0x7c`, `field_0x94`, encoding the hex offset. A member the code uses gets a name and a type (see [Naming and values](#naming-and-values-from-qwerins-425-review)).
 - Method names use PascalCase: `ArriveHome()`, `AddVillagerToAbode()`, `CalcRandomPos()`.
-- Use comments to record specific evidence or uncertainty about a name or provisional ownership when useful. Do not add blanket comments such as "Descriptive member names" or comments merely stating that names are inferred rather than original; readable names for reconstructed members are expected.
+- Record evidence or uncertainty about a name or provisional ownership in the PR description, not in source comments (see [Comments](#comments--annotations-in-the-code)). Do not add blanket comments such as "Descriptive member names" or comments merely stating that names are inferred rather than original; readable names for reconstructed members are expected.
 
 ### Comments & annotations in the code
 
@@ -340,15 +368,15 @@ Source must read as if a Lionhead programmer wrote it. The only comments it cont
   [Signatures](#signatures-function-boundaries-and-layouts), above declarations in headers.
   `.cpp` files carry no comments above definitions; a function with no header (file static,
   callback) keeps its address comment on a forward declaration in the `.cpp`.
-- `/* 0x1c */` offsets on data members.
 - `// Inliner IL size: N` — above an inline helper's address comment: its exact IL size, as measured by `tools/inline-budget.py size`
   (`<= 40` means never charged). Update it whenever the body changes.
+- An empty trailing `//` after each entry of an initializer table, to keep clang-format at one entry per line (#506).
 - Comments a Lionhead programmer could plausibly have written; prefer none.
 
 Do not commit decompilation commentary: TODOs, "fabricated", match percentages, register,
 scheduling or inliner notes, evidence for a name, Mac/IDA references, layout prose, or
 dividers such as `// Static methods`. The match percentage is the TODO. Keep residual
-analyses, name evidence and matching notes in the disassembly folder (see
+analyses, name evidence and matching notes in your notes folder (see
 [Repository Layout](#repository-layout)) or the PR description.
 
 `#pragma dont_inline on/off` is code, not commentary, and stays where matching needs it.
@@ -363,18 +391,36 @@ analyses, name evidence and matching notes in the disassembly folder (see
 - Header guards use the `#ifndef BW1_DECOMP_<NAME>_INCLUDED_H` / `#define` / `#endif` pattern (e.g. `BW1_DECOMP_ABODE_INCLUDED_H`).
 - Use windef.h's `min`/`max` where the original did. `tools/minmax-scan.py --verify --apply <file>` finds
   hand-expanded selects and clamps and keeps only rewrites that compile byte-identical (`minmax-macros` skill).
-- No magic numbers. Name sizes, counts, lengths, ports, timeouts, ids and flags as enumerators
-  (an anonymous `enum { LH_... = n };` in the owning header, never new static data), use existing
+- No magic numbers. Name sizes, counts, lengths, ports, timeouts, ids and flags. A value that
+  belongs to a real enum is one of its enumerators: the number of entries in `TRIBE_TYPE` is
+  `TRIBE_TYPE_LAST`, not a separate constant. Any other standalone constant is a `#define` in the
+  owning header, never an anonymous `enum { ... }` and never new static data. Use existing
   enums and Win32 names (`INFINITE`, `WAIT_FAILED`, `THREAD_PRIORITY_*`), `sizeof`/`ARRAY_SIZE`
   for repeated sizes, hex for colours and base 10 for line numbers.
 - Full-register true/false values are `bool32_t` (returns, members, parameters, template helpers
   such as `LHLinkedList::Add`) with `true`/`false`, not `TRUE`/`FALSE`/`1`/`0`. It is `int`, so
   manglings do not change. Wide strings are `wchar_t`, not `char16_t` or `unsigned short`.
   `unsigned long` (`K`) and `uint32_t` (`I`) mangle differently: never swap them in signatures.
+- Declare each value as what it holds, then compare it in that type's own terms. A field, local,
+  parameter or return used only as a flag is `bool32_t`, tested directly or against `true`/`false`,
+  never `0`/`1`. A pointer is a pointer type compared with `NULL`, never a `uint32_t` cast back to a
+  pointer. An enum value has the enum type and is compared with enumerators. A cast inside a comparison
+  (`(uint8_t)GetTopState() != …`, `(uint32_t)NumAdults > …`) usually hides a wrong declaration: fix the
+  field, return or parameter type instead, and keep the cast only when codegen needs it. Naming a
+  `field_0x…` member includes giving it the right type.
 - Never use `__FILE__`, `__LINE__` or `#line`. For debug-new and logging calls define a TU-local
   `#define FILEPATH "C:\\dev\\MP\\..."` holding the binary's exact string and pass a base-10 line literal.
 - Boilerplate that recurs identically across modules is a shared macro, not per-file code
   (e.g. the version blocks: `LH_VERSION_INFO` in `LHLog/ver4.0/LHVersion.h`).
+- Parentheses around a product stop cl folding constants: `(x * 3) / 4` emits
+  `fmul 3.0; fmul 0.25`, while `x * 3 / 4` folds to one `fmul 0.75`.
+- When we narrow a flag helper's `& mask` to `test byte ptr` but the target keeps `mov; and; test`,
+  the AND result flows into a join at the caller:
+  `uint32_t type = i < n - 1 ? GetKeyPointType(i) : GESTURE_KEY_POINT_TYPE_END;`.
+- Use inline accessors such as `LHCoordF::X()`/`Y()`/`Set()` where the Mac build has them, not
+  direct field access; their float results add IL nodes that move the schedule.
+- An accessor's float result also makes its operand the heavier one, so it is loaded first:
+  `z - region.start.Y()` gives `fld start.y; fsubr [z]`.
 
 ### Header dependencies
 
@@ -385,7 +431,10 @@ Verify affected header consumers after layout, virtual-interface or include-boun
 
 Every static data member declared in a header bumps cl6's `_$E`/`_$S` counter in each TU
 that includes it, renumbering those TUs' initializers. If the game's numbering shows it never
-saw a module's statics, keep them out of the game's view (e.g. `#ifdef LH_MULTIPLAYER_EXPORTS`).
+saw a DLL module's statics, keep them out of the game's view with that module's own build
+define (e.g. `#ifdef LH_MULTIPLAYER_EXPORTS`). This applies only to the DLL modules: LH3DLib
+is linked into the executable, and hiding its declarations from the game with `_LH_3D_LIB_`
+is forbidden (see [Rules from maintainer review](#rules-from-maintainer-review)).
 
 ### Inline expansion
 
@@ -506,3 +555,102 @@ name it).
 which translation unit owns the data and produces a mangled name (`?Name@@3...`) that will
 not match the real one. If a global cannot be declared in its proper header yet, leave
 the function nonmatching without it and record why in the notes or PR description.
+
+## Rules from maintainer review
+
+These are drawn from review feedback on earlier PRs and take precedence where they
+conflict with looser guidance above. `tools/review-lint.py` lists added lines that often
+draw these comments; it is a reviewer's aid, every hit needs a judgement.
+
+- **Name parameters.** A function that matches must not keep `param_1`/`param_2`
+  placeholders. Name each argument from its role, the demangled Mac symbol, or its call
+  sites (`snake_case`). Keep `param_N` (or Hex-Rays `fVarN`) only when the signature is
+  genuinely unknown, and even then prefer the closest evidence-based name. This extends
+  to the base-class convention already used elsewhere (`ToBeDeleted(bool32_t delete_now)`,
+  `CallVirtualFunctionsForCreation(const MapCoords& coords)`, `PhysicsEditorCreate(int type)`).
+- **Know which symbol source is authoritative.** The Mac symbols (`config/BW1M119`) are
+  ground truth — the real names survived, with only subtle differences, so they are right
+  ~99% of the time. The Windows `symbols.txt` mangled names and return types, by contrast,
+  are reconstructed and can be wrong — `class` vs `struct`, `bool` vs `int`, a return type
+  that disagrees with the codegen, or an offset encoded relative to one symbol base that
+  resolves to a different one elsewhere. RTTI in the Windows binaries is absolute ground
+  truth for RTTI types. Before renaming a type or changing a signature, confirm the change
+  in objdiff *and* in the CI report, and check it does not regress other functions,
+  sections or data matches.
+- **Typedefs and `#define`d types don't survive in the mangling.** Two spellings of the
+  same underlying type — `BOOL` vs `int`, a `typedef` vs its expansion — mangle
+  identically, so the mangling leaves room to interpret which one the original wrote. The
+  game used `int` for booleans (likely `BOOL`), so the Mac symbol may show an `int`
+  parameter where the source said `BOOL`/`bool32_t`. Pick the spelling that reads best and
+  matches the surrounding code, and confirm the codegen is unchanged.
+- **Prefer `[u]intN_t` over the spelled-out equivalents** (`unsigned long`,
+  `unsigned char`, `unsigned short`, …) wherever it does not hurt matching — same size,
+  signedness and mangling. Plain `int` is fine. Do **not** use `uint16_t` for wide
+  characters; those are `wchar_t`.
+- **Show it matching.** A PR must demonstrate the result (objdiff 100% and the CI report),
+  not just assert it. Comment-only, analysis-only or "proposed" changes are not enough —
+  a macro or abstraction must be shown working and matching.
+- **Prefer the clearer of equal matches.** When two source shapes produce byte-identical
+  code (e.g. a member order reading `values[age]` vs the original order reading
+  `values[age - 1]`), the assembly does not pin the source down. Pick the more readable
+  form and note the ambiguity rather than treating the asm as proof of one shape.
+- **Format and rebase before review.** Run `clang-format` 22 on every touched file and
+  rebase onto the latest `main`; CI runs `check-format` and expects the report to show
+  the claimed improvement.
+- **Never use `_LH_3D_LIB_`.** Do not test it (`#ifdef`, `#if defined`) in source or headers,
+  and do not add it to the MSVC compile flags, to give LH3DLib units statics, members or
+  inline bodies that the game units do not see. The same goes for any other invented
+  library-only define. Its only place is LH3DP3.cpp's reproduced Intel C++ command line in
+  `configure.py`. When an LH3DLib declaration would break matched game code (an executable
+  hash, or a function, initializer or section that currently matches), treat it like a
+  global that cannot be declared yet (see [Globals](#globals)): leave the function that needs
+  it nonmatching and record why.
+- **One TU per PR.** Broad PRs over many units get tabled (#484). Prefer taking one
+  translation unit to `Matching` over partial progress across many, and wait for an open PR
+  that touches the same headers to land first.
+- **Ask the Mac binary before asking the reviewer.** What a body does (an empty destructor, a
+  helper's argument order) is in the BW1M119 code; `tools/mac-disasm.py` disassembles it
+  (#496). A new helper needs proof of where it lives and of its argument order. The Mac
+  symbol's class or namespace cannot be contradicted: resolve a duplicate inside it rather
+  than moving the function out (#501).
+- **Rename the placeholders your code uses.** New code that reads a `field_0x…`, `param_N` or
+  offset-named member (`Material0x58`) renames it in the same PR (#494). An address- or
+  offset-suffixed name (`GetDistanceInMetres_0074cd50`) is not a name (#501).
+- **Related values are an enum.** A set of values for one property
+  (`LIVING_LOOK_AT_SPEED_SLOW`/`_NORMAL`/`_FAST`) is a named enum in the owning header, not a
+  run of `#define`s (#501).
+- **Header code stays in headers.** A function a TU only instantiates from a header (an inline
+  or template body, COMDAT, `scope:weak`) is defined inline in that header, not in the TU's
+  `.cpp` (#441).
+- **Member-pointer tables** follow `VillagerStates.h` (#515): declare the entry struct while
+  its class is only forward-declared (MSVC's general 16-byte representation without `/vmg`) and
+  make the table a static member of the entry struct in its own small header. A static
+  member in a widely included class header bumps `_$E`/`_$S` in every consumer.
+- **Only ask real questions.** Odd code that matches is not a question for review: "If it
+  matches it matches" (#486). Raise only decisions the evidence cannot settle.
+
+### Naming and values (from @qwerin's #425 review)
+
+- **Model values, don't relocate them.** Wrapping a literal in a macro
+  (`#define X (Y + 4)`) is still a magic number. Work out what the value *is* — an enum
+  count, a slot in a table with known entries, a flag — and model that, starting the enum
+  from the known entries (e.g. the belief `Attributes[]` slots named from the functions
+  that fill them). Never reuse a `chlasm` name that only coincidentally has the same value.
+- **Name anything used in a significant way** — field, function, enum value, flag, or
+  parameter — from context: find what sets and reads it, then name it by its role. Fields
+  that are only saved/loaded and never read may stay `field_0x…`, but say so in the PR.
+- **Placement.** Standalone counts/sizes are `#define`s in the owning header (no anonymous
+  enums); new named enums go in the owning class's header.
+  `include/chlasm/*.h` comes from Creature Isle but is usable for Black & White; where its
+  last enumerator is too large it needs `#ifdef VERSION_BW1WCI` guards.
+- **Watch include/link side effects.** A new `#include` in a shared header reaches every
+  unit that transitively includes it and can change their objects for *other* versions — an
+  extra include in `CreatureMentalAttributeTest.h` changed `Audio.cpp`'s 1.00 object and
+  broke the BW1W100 hash while 1.20 still passed. Include heavy headers in the `.cpp` that
+  needs them, and compile changed files for BW1W100/BW1W110 as well.
+- **Verify readability passes with `tools/codegen-check.py snapshot`/`compare`**, not
+  `decomp-regress` against a `main` baseline — the latter cannot see a drop in a function
+  the PR itself adds (it was 0% in the baseline). Note `(status & F) == F` and `status & F`
+  compile differently.
+- **Rebuild the `main` baseline after `main` moves**, otherwise merged upstream work shows
+  up as false regressions.

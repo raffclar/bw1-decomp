@@ -17,9 +17,12 @@
 #include "LHMPServerStartInfo.h"
 #include "LHSession.h"
 #include "LHMessageServer.h"
-#include "LHNetLog.h"
+#include "LHNetErrors.h"
 #include "LHPlayer.h"
 #include "LHServerListener.h"
+
+static LHErrorCode* LHLogErrorCodes = LH_NET_Errors;
+static char*        LHLogLibraryName = "MultiplayerLib";
 
 enum
 {
@@ -455,7 +458,6 @@ LHMessageServer* LHLobby::StartInternalMessageServer(LHNetUser* user, char* name
                                                      LH_USER_ID    player_ids[])
 {
 	LHMPServerStartInfo info;
-	memset(&info, 0, sizeof(info));
 	info.ListenerAddress = &LH_LIONHEAD_DEFAULT_LISTNER_ADDRESS;
 
 	LHMessageServer* server = new LHMessageServer();
@@ -771,8 +773,7 @@ void LHLobbyChannel::ClearInternalMessageServer()
 		{
 			if (InternalMessageServer->Mode != LH_OPERATING_MODE_NONE)
 			{
-				Session->Write(
-					LHNetEvent::CreateSimple(LH_NETEVENT_TYPE_CLIENT_SHUTDOWN_SERVER, LH_ALL_USERS, 0, NULL));
+				Session->Write(LHNetEvent::CreateSimple(LH_NETEVENT_TYPE_CLIENT_SHUTDOWN_SERVER, LH_EVERYONE, 0, NULL));
 				InternalMessageServer->WaitUntilShutdown();
 			}
 			if (InternalMessageServer->Mode != LH_OPERATING_MODE_NONE)

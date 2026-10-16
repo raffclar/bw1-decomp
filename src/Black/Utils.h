@@ -11,6 +11,7 @@
 class Abode;
 struct JustMapXZ;
 struct LH3DColor;
+struct LHCoord;
 struct LHPoint;
 struct MapCoords;
 
@@ -43,13 +44,17 @@ struct GUtils
 	// BW1W120 0074cca0 BW1M119 013d2a10
 	static void SetupUtils();
 	// BW1W120 0074ccb0 BW1M119 0104bfa0
-	static void GetDistance(const MapCoords& param_1, const MapCoords& param_2);
+	static long GetDistance(const MapCoords& from, const MapCoords& to);
+	// BW1W120 0074cce0 BW1M119 null
+	static long GetDistance(const MapCoords* from, const MapCoords* to);
+	// BW1W120 0074cd50 BW1M119 null
+	static float GetDistanceInMetres(const MapCoords* from, const MapCoords* to);
 	// BW1W120 0074cd70 BW1M119 0104bf00
 	static float GetDistanceInMetres(const MapCoords& param_1, const MapCoords& param_2);
 	// BW1W120 0074cde0 BW1M119 01036610
 	static float GetDistance(const LHPoint& a, const LHPoint& b);
-	// BW1W120 0074cd50 BW1M119 null
-	static float GetDistanceInMetres_0074cd50(const MapCoords& param_1, const MapCoords& param_2);
+	// BW1W120 0074caf0 BW1M119 01076080
+	static void __fastcall SetPointFromScreenPointAndDistance(LHCoord* coord, float distance, LHPoint* point);
 	// BW1W120 0074d200 BW1M119 010516f0
 	static long GetAngleFromDXDZ(long dx, long dz);
 	// BW1W120 0074d240 BW1M119 01051760
@@ -62,6 +67,8 @@ struct GUtils
 	static const JustMapXZ* Spiral(long& param_1, long& param_2);
 	// BW1W120 0074d810 BW1M119 01024840
 	static void SpiralIncrement(MapCoords& param_1, long& param_2, long& param_3, float param_4);
+	// BW1W120 0074dbf0 BW1M119 01358130
+	static unsigned long Spread(unsigned long index, unsigned long range);
 	// BW1W120 0074dc50 BW1M119 0104f6e0
 	static float ConvertGameAngleTo3D(long angle);
 	// BW1W120 0074dc80 BW1M119 0101b2e0
@@ -70,6 +77,12 @@ struct GUtils
 	static float ConvertWholeDistanceToMeters(int param_1);
 	// BW1W120 0074dce0 BW1M119 01590e30
 	static int ConvertMetersToWholeDistance(float meters);
+	// BW1W120 0074e1d0 BW1M119 01105a50
+	static long MetersToWholeX(float meters);
+	// BW1W120 0074e200 BW1M119 015728d0
+	static long MetersToWholeZ(float meters);
+	// BW1W120 0074e270 BW1M119 015a1bf0
+	static float ShapePosToMeters(float pos);
 	// BW1W120 0074dd70 BW1M119 011a8630
 	static Abode* FindClosestAbode(const MapCoords& pos, TRIBE_TYPE tribe_type, int param_3, int param_4, int param_5);
 	// BW1W120 0074e2b0 BW1M119 013e5570
@@ -94,6 +107,10 @@ struct GUtils
 	static float GetXByAngle(unsigned short angle, float distance);
 	// BW1W120 0074d380 BW1M119 015962c0
 	static float GetZByAngle(unsigned short angle, float distance);
+	// BW1W120 0074d3e0 BW1M119 01590b30
+	static long GetXByAngleHugeDistance(unsigned short angle, long distance);
+	// BW1W120 0074d400 BW1M119 01590080
+	static long GetZByAngleHugeDistance(unsigned short angle, long distance);
 	// BW1W120 0074d420 BW1M119 011685f0
 	static int GetXByAngleMetersDistance(unsigned short angle, float distance);
 	// BW1W120 0074d450 BW1M119 0116fc20
@@ -101,7 +118,7 @@ struct GUtils
 	// BW1W120 0074ce10 BW1M119 012f8450
 	static int FastDistance(const MapCoords& param_1, const MapCoords& param_2);
 	// BW1W120 0074ecc0 BW1M119 010f1390
-	static void GetMidPoint(MapCoords& param_1, MapCoords& param_2, float param_3);
+	static MapCoords GetMidPoint(MapCoords& from, MapCoords& to, float distance);
 	// BW1W120 0074dc30 BW1M119 015a09e0
 	static uint32_t ConvertAngle3DToGame(float param_1);
 	// BW1W120 0074cf30 BW1M119 013d2e80

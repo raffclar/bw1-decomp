@@ -1,4 +1,5 @@
 #include "GameTimeConstants.h"
+#include "VillagerStates.h"
 #include "VillagerStateTableInfo.h"
 
 #include <stdlib.h> /* For max */
@@ -25,6 +26,8 @@
 #include "Town.h"
 #include "Utils.h"
 #include "Villager.h"
+
+#define FILEPATH "C:\\dev\\MP\\Black\\VillagerStates.cpp"
 
 GVillagerStateTableInfo GVillagerStateTableInfo::Infos[VILLAGER_STATE_LAST_STATE];
 
@@ -170,16 +173,10 @@ bool32_t Villager::ArrivesAtStoragePitForResource(RESOURCE_TYPE resourceType, un
 			Object*   pot = (Object*)GetTown()->GetTemporaryResourceStorePotOrPos(Pos, storePos, resourceType);
 			if (pot != NULL)
 			{
-				LHPoint       edgePos = pot->GetNearestEdgeOfObject(this);
-				LH3DMapCoords lh3dCoords;
-				storePos.x = (int)(edgePos.x * 6553.6f);
-				storePos.z = (int)(edgePos.z * 6553.6f);
-				float fixedX = edgePos.x * 65536.0f;
-				float fixedZ = edgePos.z * 65536.0f;
-				lh3dCoords.x = (int)(fixedX * 0.001f);
-				lh3dCoords.z = (int)(fixedZ * 0.001f);
-				lh3dCoords.altitude = 0.0f;
-				storePos.altitude = edgePos.y - LH3DIsland::GetAltitude(lh3dCoords);
+				LHPoint edgePos = pot->GetNearestEdgeOfObject(this);
+				storePos.SetX(edgePos.x);
+				storePos.SetZ(edgePos.z);
+				storePos.altitude = edgePos.y - LH3DIsland::GetAltitude(LH3DMapCoords(edgePos.x, edgePos.z));
 				if (AreWeThere(storePos, 0.0f))
 				{
 					pot->RemoveResource(resourceType, amount, NULL, NULL);
@@ -521,13 +518,12 @@ bool32_t Villager::Drowning()
 }
 
 // BW1W120 0076a7e0 BW1M119 015a1430
-// TODO: the max() macro double-evaluates both arms, baking GameRand __FILE__/__LINE__ into
-// several calls — cannot match in a split TU
+// TODO: the max() macro double-evaluates both arms; register allocation differs
 bool32_t Villager::MakeScaredStiff()
 {
-	TurnsUntilNextStateChange = (int16_t)max(
-		(float)(uint32_t)GRand::GameRand(((const GVillagerInfo*)info)->ScaredStiffTime, __FILE__, __LINE__),
-		GRand::GameFloatRand(5.0f, __FILE__, __LINE__) + 10.0f);
+	TurnsUntilNextStateChange =
+		(int16_t)max((float)(uint32_t)GRand::GameRand(GetInfo()->ScaredStiffTime, FILEPATH, 604),
+	                 GRand::GameFloatRand(5.0f, FILEPATH, 604) + 10.0f);
 	SetTopState(VILLAGER_STATE_SCARED_STIFF);
 	ScaredStiff();
 	return true;
@@ -580,7 +576,7 @@ bool32_t Villager::SetupInspectObject(Object* param_1)
 bool32_t Villager::InspectObject()
 {
 	GameThingWithPos* target = (GameThingWithPos*)TargetThing;
-	if (target != NULL && LookAtObject(target, 1) == 0)
+	if (target != NULL && LookAtObject(target, LIVING_LOOK_AT_SPEED_NORMAL) == false)
 	{
 		return true;
 	}
@@ -619,8 +615,7 @@ bool32_t Villager::EnterSex(unsigned char param_1, unsigned char param_2)
 // BW1W120 0076acf0 BW1M119 015a0b50
 // TODO: needs GUtils::AddDistanceFromAngle declared (its target symbol is thiscall but the
 // body is cdecl) and the JustWholeMapXZ class/struct keyword reconciled with the MapCoords
-// ctor; GameRand __FILE__/__LINE__ cannot match in a split TU (same blockers as
-// SetupNewScriptWander in VillagerScript.cpp)
+// ctor (same blockers as SetupNewScriptWander in VillagerScript.cpp)
 bool32_t Villager::SetupWander(JustWholeMapXZ& wander_area, VILLAGER_STATES state)
 {
 	return false;
@@ -641,14 +636,12 @@ bool32_t Villager::InHand()
 // BW1W120 0076afe0 BW1M119 inlined
 bool32_t Villager::EnterInHand(uint8_t param_1, uint8_t param_2)
 {
-	// field_0x10c is a float slot elsewhere; this state stashes the (remapped) disciple
-	// type into its raw bits, hence the reinterpret store rather than a float conversion.
 	uint32_t discipleType = DiscipleType;
 	if (discipleType == VILLAGER_DISCIPLE_MISSIONARY)
 	{
 		discipleType = VILLAGER_DISCIPLE_NONE;
 	}
-	*(uint32_t*)&field_0x10c = discipleType;
+	DiscipleOnPickUp = (VILLAGER_DISCIPLE)discipleType;
 	return 1;
 }
 
@@ -730,19 +723,17 @@ bool32_t Villager::GotoCongregateInTownAfterEmergency()
 }
 
 // BW1W120 0076b300 BW1M119 015a0190
-// TODO: GameRand's __FILE__/__LINE__ default args can't match the original line numbers
-// in a split TU (costs the file-string + line-number arg pushes per call). Rest matches.
 bool32_t Villager::CongregateInTownAfterEmergency()
 {
 	if (GetTown() != NULL && GetTown()->IsInStateOfEmergency())
 	{
-		int state = GRand::GameRand(12, __FILE__, __LINE__) ? VILLAGER_STATE_GOTO_CONGREGATE_IN_TOWN_AFTER_EMERGENCY
-		                                                    : VILLAGER_STATE_GO_HOME;
+		int state = GRand::GameRand(12, FILEPATH, 944) ? VILLAGER_STATE_GOTO_CONGREGATE_IN_TOWN_AFTER_EMERGENCY
+		                                               : VILLAGER_STATE_GO_HOME;
 		PlayAnimThenSetState(state, 1);
 		return true;
 	}
-	int state = GRand::GameRand(5, __FILE__, __LINE__) ? VILLAGER_STATE_GOTO_CONGREGATE_IN_TOWN_AFTER_EMERGENCY
-	                                                   : VILLAGER_STATE_DECIDE_WHAT_TO_DO;
+	int state = GRand::GameRand(5, FILEPATH, 940) ? VILLAGER_STATE_GOTO_CONGREGATE_IN_TOWN_AFTER_EMERGENCY
+	                                              : VILLAGER_STATE_DECIDE_WHAT_TO_DO;
 	PlayAnimThenSetState(state, 1);
 	return true;
 }
@@ -762,7 +753,7 @@ bool32_t Villager::GoAndChilloutOutsideHome()
 // BW1W120 0076b4e0 BW1M119 010623b0
 bool32_t Villager::SitAndChillout()
 {
-	uint32_t turns = (uint16_t)TurnsUntilNextStateChange;
+	uint16_t turns = TurnsUntilNextStateChange;
 	TurnsUntilNextStateChange = turns - 1;
 	if ((int16_t)turns > 0)
 	{
@@ -779,7 +770,7 @@ bool32_t Villager::SitAndChillout()
 	{
 		return true;
 	}
-	if (GRand::GameRand(10, __FILE__, __LINE__) == 0)
+	if (GRand::GameRand(10, FILEPATH, 1023) == 0)
 	{
 		SetupNothingToDo();
 		return true;
@@ -810,7 +801,7 @@ bool32_t Villager::GoAndChilloutInTown()
 	{
 		MapCoords congregationPos = town->GetCongregationPos();
 		GetMeToMyChillOutPos((int (Villager::*)(MapCoords&))&Villager::GetChillOutPos, congregationPos,
-		                     town->GetInfo()->field_0x140, congregationPos);
+		                     town->GetInfo()->ChillOutRadius, congregationPos);
 		return true;
 	}
 	SetTopState(VILLAGER_STATE_DECIDE_WHAT_TO_DO);

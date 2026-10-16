@@ -5,6 +5,7 @@
 #include <stddef.h> /* For NULL */
 #include <stdint.h> /* For uint32_t */
 
+#include "GTPointer.h"          /* For class GTPointer */
 #include "PSysRenderParticle.h" /* For struct RenderParticle */
 
 // Forward Declares
@@ -79,7 +80,7 @@ public:
 class RenderParticleGameObjectRef : public RenderParticle
 {
 public:
-	uint8_t field_0x18[0x8];
+	GTPointer<Object> GameObject;
 
 	// Override methods
 
@@ -98,10 +99,12 @@ public:
 	// BW1W120 006c8120 BW1M119 0142c0f0
 	virtual char* GetDebugText();
 	// BW1W120 006957e0 BW1M119 014253a0
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 
 	// BW1W120 006c80f0 BW1M119 01484d10
 	RenderParticleGameObjectRef();
+	// BW1W120 006c8150 BW1M119 01484c40
+	RenderParticleGameObjectRef(Object* object);
 };
 
 class RenderParticleGoldenShower : public RenderParticleGameObjectRef
@@ -114,18 +117,20 @@ public:
 	// BW1W120 0067b0f0 BW1M119 013f7b70
 	virtual void DrawAt(const DrawData& data);
 	// BW1W120 00695850 BW1M119 01425330
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 006cc3c0 BW1M119 0148c0b0
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0055efc0 BW1M119 0142c000
 	virtual uint32_t GetSaveType() { return GAME_THING_TYPE_RENDER_PARTICLE_GOLDEN_SHOWER; }
 	// BW1W120 006c80c0 BW1M119 01484dd0
 	virtual ~RenderParticleGoldenShower();
 	// BW1W120 0055efd0 BW1M119 0142c050
-	virtual char* GetDebugText() { return "##a_class:"; }
+	virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 
 	// BW1W120 0055efa0 BW1M119 inlined
 	RenderParticleGoldenShower() { Shower = NULL; }
+	// BW1W120 inlined BW1M119 inlined
+	RenderParticleGoldenShower(Object* object) : RenderParticleGameObjectRef(object) { Shower = NULL; }
 };
 
 class RenderParticleMist : public RenderParticle

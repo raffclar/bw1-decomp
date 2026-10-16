@@ -32,6 +32,7 @@ enum LH3D_MESH_FLAGS
 struct LH3DMesh;
 struct LH3DSubMesh;
 struct LH3DTexture;
+struct LHMatrix;
 struct LHPoint;
 
 struct SubmeshName
@@ -59,7 +60,7 @@ struct LH3DMesh
 	char            magic[0x4]; /* 0x0 */
 	uint32_t        flags;
 	uint32_t        size;
-	uint32_t        SubmeshCount;
+	int             SubmeshCount;
 	LH3DSubMesh**   submeshes; /* 0x10 */
 	LH3DBoundingBox BoundingBox;
 	uint32_t        AnotherOffset; /* 0x34 */
@@ -74,6 +75,15 @@ struct LH3DMesh
 	static LH3DMeshPack* MeshPack; /* 0x00e9fe34 */
 	// BW1W120 00e9fe28 BW1M119 01215a7c (LHCombined Release)
 	static bool g_hinge_only;
+	// BW1W120 00c37d8c BW1M119 011cfb28 (LHCombined Release)
+	static unsigned long g_color;
+	// BW1W120 00c37d90 BW1M119 011cfb2c (LHCombined Release)
+	static unsigned long g_special_color;
+	// BW1W120 00e9fe2c BW1M119 01215a60 (LHCombined Release)
+	static unsigned long g_specular;
+	// The bone matrices of the object being drawn.
+	// BW1W120 00e9fe48 BW1M119 01215a40 (LHCombined Release)
+	static LHMatrix* g_current_matrix;
 
 	// Static methods
 
@@ -95,11 +105,15 @@ struct LH3DMesh
 	static void CreatePackInternal(const void* data);
 	// BW1W120 00807c60 BW1M119 01069000 (LHCombined Release)
 	static void CreatePack();
+	// BW1W120 007acdd0 BW1M119 0100d440 (LHCombined Release)
+	static LHMatrix* GetCurrentMatrix();
 
 	// Non-virtual methods
 
 	// BW1W120 inlined BW1M119 0102dc80
 	LH3DBoundingBox& GetBoundingBox() { return BoundingBox; }
+	// BW1W120 0080b250 BW1M119 01064300 (LHCombined Release)
+	void SetAllTextures(LH3DTexture* texture);
 
 	// BW1W120 inlined BW1M119 01010fd0
 	bool32_t IsContainsLandscapeFeature() { return flags & LH3D_MESH_FLAGS_CONTAINS_LANDSCAPE_FEATURE; }

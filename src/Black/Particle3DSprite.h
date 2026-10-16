@@ -35,7 +35,7 @@ public:
 	// BW1W120 006c9e40 BW1M119 01057680
 	virtual void GameUpdate(AtomCore* core);
 	// BW1W120 006cc630 BW1M119 0148bdb0
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0055f040 BW1M119 0142bb40
 	virtual uint32_t GetSaveType() { return GAME_THING_TYPE_RENDER_PARTICLE_3D_SPRITE; }
 	// BW1W120 00699d80 BW1M119 01420730
@@ -43,11 +43,11 @@ public:
 	// BW1W120 006c9e00 BW1M119 01094130
 	virtual ~Particle3DSprite();
 	// BW1W120 0055f050 BW1M119 inlined
-	virtual char* GetDebugText() { return "##a_class:"; }
+	virtual char* GetDebugText() { return PSYS_DEBUG_TEXT; }
 	// BW1W120 0055f060 BW1M119 inlined
 	virtual Particle3DSprite* IsParticle3DSprite() { return this; }
 	// BW1W120 00695ac0 BW1M119 inlined
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 
 	// BW1W120 0055f000 BW1M119 inlined
 	Particle3DSprite()

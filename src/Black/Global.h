@@ -22,19 +22,19 @@ struct GGlobal
 	GDebug   debug;
 	bool32_t EditorMode;
 	uint32_t field_0x2d2b0;
-	uint32_t field_0x2d2b4;
+	bool32_t ReactionsEnabled;
 	uint32_t field_0x2d2b8;
 	uint32_t field_0x2d2bc;
 	uint32_t field_0x2d2c0;
 	uint32_t field_0x2d2c4;
 	uint32_t field_0x2d2c8;
-	uint32_t field_0x2d2cc;
+	bool32_t RandomiseCreatureMinds;
 	uint32_t field_0x2d2d0;
 	uint32_t field_0x2d2d4;
 	uint32_t field_0x2d2d8;
 	uint32_t field_0x2d2dc;
 	uint32_t field_0x2d2e0;
-	Prss*    field_0x2d2e4; // Active editor interface; concrete subtype unrecovered.
+	Prss*    Editor; // Active editor interface; concrete subtype unrecovered.
 	uint8_t  field_0x2d2e8[0xc];
 	char     CurrentDirectory[0x100]; /* 0x2d2f4 */
 	uint8_t  field_0x2d3f4[0x10c];

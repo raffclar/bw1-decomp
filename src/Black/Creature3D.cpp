@@ -92,12 +92,6 @@ const int BruiseHealTimes[8] = {32, 64, 64, 64, 64, 64, 64, 1};
 const float MoveTimeStep = 0.1f;
 const float MoveAcceleration = 12.0f;
 
-// Abode.cpp defines these the same way; Camera.h only declares them.
-inline void GCamera::GetPosition(LHPoint& pos)
-{
-	pos = LH3DTech::g_camera.pos;
-}
-
 inline float GCamera::GetDistance(const LHPoint& point)
 {
 	LHPoint pos;
@@ -2251,7 +2245,7 @@ bool32_t LH3DCreature::StartMovingToPoint(const LHPoint& pos, float param_2, flo
 	MoveState = LH3D_CREATURE_STATE_MOVING;
 	if (creature)
 	{
-		GLandscape::ConvertLandscapePointToMapCoord(dest, creature->field_0x1214);
+		GLandscape::ConvertLandscapePointToMapCoord(dest, creature->DestPos);
 		creature->field_0x1118 = 1;
 	}
 	return 4;
@@ -3874,7 +3868,7 @@ void LH3DCreature::DoStaticAction()
 				GLandscape::ConvertLandscapePointToMapCoord(anus, coords);
 				MobileObject* poo =
 					MobileObject::Create(coords, &GMobileObjectInfo::GetInfo()[MOBILE_OBJECT_INFO_LUMP_OF_POO], NULL,
-				                         GRand::GameFloatRand(6.2831855f, CREATURE_3D_FILE, 4870), Size1 * 1.5f);
+				                         (GRand::GameFloatRand(6.2831855f, CREATURE_3D_FILE, 4870)), Size1 * 1.5f);
 				poo->Pos.altitude = anus.y - GetAltitude(anus);
 				float   angle = Heading + 3.1415927f;
 				LHPoint velocity(5.0f * (float)sin(angle), 0.0f, 5.0f * -(float)cos(angle));
@@ -3890,8 +3884,8 @@ void LH3DCreature::DoStaticAction()
 					// TODO: CreaturePhysical::field_0x2c is the float AmountOfPoo (BW1M119 GetAmountOfPoo reads 0x2c).
 					creature->physical->field_0x2c = 0;
 					CreatureDesires& desires = creature->mind->desires;
-					desires.field_0x148[CREATURE_DESIRE_TO_POO] = 0.0f;
-					CLAMP(desires.field_0x148[CREATURE_DESIRE_TO_POO], 0.0f, 1.0f);
+					desires.Levels[CREATURE_DESIRE_TO_POO] = 0.0f;
+					CLAMP(desires.Levels[CREATURE_DESIRE_TO_POO], 0.0f, 1.0f);
 					creature->mind->desires.SuppressDesire(CREATURE_DESIRE_TO_POO, 60.0f);
 					creature->NumPoos++;
 				}
@@ -5374,7 +5368,7 @@ void LH3DCreature::DoFightActionAction()
 								                  belief, belief, NULL, 1.0f);
 								winner->ForceActivityAndForceAction(plan, 1, 1);
 								winner->NumBattlesWon++;
-								winner->field_0x10b0 = 1;
+								winner->FightEnded = true;
 								if (winner->GetPlayer())
 								{
 									Reaction::CreateReaction(winner, REACTION_REACT_TO_FIGHT_WON, winner->GetPlayer(),
@@ -5382,7 +5376,7 @@ void LH3DCreature::DoFightActionAction()
 								}
 							}
 							loser->Faint();
-							loser->field_0x10b0 = 1;
+							loser->FightEnded = true;
 						}
 					}
 					else

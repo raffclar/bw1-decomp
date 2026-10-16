@@ -14,10 +14,13 @@
 class Base;
 class Creature;
 class GInterfaceStatus;
+class GPlayer;
+class GTreeInfo;
 class GameOSFile;
 class GameThing;
 class GameThingWithPos;
 struct GestureSystemPacketData;
+struct LH3DMesh;
 class LHOSFile;
 struct LHPoint;
 struct MapCoords;
@@ -28,11 +31,17 @@ class PhysicsObject;
 class DeadTree : public Rock
 {
 public:
+	uint32_t field_0x94;
+	uint32_t field_0x98;
+	float    WoodMultiplier;
+
 	// BW1W120 00511210 BW1M119 010c5820
 	static void Init();
 	// BW1W120 00511250 BW1M119 010c57a0
 	static void Close();
-	uint8_t     field_0x94[0xc];
+	// BW1W120 00510bb0 BW1M119 010c6960
+	static DeadTree* Create(const MapCoords& coords, const GTreeInfo* info, GPlayer* player, float param_4,
+	                        float param_5, float param_6, float param_7, LH3DMesh* mesh);
 
 	// Override methods
 
@@ -47,9 +56,9 @@ public:
 	// BW1W120 0071be30 BW1M119 015176b0
 	virtual uint32_t GetGuidanceResourceType();
 	// BW1W120 00511630 BW1M119 010c4ee0
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 005115c0 BW1M119 010c4fc0
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 005109e0 BW1M119 010c71c0
 	virtual uint32_t GetSaveType();
 	// BW1W120 005109d0 BW1M119 inlined
@@ -100,7 +109,7 @@ public:
 	// BW1W120 005109b0 BW1M119 010c4430
 	virtual uint32_t InterfaceTap(GInterfaceStatus* param_1);
 	// BW1W120 00511100 BW1M119 010c5ba0
-	virtual uint32_t GetPhysicsConstantsType();
+	virtual PHYSICS_CONSTANTS_TYPE GetPhysicsConstantsType();
 	// BW1W120 00511170 BW1M119 010c5970
 	virtual void SetUpPhysOb(PhysOb* param_1);
 	// BW1W120 005113f0 BW1M119 010c53a0

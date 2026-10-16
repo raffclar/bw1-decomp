@@ -28,14 +28,20 @@ public:
 	uint32_t field_0x268;
 	uint32_t field_0x26c;
 	uint32_t field_0x270;
-	uint32_t field_0x274;
-	float    field_0x278[0x3];
+	float    MinDesireLevel;
+	float    field_0x278;
+	float    MinDesireIncreaseTime;
+	float    MaxDesireIncreaseTime;
 	uint32_t field_0x284;
 	float    field_0x288[0x8];
 	uint32_t field_0x2a8;
-	float    field_0x2ac[0x26];
+	float    field_0x2ac[0x9];
+	float    MaxDesireLevelFeedbackScale;
+	float    field_0x2d4[0x2];
+	float    SecondsBeforeReactingToSameCreatureAgain;
+	float    field_0x2e0[0x19];
 	uint32_t field_0x344;
-	float    field_0x348[0xf];
+	float    MaxAlignmentChangePerGameTurn[0xf];
 	float    AlignmentChangeScale; /* 0x384 */
 	float    field_0x388[0x3];
 

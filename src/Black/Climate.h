@@ -47,6 +47,8 @@ public:
 	static void ProcessAll();
 	// BW1W120 007714b0 BW1M119 01026110
 	static bool IsRaining(const LHPoint& point);
+	// BW1W120 00771b10 BW1M119 015a8970
+	static LHPoint GetWindAtPoint(const LHPoint* point, bool recalc);
 
 	LH3DMapCoords            Pos;
 	uint8_t                  field_0x20[0x14];
@@ -66,9 +68,9 @@ public:
 	// BW1W120 0055ded0 BW1M119 015a5f10
 	virtual char* GetDebugText() { return "Climate:"; }
 	// BW1W120 007736e0 BW1M119 015a5f50
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 00773320 BW1M119 015a6820
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0055dec0 BW1M119 015a5ed0
 	virtual uint32_t GetSaveType() { return GAME_THING_TYPE_GCLIMATE; }
 

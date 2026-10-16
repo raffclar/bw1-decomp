@@ -37,15 +37,15 @@ public:
 	// BW1W120 0055df50 BW1M119 015aad40
 	virtual char* GetDebugText() { return "WeatherThing:"; }
 	// BW1W120 007747e0 BW1M119 015aad80
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 007745c0 BW1M119 015ab0a0
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0055df40 BW1M119 015aad00
 	virtual uint32_t GetSaveType() { return GAME_THING_TYPE_WEATHER_THING; }
 	// BW1W120 007742e0 BW1M119 015ab980
 	virtual void SetPos(const MapCoords& param_1);
 	// BW1W120 00774580 BW1M119 015ab420
-	virtual void SetSpeedInMetres(float param_1, int param_2);
+	virtual void SetSpeedInMetres(float speed_in_metres, bool32_t scale_speed);
 	// BW1W120 0055df10 BW1M119 015aac40
 	virtual bool32_t IsWeather() const { return true; }
 	// BW1W120 0055df30 BW1M119 015aacc0

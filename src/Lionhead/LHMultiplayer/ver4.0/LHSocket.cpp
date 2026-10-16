@@ -9,9 +9,12 @@
 #include <Lionhead/LHLog/ver4.0/LHLogger.h>
 #include <zlib/zlib.h>
 
-#include "LHNetLog.h"
+#include "LHNetErrors.h"
 #include "LHPacket.h"
 #include "LHTransportInfo.h"
+
+static LHErrorCode* LHLogErrorCodes = LH_NET_Errors;
+static char*        LHLogLibraryName = "MultiplayerLib";
 
 enum
 {
@@ -24,7 +27,7 @@ enum
 	LH_SOCKET_PACKET_HEADER_SIZE = sizeof(LHPacketHeader) - LH_SOCKET_PACKET_LENGTH_SIZE,
 };
 
-int LHSocket::InitFlag;
+int LHSocket::InitFlag = 0;
 
 LHSocket::LHSocket()
 {

@@ -21,13 +21,8 @@ enum VMType
 enum VMScriptType
 {
 	VMScriptType_0 = 0x0,
+	VMScriptType_RunWhilePaused = 0x18,
 	_VMScriptType_COUNT = 0x1
-};
-
-enum STATE_TYPE
-{
-	STATE_TYPE_0 = 0x0,
-	_STATE_TYPE_COUNT = 0x1
 };
 
 // Forward Declares
@@ -46,7 +41,7 @@ public:
 	uintptr_t FindScript;
 	void(__cdecl* AutoStart_ptr)(LHTransport* transport); /* 0x40 */
 	uintptr_t StopTask;
-	uintptr_t StopAllTasks_ptr;
+	void(__cdecl* StopAllTasks_ptr)(LHTransport* transport);
 	uintptr_t StopTasksOfType_ptr;
 	uintptr_t POP_ptr; /* 0x50 */
 	uintptr_t PUSH_ptr;
@@ -138,6 +133,8 @@ public:
 
 	// Non-virtual methods
 
+	// BW1W120 006f6840 BW1M119 0108e380
+	void LookIn(VMScriptType script_type);
 	// BW1W120 006f68c0 BW1M119 014efc20
 	void AutoStart();
 	// BW1W120 006f68f0 BW1M119 014efbb0

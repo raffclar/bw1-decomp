@@ -16,7 +16,12 @@ struct LHPoint;
 class PSysSound : public PSysBase
 {
 public:
-	uint8_t field_0x14[0x2c];
+	PSysSound* Previous;
+	PSysSound* Next;
+	long       Action;
+	uint8_t    field_0x20[0xc];
+	long       FadeStep;
+	uint8_t    field_0x30[0x10];
 
 	// Override methods
 
@@ -27,9 +32,9 @@ public:
 	// BW1W120 006d0f40 BW1M119 0148ee00
 	virtual char* GetDebugText();
 	// BW1W120 006d13a0 BW1M119 0148efd0
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 006d14a0 BW1M119 0148ee40
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 006d0f30 BW1M119 0148edc0
 	virtual uint32_t GetSaveType();
 

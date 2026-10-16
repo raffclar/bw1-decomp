@@ -201,10 +201,10 @@ void GameStats::FillInTownStatsStructure()
 		TownStats.FinalMalePopulation += town->stats.NumMales;
 		TownStats.FinalFemalePopulation += town->stats.NumFemales;
 		TownStats.FinalTotalPopulationCapacity += town->stats.MaxVillagersInAbodes;
-		TownStats.FinalTotalPopulationCapacity += town->stats.field_0x40;
+		TownStats.FinalTotalPopulationCapacity += town->stats.MaxChildrenInAbodes;
 		TownStats.TownsOwned++;
-		TownStats.TotalCivicBuildings += town->stats.field_0x1c;
-		TownStats.TotalAbodes += town->stats.field_0x10;
+		TownStats.TotalCivicBuildings += town->stats.NumCivicBuildings;
+		TownStats.TotalAbodes += town->stats.NumAbodes;
 		TownStats.TotalBuildings += TownStats.TotalAbodes + TownStats.TotalCivicBuildings;
 		TownStats.TotalWonders += town->stats.NumAbodesOfNumber[ABODE_NUMBER_WONDER];
 	}
@@ -532,7 +532,7 @@ uint32_t GameStats::GetCreatureNumMushroomsEaten()
 	return 0;
 }
 
-uint32_t GameStats::Load(GameOSFile& file)
+bool32_t GameStats::Load(GameOSFile& file)
 {
 	if (GameThing::Load(file))
 	{
@@ -624,12 +624,12 @@ uint32_t GameStats::Load(GameOSFile& file)
 		file.ReadIt(TotalChantsUsed);
 		file.ReadIt(TotalNumSacrifices);
 		file.ReadIt(NumTownsAtStart);
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
-uint32_t GameStats::Save(GameOSFile& file)
+bool32_t GameStats::Save(GameOSFile& file)
 {
 	if (GameThing::Save(file))
 	{
@@ -721,9 +721,9 @@ uint32_t GameStats::Save(GameOSFile& file)
 		file.WriteIt(TotalChantsUsed);
 		file.WriteIt(TotalNumSacrifices);
 		file.WriteIt(NumTownsAtStart);
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 void GameStats::SaveExtraData(GameOSFile& file)
@@ -1049,9 +1049,9 @@ void GameStatsPackage::SetToZero()
 
 char* GameStatsPackage::GetDatabaseStatsString()
 {
-	GameStatsStringList list;
-	unsigned long       length = 0;
-	unsigned long       users[4];
+	LHListHeadTail<GameStatsListString> list;
+	unsigned long                       length = 0;
+	unsigned long                       users[4];
 	memset(users, 0, sizeof(users));
 	GameStatsListString* string;
 	for (unsigned long i = 0; i < 4; i++)
@@ -1530,7 +1530,7 @@ char* GameStatsPackage::GetDatabaseStatsString()
 			list.AddToTail(string);
 			length += strlen(string->GetString());
 
-#ifndef VERSION_BW1W120
+#if !defined(VERSION_BW1W120) && !defined(VERSION_BW1W130)
 			string = new (GAME_STATS_SOURCE_FILE, 1626) GameStatsListString;
 			sprintf(string->GetString(), "CreatureNumPeopleKilled=%ld;", PerPlayer[i].CreatureNumPeopleKilled);
 			list.AddToTail(string);
@@ -1894,7 +1894,7 @@ void GameStats::PlayerLostTheGame(GPlayer& player, int reason)
 		if (other != &player && !other->HasLost && other->type == PLAYER_TYPE_HUMAN)
 		{
 			lastOpponent = other;
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 			if (player.type == PLAYER_TYPE_HUMAN || GGame::g_game->SkirmishGame)
 #else
 			if (player.type == PLAYER_TYPE_HUMAN)

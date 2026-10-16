@@ -79,18 +79,13 @@
 #define ABODE_FILE "C:\\dev\\MP\\Black\\Abode.cpp"
 #endif
 
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 #define ABODE_LINE(line) (line)
 #else
 // 1.10 and 1.00 lack the 1.20 win conditions, so their lines sit earlier.
 #define ABODE_LINE(line)                                                                                               \
 	((line) - ((line) < 1019 ? 1 : (line) < 1359 ? 13 : (line) < 1856 ? 71 : (line) < 2210 ? 78 : 83))
 #endif
-
-inline void GCamera::GetPosition(LHPoint& pos)
-{
-	pos = LH3DTech::g_camera.pos;
-}
 
 inline float GCamera::GetDistance(const LHPoint& point)
 {
@@ -114,12 +109,12 @@ static int KnockSample;
 #define ABODE_SETTLED_AGE 200
 // Impact strength (speed times mass) that damages the destruction mesh, and above which the colliding objects are
 // linked; weaker impacts only play a sound above the sound thresholds.
-#define ABODE_DAMAGING_IMPACT     1000.0f
+#define ABODE_DAMAGING_IMPACT     2000.0f
 #define ABODE_LINKING_IMPACT      1400.0f
-#define ABODE_MEDIUM_IMPACT_SOUND 500.0f
+#define ABODE_MEDIUM_IMPACT_SOUND 1000.0f
 #define ABODE_LIGHT_IMPACT_SOUND  300.0f
 // Fixed-point factor for the angle and scale in the script commands written by SaveObject.
-#define ABODE_SCRIPT_SCALE    500.0f
+#define ABODE_SCRIPT_SCALE    1000.0f
 #define WORKSHOP_SMOKE_COLOUR 0x00808080
 
 // Index of the sails mesh in the packed mesh list; AllMeshes.h is numbered for a different list.
@@ -237,9 +232,9 @@ bool Abode::GetPSysFireLocalRndFlamePos(LHPoint* point, int* bone_index)
 	return Object::GetPSysFireLocalRndFlamePos(point, bone_index);
 }
 
-uint32_t Abode::GetPhysicsConstantsType()
+PHYSICS_CONSTANTS_TYPE Abode::GetPhysicsConstantsType()
 {
-	return 0;
+	return PHYSICS_CONSTANTS_TYPE_DEFAULT_UNMOVABLE;
 }
 
 void Abode::SetUpPhysOb(PhysOb* obj)
@@ -656,11 +651,11 @@ uint32_t Abode::Process()
 			NeglectTimer += 1.0f / ABODE_NEGLECT_TURNS;
 			if (NeglectTimer >= 1.0f)
 			{
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 				LosingLifeFromNeglect = true;
 #endif
 				ReduceLife(GetInfo()->EmptyAbodeLifeReducer, NULL);
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 				LosingLifeFromNeglect = false;
 #endif
 				NeglectTimer = 0.0f;
@@ -768,7 +763,7 @@ bool32_t Abode::Built()
 	if (GetTown() != NULL && GetTown()->GetPlayer() != NULL)
 	{
 		GetTown()->GetPlayer()->GetStats()->IncrementAllBuildingsBuilt(this);
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 		if (IsWonder())
 		{
 			GetPlayer()->AddToCondition(WC_WONDERS_BUILT, 1);
@@ -839,13 +834,13 @@ void Abode::MakeFunctional()
 				storage_pit->AddFootpath(footpath);
 			}
 		}
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 		CheckForCompleteNewTown();
 #endif
 	}
 }
 
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 void Abode::CheckForCompleteNewTown()
 {
 	int townCentres = 0;
@@ -1176,24 +1171,24 @@ uint32_t PlannedAbode::IsOkToBuild()
 	return Pos.IsSuitableForFixed(info->GetMesh(), YAngle, GetScale() * 1.25);
 }
 
-uint32_t PlannedAbode::Save(GameOSFile& file)
+bool32_t PlannedAbode::Save(GameOSFile& file)
 {
 	if (PlannedMultiMapFixed::Save(file))
 	{
 		file.WritePtr(town.Get());
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
-uint32_t PlannedAbode::Load(GameOSFile& file)
+bool32_t PlannedAbode::Load(GameOSFile& file)
 {
 	if (PlannedMultiMapFixed::Load(file))
 	{
 		file.ReadPtr((GameThing**)&town);
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 Windmill* Windmill::Create(const MapCoords& coords, const GAbodeInfo* info, Town* town, float y_angle, float scale,
@@ -1335,7 +1330,7 @@ float Abode::ReduceLife(float value, GPlayer* player)
 				GetTown()->SetInStateOfEmergency();
 			}
 		}
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 		else if (oldLife >= 1.0f)
 		{
 			AddSmashedCondition(player);
@@ -1541,7 +1536,7 @@ void Abode::ReactToPhysicsImpact(PhysicsObject* physics, bool transferred_damage
 				return;
 			}
 		}
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 		Object* thrower = physics->CollidedWith;
 		if (thrower == NULL)
 		{
@@ -1553,7 +1548,7 @@ void Abode::ReactToPhysicsImpact(PhysicsObject* physics, bool transferred_damage
 		}
 #endif
 		ApplyEffectsDueToPhysicalDestruction(hitterObject, player);
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 		SmashedByCreature = false;
 #endif
 		return;
@@ -1699,7 +1694,7 @@ Villager* Abode::FindVillager(int(__cdecl* callback)(GameThingWithPos*, SCRIPT_O
 	return NULL;
 }
 
-uint32_t Abode::Save(GameOSFile& file)
+bool32_t Abode::Save(GameOSFile& file)
 {
 	if (MultiMapFixed::Save(file))
 	{
@@ -1719,12 +1714,12 @@ uint32_t Abode::Save(GameOSFile& file)
 		{
 			DestructionMesh->WriteToFile(file);
 		}
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
-uint32_t Abode::Load(GameOSFile& file)
+bool32_t Abode::Load(GameOSFile& file)
 {
 	if (MultiMapFixed::Load(file))
 	{
@@ -1747,9 +1742,9 @@ uint32_t Abode::Load(GameOSFile& file)
 			DestructionMesh =
 				new (ABODE_FILE, ABODE_LINE(2210)) FragMesh(file, LH3DMesh::GetPackedMesh(GetInfo()->GetMesh()));
 		}
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 bool32_t Abode::GetNearestWaterPos(MapCoords& coords)
@@ -1847,10 +1842,10 @@ MapCoords Abode::GetPosOutside(float divisions, float min_dist, float rand_dist)
 {
 	MapCoords pos;
 	pos = GetArrivePos();
-	float angle = GRand::GameFloatRand(2.0f * (float)M_PI / divisions, ABODE_FILE, ABODE_LINE(2378)) -
+	float angle = (GRand::GameFloatRand(2.0f * (float)M_PI / divisions, ABODE_FILE, ABODE_LINE(2378))) -
 	              2.0f * (float)M_PI / (divisions + divisions);
 	angle += GUtils::Get3DAngleFromXZ(Pos, pos);
-	float dist = GRand::GameFloatRand(rand_dist, ABODE_FILE, ABODE_LINE(2379)) + min_dist;
+	float dist = (GRand::GameFloatRand(rand_dist, ABODE_FILE, ABODE_LINE(2379))) + min_dist;
 	pos += GUtils::GetPosFromAngle(angle, dist);
 	return pos;
 }
@@ -1860,13 +1855,13 @@ void Abode::StopBeingFunctional(GPlayer* player)
 	if (player != NULL && Age >= ABODE_SETTLED_AGE)
 	{
 		++player->game_stats->BuildingsDestroyed;
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 		AddSmashedCondition(player);
 #endif
 	}
 }
 
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 void Abode::AddSmashedCondition(GPlayer* player)
 {
 	if (!LosingLifeFromNeglect)

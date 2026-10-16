@@ -18,9 +18,9 @@
 #include "LHPTR.h"            /* For class LHPTR */
 #include "GameThingWithPos.h" /* For struct GameThingWithPos */
 #include "Living.h"           /* For struct Living, struct LivingVftable */
-#include "LivingAction.h"     /* For enum LIVING_ACTION_INDEX, struct Living__StateTableEntry */
+#include "LivingAction.h"     /* For enum LIVING_ACTION_INDEX, enum STATE_TYPE */
 #include "Object.h"           /* For struct Object */
-#include "ScriptDLL.h"        /* For enum STATE_TYPE */
+#include "Reaction.h"         /* For MissionaryControl::GetPlayer */
 
 // Forward Declares
 
@@ -37,6 +37,7 @@ class FireEffect;
 class FishFarm;
 class Flock;
 class Football;
+class PFootball;
 class Forest;
 class GInterfaceStatus;
 class GJobInfo;
@@ -57,7 +58,6 @@ struct ObjectVftable;
 struct PhysOb;
 class PhysicsObject;
 class Pot;
-class Reaction;
 class StoragePit;
 class Town;
 class Tree;
@@ -68,7 +68,9 @@ struct SortedObject
 	uint8_t field_0x0;
 };
 
+class GVillagerStateTableInfo;
 class Villager;
+struct VillagerStateTableEntry;
 
 // Search context for Villager::CheckForClearArea's point iteration.
 struct ClearAreaPoint
@@ -87,24 +89,50 @@ struct ClearAreaPoint
 struct DiscipleInfo
 {
 	VILLAGER_STATES  begin_state;
-	uint32_t         field_0x4;
-	uint32_t         field_0x8;
-	uint32_t         field_0xc;
-	uint32_t         field_0x10;
+	bool32_t         ReactToDroppedByHand;
+	bool32_t         IsGlowing;
+	bool32_t         UsesNothingToDoState;
+	bool32_t         CollectsWood;
 	TOWN_DESIRE_INFO desire_i_fulfil;
 	uint32_t         field_0x18;
 };
 
+#define VILLAGER_NUM_CLEAR_AREA_COORDS          2
+#define VILLAGER_MIN_ADULT_AGE                  18
+#define VILLAGER_FOOD_SPEED_UP_START            0xff
+#define VILLAGER_MAX_LOAD_STATE_CHANGE_DELAY    20
+#define VILLAGER_MAX_CREATED_STATE_CHANGE_DELAY 500
+#define VILLAGER_OLD_AGE_CHECK_PERIOD           800
+#define VILLAGER_SKELETON_MESH                  511
+
+enum VILLAGER_STATE_RESULT
+{
+	VILLAGER_STATE_RESULT_DIED = 0x21,
+	VILLAGER_STATE_RESULT_STATE_CHANGED = 0x23,
+};
+
+#define VILLAGER_WORSHIP_SITE_ARRIVE_DISTANCE 10.0f
+
 enum VILLAGER_FLAGS
 {
+	VILLAGER_FLAG_AT_WORSHIP_SITE = 0x2,
 	VILLAGER_FLAG_AT_HOME = 0x4,
 	VILLAGER_FLAG_CHILD = 0x8,
+	VILLAGER_FLAG_ON_WAY_TO_WORSHIP_SITE = 0x10,
+	VILLAGER_FLAG_BEEN_PICKED_UP = 0x20,
+	VILLAGER_FLAG_REMOVED_FROM_POPULATION = 0x40,
+	VILLAGER_FLAG_PLAYING_FOOTBALL = 0x80,
+	VILLAGER_FLAG_DISCIPLE = 0x200,
+	VILLAGER_FLAG_DISCIPLE_FOLLOWER = 0x400,
+	VILLAGER_FLAG_IN_TRANSITION_ANIMATION = 0x800,
+	VILLAGER_FLAG_INTO_ANIMATION_PENDING = 0x1000,
+	VILLAGER_FLAG_WOOD_GRAPHIC = 0xc000,
 };
 
 class Villager : public Living
 {
 public:
-	uint16_t             Flags; // TODO(#343)
+	uint16_t             Flags;
 	LHListNode<Villager> next;
 	float                food;
 	int                  LastCheckTurn;
@@ -117,7 +145,7 @@ public:
 	int16_t              field_0xfa;
 	BuildingSite*        building_site;
 	Villager*            mother;
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 	GPlayer* LastPlayerToInteract;
 #endif
 #ifndef VERSION_BW1W100
@@ -128,8 +156,17 @@ public:
 	union {
 		struct
 		{
-			float    field_0x10c; // Inspection reactions: value compared against 1.0f.
-			uint32_t field_0x110; // Inspection reactions: turns until approaching the target.
+			float    InspectDistance;
+			uint32_t InspectTurnsUntilApproach;
+		};
+		struct
+		{
+			uint32_t BewilderedTreeIndex;
+			uint32_t BewilderedTreesSeen;
+		};
+		struct
+		{
+			VILLAGER_DISCIPLE DiscipleOnPickUp;
 		};
 		struct
 		{
@@ -146,7 +183,7 @@ public:
 		};
 		struct
 		{
-			uint32_t       HideTurns; // GO_AND_HIDE_IN_NEARBY_BUILDING: elapsed hiding turns.
+			uint32_t       HideTurns; // GO_AND_HIDE_IN_NEARBY_BUILDING / LOOK_TO_SEE_IF_IT_IS_SAFE: turns spent.
 			JustWholeMapXZ HidePos;   // GO_AND_HIDE_IN_NEARBY_BUILDING: hiding place.
 		};
 	};
@@ -163,7 +200,19 @@ public:
 		struct
 		{
 			GameThing* TargetThing; // Current task's target; interpretation depends on the state.
-			Town*      TradeTown;   // Trading states: trading partner's town.
+		};
+		struct
+		{
+			RESOURCE_TYPE TradeResource;
+			Town*         TradeTown; // Trading states: trading partner's town.
+		};
+		struct
+		{
+			bool32_t RequestingToGoHome;
+		};
+		struct
+		{
+			long BuildPosIndex;
 		};
 		struct
 		{
@@ -177,8 +226,25 @@ public:
 		};
 		struct
 		{
-			uint32_t        FootballState; // Football states: football substate data.
-			LHPTR<Football> football;      // Football states: current match.
+			bool            FootballSubStateDone;
+			uint8_t         FootballSubStateTurns;
+			uint8_t         field_0x11a;
+			LHPTR<Football> football; // Football states: current match.
+		};
+		struct
+		{
+			uint16_t ShepherdWaitTurns;
+			uint16_t ShepherdNextState;
+		};
+		struct
+		{
+			uint32_t field_0x118;
+			uint32_t field_0x11c;
+		};
+		struct
+		{
+			uint32_t ClearAreaPos[VILLAGER_NUM_CLEAR_AREA_COORDS];
+			float    ClearAreaRadius;
 		};
 	};
 	Abode* home;
@@ -189,7 +255,7 @@ public:
 	// BW1W120 0055cb40 BW1M119 01579bf0
 	virtual ~Villager();
 	// BW1W120 007521b0 BW1M119 015755c0
-	virtual void ToBeDeleted(int param_1);
+	virtual void ToBeDeleted(int delete_now);
 	// BW1W120 007502f0 BW1M119 01066b50
 	virtual GPlayer* GetPlayer();
 	// BW1W120 00751d50 BW1M119 01057200
@@ -197,16 +263,16 @@ public:
 	// BW1W120 00751f00 BW1M119 01066b20
 	virtual Town* GetTown();
 	// BW1W120 007564d0 BW1M119 0156de50
-	virtual uint32_t AddResource(RESOURCE_TYPE param_1, uint32_t param_2, GInterfaceStatus* param_3, bool param_4,
-	                             const MapCoords* param_5, int param_6);
+	virtual uint32_t AddResource(RESOURCE_TYPE type, uint32_t amount, GInterfaceStatus* status, bool poisoned,
+	                             const MapCoords* coords, int from_other_player);
 	// BW1W120 00751cf0 BW1M119 0101c5a0
 	virtual bool32_t IsFunctional();
 	// BW1W120 0055cb30 BW1M119 0157a2c0
 	virtual char* GetDebugText() { return "Villager:"; }
 	// BW1W120 00754580 BW1M119 01571730
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 00754280 BW1M119 01571b20
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0055cb20 BW1M119 0157a280
 	virtual uint32_t GetSaveType() { return GAME_THING_TYPE_VILLAGER; }
 	// BW1W120 00754870 BW1M119 015716b0
@@ -216,7 +282,7 @@ public:
 	// BW1W120 00751db0 BW1M119 01576080
 	virtual Citadel* GetCitadel();
 	// BW1W120 00753110 BW1M119 015736b0
-	virtual void SetSpeedInMetres(float param_1, int param_2);
+	virtual void SetSpeedInMetres(float speed_in_metres, bool32_t scale_speed);
 	// BW1W120 00756b30 BW1M119 0156ce00
 	virtual bool32_t IsDrowning();
 	// BW1W120 004e4c90 BW1M119 015eb940
@@ -272,7 +338,7 @@ public:
 	// BW1W120 0055cb00 BW1M119 0109c270
 	virtual bool32_t IsAChild() { return IsChild() == true; }
 	// BW1W120 007562c0 BW1M119 0156e0e0
-	virtual void SetSkeleton(int index);
+	virtual void SetSkeleton(bool32_t skeleton);
 	// BW1W120 00753f20 BW1M119 015724c0
 	virtual HELP_TEXT GetQueryFirstEnumText();
 	// BW1W120 00753f90 BW1M119 01572370
@@ -292,7 +358,7 @@ public:
 	// BW1W120 00750320 BW1M119 0109c130
 	virtual float GetHoldLoweringMultiplier();
 	// BW1W120 00756b40 BW1M119 0104dbc0
-	virtual void SetLife(float param_1);
+	virtual void SetLife(float life);
 	// BW1W120 00753460 BW1M119 01572e30
 	virtual float IncreaseLife(float value);
 	// BW1W120 007502d0 BW1M119 01578f80
@@ -315,27 +381,27 @@ public:
 		return !(GameThingWithPos::Flags & GAME_THING_WITH_POS_FLAG_CANNOT_BE_PICKED_UP);
 	}
 	// BW1W120 007560e0 BW1M119 0156e660
-	virtual uint32_t GetDiscipleStateIfInteractedWith(GInterfaceStatus* param_1, Villager* param_2);
+	virtual uint32_t GetDiscipleStateIfInteractedWith(GInterfaceStatus* status, Villager* villager);
 	// BW1W120 0074fc70 BW1M119 01579890
 	virtual void CallVirtualFunctionsForCreation(const MapCoords& coords);
 	// BW1W120 0055c990 BW1M119 0114fd20
 	virtual bool32_t IsABeliever() { return true; }
 	// BW1W120 0076a4c0 BW1M119 015a1a80
 	virtual bool32_t SetDying();
-	// BW1W120 00753040 BW1M119 inlined
+	// BW1W120 00753040 BW1M119 01573900
 	virtual bool32_t IsTouching(const MapCoords& coords);
 	// BW1W120 0055c9a0 BW1M119 inlined
 	virtual bool32_t IsTouching(Object* target, float epsilon) { return Object::IsTouching(target, epsilon); }
 	// BW1W120 007564a0 BW1M119 0156dfa0
-	virtual bool32_t ValidForPlaceInHand(GInterfaceStatus* param_1);
+	virtual bool32_t ValidForPlaceInHand(GInterfaceStatus* status);
 	// BW1W120 00753080 BW1M119 01573730
-	virtual bool32_t InterfaceSetInMagicHand(GInterfaceStatus* param_1);
+	virtual bool32_t InterfaceSetInMagicHand(GInterfaceStatus* status);
 	// BW1W120 00752bd0 BW1M119 010a26b0
-	virtual uint32_t ValidToApplyThisToObject(GInterfaceStatus* param_1, Object* param_2);
+	virtual uint32_t ValidToApplyThisToObject(GInterfaceStatus* status, Object* object);
 	// BW1W120 00752c40 BW1M119 01573a80
-	virtual uint32_t ApplyThisToObject(GInterfaceStatus* param_1, Object* param_2, GestureSystemPacketData* param_3);
+	virtual uint32_t ApplyThisToObject(GInterfaceStatus* status, Object* object, GestureSystemPacketData* packet);
 	// BW1W120 00756ae0 BW1M119 0156ce70
-	virtual uint32_t ThrowObjectFromHand(GInterfaceStatus* param_1, int param_2);
+	virtual uint32_t ThrowObjectFromHand(GInterfaceStatus* status, bool32_t dont_replant);
 	// BW1W120 00751d70 BW1M119 0100ca10
 	virtual bool32_t IsEffectReceiver(EffectValues* effect);
 	// BW1W120 0076aa80 BW1M119 015a1030
@@ -347,7 +413,7 @@ public:
 	virtual PhysicsInitialisation InitialisePhysics(const LHPoint& param_1, const LHPoint& param_2, Object* param_3,
 	                                                bool param_4, GInterfaceStatus* param_5);
 	// BW1W120 005eff30 BW1M119 0138d7d0
-	virtual uint32_t GetPhysicsConstantsType();
+	virtual PHYSICS_CONSTANTS_TYPE GetPhysicsConstantsType();
 	// BW1W120 005eff40 BW1M119 0138d280
 	virtual void SetUpPhysOb(PhysOb* param_1);
 	// BW1W120 005f0a60 BW1M119 0138c8c0
@@ -363,13 +429,13 @@ public:
 	// BW1W120 0055ca30 BW1M119 0114ff50
 	virtual uint32_t GetTastiness() { return OBJECT_TASTINESS_LIVING; }
 	// BW1W120 00751af0 BW1M119 01576600
-	virtual uint32_t SaveObject(LHOSFile& param_1, const MapCoords* param_2);
+	virtual uint32_t SaveObject(LHOSFile& file, const MapCoords* origin);
 	// BW1W120 00753410 BW1M119 01572f40
-	virtual void SetFoodSpeedup(bool param_1);
+	virtual void SetFoodSpeedup(bool value);
 	// BW1W120 0055c980 BW1M119 01053ca0
 	virtual bool IsFoodSpeedUp() { return FoodSpeedUp != 0; }
 	// BW1W120 00756ad0 BW1M119 0156cf80
-	virtual MapCoords GetFinalDestPos();
+	virtual void GetFinalDestPos(MapCoords* out);
 	// BW1W120 00763b00 BW1M119 0159b010
 	virtual bool32_t FleeingFromObjectReaction();
 	// BW1W120 007642c0 BW1M119 01599fd0
@@ -402,7 +468,7 @@ public:
 	virtual bool32_t InHand();
 	// BW1W120 007515c0 BW1M119 0109af00
 	virtual bool32_t DecideWhatToDo();
-	// BW1W120 00751040 BW1M119 016e8c0c
+	// BW1W120 00751040 BW1M119 01577b80
 	virtual void Birthday();
 	// BW1W120 007528c0 BW1M119 01574250
 	virtual void SetAge(uint32_t age);
@@ -418,8 +484,8 @@ public:
 	virtual void StorePreviousState();
 	// BW1W120 00753740 BW1M119 010782d0
 	virtual void SetStateSpeed();
-	// BW1W120 00753f00 BW1M119 inlined
-	virtual bool IsFinalState(uint8_t state);
+	// BW1W120 00753f00 BW1M119 015725b0
+	virtual bool32_t IsFinalState(uint8_t state);
 	// BW1W120 00750110 BW1M119 01068c50
 	virtual ANIM_LIST GetAnimId();
 	// BW1W120 00752320 BW1M119 inlined
@@ -428,14 +494,14 @@ public:
 	virtual uint32_t CallEntryStateFunction(uint8_t current, uint8_t destination);
 	// BW1W120 007523d0 BW1M119 010781d0
 	virtual uint32_t CallEntryStateFunction(uint8_t state);
-	// BW1W120 007527a0 BW1M119 inlined
+	// BW1W120 007527a0 BW1M119 015748b0
 	virtual bool32_t ExitReaction(uint8_t state);
 	// BW1W120 0076b000 BW1M119 inlined
 	virtual bool32_t ExitInHand(uint8_t state);
 	// BW1W120 0076acb0 BW1M119 inlined
 	virtual bool32_t ExitInFlying(uint8_t state);
 	// BW1W120 00753690 BW1M119 0106cc30
-	virtual void SetState(LIVING_ACTION_INDEX index, VILLAGER_STATES state);
+	virtual void SetState(uint32_t index, uint8_t state);
 	// BW1W120 0076afe0 BW1M119 inlined
 	virtual bool32_t EnterInHand(uint8_t current, uint8_t destination);
 	// BW1W120 0055c9f0 BW1M119 inlined
@@ -445,17 +511,17 @@ public:
 	// BW1W120 00752530 BW1M119 inlined
 	virtual bool32_t IsStateExitFunctionSameAs(unsigned long state) const;
 	// BW1W120 007528b0 BW1M119 015745c0
-	virtual uint32_t DebugShowTime(uint32_t param_1, uint8_t param_2, uint8_t param_3);
+	virtual void DebugShowTime(uint32_t time, uint8_t current, uint8_t destination);
 	// BW1W120 00764df0 BW1M119 01598700
-	virtual bool IsInterestedInFoodObject(Object* param_1);
+	virtual bool IsInterestedInFoodObject(Object* food);
 	// BW1W120 00764f60 BW1M119 01598410
-	virtual bool IsInterestedInWoodObject(Object* param_1);
+	virtual bool IsInterestedInWoodObject(Object* wood);
 	// BW1W120 00763390 BW1M119 01023dd0
 	virtual bool32_t IsAvailableForReaction(REACTION reaction);
 	// BW1W120 00763410 BW1M119 01011930
-	virtual bool32_t IsAvailableForBeliefButNotReaction(REACTION param_1);
+	virtual bool32_t IsAvailableForBeliefButNotReaction(REACTION reaction);
 	// BW1W120 007634c0 BW1M119 010071b0
-	virtual void UpdateHowImpressed(Reaction* param_1, int param_2);
+	virtual void UpdateHowImpressed(Reaction* reaction, int multiplier);
 	// BW1W120 00763440 BW1M119 inlined
 	virtual void AddReaction(Reaction* reaction, VILLAGER_STATES state);
 	// BW1W120 007637d0 BW1M119 0159ba30
@@ -469,19 +535,19 @@ public:
 	// BW1W120 00763ae0 BW1M119 0159b0e0
 	virtual void SetupLookAtNiceSpell(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 00767630 BW1M119 0159db60
-	virtual void SetupReactToCreature(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToCreature(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 00765b70 BW1M119 015973d0
 	virtual void SetupReactToWood(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 00763820 BW1M119 0159b750
 	virtual void SetupReactToMagicTree(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 007639d0 BW1M119 0159b240
-	virtual void SetupReactToFlyingObject(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToFlyingObject(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 00765540 BW1M119 01597b60
-	virtual void SetupReactToFire(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToFire(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 00765c60 BW1M119 01596ff0
-	virtual void SetupReactToMagicShield(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToMagicShield(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 00766010 BW1M119 01596b30
-	virtual void SetupReactToNewBuilding(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToNewBuilding(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 00766e30 BW1M119 01594de0
 	virtual void SetupReactToFight(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 00766250 BW1M119 015967f0
@@ -503,76 +569,76 @@ public:
 	// BW1W120 00763990 BW1M119 0159b390
 	virtual void SetupFleeFromPredator(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 00766fd0 BW1M119 01594790
-	virtual void SetupReactToTownCelebration(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToTownCelebration(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 007672f0 BW1M119 015942a0
 	virtual void SetupReactToVillagerInHand(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 00767490 BW1M119 01593e10
 	virtual void SetupReactToBurningObjectInHand(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 007674b0 BW1M119 01593cb0
-	virtual void SetupReactToMagicShieldStruck(GameThingWithPos* param_1, Reaction* param_2);
+	virtual void SetupReactToMagicShieldStruck(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 00767520 BW1M119 01593c20
 	virtual void SetupReactToMagicShieldDestroyed(GameThingWithPos* thing, Reaction* reaction);
 	// BW1W120 007676e0 BW1M119 0159d880
-	virtual uint8_t ReactToCreaturePriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToCreaturePriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 00765260 BW1M119 01598070
-	virtual uint8_t ReactToFlyingObjectPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToFlyingObjectPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 00765610 BW1M119 01597830
-	virtual uint8_t ReactToFirePriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToFirePriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 00765bb0 BW1M119 01597250
-	virtual uint8_t ReactToMagicShieldPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToMagicShieldPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 00766df0 BW1M119 01594e90
-	virtual uint8_t ReactToFightPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToFightPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 00766200 BW1M119 01596920
-	virtual uint8_t ReactToTeleportPriority(Reaction* reaction_1, Reaction* reaction_2);
+	virtual uint8_t ReactToTeleportPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 00766440 BW1M119 01596330
-	virtual uint8_t ReactToDeathPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToDeathPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 007664b0 BW1M119 015960d0
-	virtual uint8_t ReactToDroppedByHandPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToDroppedByHandPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 00766a10 BW1M119 01595670
-	virtual uint8_t ReactToFallingTreePriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToFallingTreePriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 00766a50 BW1M119 01595550
-	virtual uint8_t ReactToCrowdPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToCrowdPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 00767210 BW1M119 015944b0
-	virtual uint8_t ReactToBreederPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToBreederPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 00767180 BW1M119 01594690
-	virtual uint8_t ReactToTownCelebrationPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToTownCelebrationPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 00763850 BW1M119 0159b510
-	virtual uint8_t FleeFromPredatorPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t FleeFromPredatorPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 00767320 BW1M119 01594130
-	virtual uint8_t ReactToVillagerInHandPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToVillagerInHandPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 00767430 BW1M119 01593ed0
-	virtual uint8_t ReactToBurningObjectInHandPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToBurningObjectInHandPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 00767540 BW1M119 01593a70
-	virtual uint8_t ReactToMagicShieldStruckPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToMagicShieldStruckPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 007675a0 BW1M119 015939f0
-	virtual uint8_t ReactToMagicShieldDestroyedPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToMagicShieldDestroyedPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 00763980 BW1M119 0159b490
-	virtual uint8_t ReactToScaffoldPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t ReactToScaffoldPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 007640a0 BW1M119 0159a610
-	virtual uint32_t NumGameTurnsToReactToPredatorFunction(GameThingWithPos* thing, uint32_t param_2, float param_3);
+	virtual uint32_t NumGameTurnsToReactToPredatorFunction(GameThingWithPos* thing, uint32_t reaction, float distance);
 	// BW1W120 007640e0 BW1M119 0159a520
-	virtual uint32_t NumGameTurnsBeforeReactingAgainToPredatorFunction(GameThingWithPos* param_1, uint32_t param_2,
-	                                                                   float param_3);
+	virtual uint32_t NumGameTurnsBeforeReactingAgainToPredatorFunction(GameThingWithPos* thing, uint32_t reaction,
+	                                                                   float distance);
 	// BW1W120 007648d0 BW1M119 01599220
-	virtual uint32_t StandardNumGameTurnsBeforeReactingToWoodAgainFunction(GameThingWithPos* param_1, uint32_t param_2,
-	                                                                       float param_3);
+	virtual uint32_t StandardNumGameTurnsBeforeReactingToWoodAgainFunction(GameThingWithPos* thing, uint32_t reaction,
+	                                                                       float distance);
 	// BW1W120 00764110 BW1M119 0159a490
-	virtual uint32_t NumGameTurnsToReactToBurningObjectFunction(GameThingWithPos* param_1, uint32_t param_2,
-	                                                            float param_3);
+	virtual uint32_t NumGameTurnsToReactToBurningObjectFunction(GameThingWithPos* thing, uint32_t reaction,
+	                                                            float distance);
 	// BW1W120 00764130 BW1M119 0159a360
-	virtual uint32_t NumGameTurnsBeforeReactingAgainToBurningObjectFunction(GameThingWithPos* param_1, uint32_t param_2,
-	                                                                        float param_3);
+	virtual uint32_t NumGameTurnsBeforeReactingAgainToBurningObjectFunction(GameThingWithPos* thing, uint32_t reaction,
+	                                                                        float distance);
 	// BW1W120 007641a0 BW1M119 0159a220
-	virtual uint32_t NumGameTurnsToReactToShieldFunction(GameThingWithPos* param_1, uint32_t param_2, float param_3);
+	virtual uint32_t NumGameTurnsToReactToShieldFunction(GameThingWithPos* thing, uint32_t reaction, float distance);
 	// BW1W120 00764230 BW1M119 0159a0b0
-	virtual uint32_t NumGameTurnsBeforeReactingToShieldAgainFunction(GameThingWithPos* param_1, uint32_t param_2,
-	                                                                 float param_3);
+	virtual uint32_t NumGameTurnsBeforeReactingToShieldAgainFunction(GameThingWithPos* thing, uint32_t reaction,
+	                                                                 float distance);
 	// BW1W120 0055c970 BW1M119 010676b0
 	virtual bool32_t IsChild() { return (Flags & VILLAGER_FLAG_CHILD) != 0; }
 	// BW1W120 00751dd0 BW1M119 01051580
 	virtual uint8_t GetFinalState() const;
 	// BW1W120 00751510 BW1M119 01577220
-	virtual void RemoveFromDance(int param_1);
+	virtual void RemoveFromDance(bool32_t is_worshipping);
 	// BW1W120 00759b80 BW1M119 0157f1b0
 	virtual void SetStateAfterFinishingDance();
 	// BW1W120 0075bae0 BW1M119 01583630
@@ -585,25 +651,36 @@ public:
 	// Static methods
 
 	// BW1W120 inlined BW1M119 01000000 (Black & White Support)
-	static Living::StateTableEntry& GetStateTable(VILLAGER_STATES state);
+	static VillagerStateTableEntry* GetStateTable();
+	// BW1W120 inlined BW1M119 01074f30
+	static GVillagerStateTableInfo* GetStateInfo(uint32_t state);
 	// BW1W120 0074fbe0 BW1M119 01579ab0
-	static Villager* Create(const MapCoords& coords, const GVillagerInfo* info, uint32_t age, bool skeleton);
+	static Villager* Create(const MapCoords& coords, const GVillagerInfo* info, uint32_t age, bool32_t skeleton);
 
 	// Constructors
 
 	// BW1W120 0055c8a0 BW1M119 0130e430
 	Villager() : building_site(NULL) { SetToZero(); }
 	// BW1W120 0074f950 BW1M119 01579df0
-	Villager(const MapCoords& coords, const GVillagerInfo* info, uint32_t age, bool skeleton);
+	Villager(const MapCoords& coords, const GVillagerInfo* info, uint32_t age, bool32_t skeleton);
 
 	// Non-virtual methods
 
 	// BW1W120 inlined BW1M119 inlined
-	uint32_t CallValidate(LIVING_ACTION_INDEX index);
+	void CallValidate(LIVING_ACTION_INDEX index);
 	// BW1W120 00423c80 BW1M119 010ac450
 	uint32_t FootballWatchMatchAnimation();
 	// BW1W120 0074fb20 BW1M119 01579d80
 	void SetToZero();
+	// BW1W120 inlined BW1M119 01056380
+	bool IsDisciple() { return (Flags / VILLAGER_FLAG_DISCIPLE) & 1; }
+	// BW1W120 inlined BW1M119 null
+	uint32_t GetWoodGraphic() { return Flags / (VILLAGER_FLAG_WOOD_GRAPHIC / 3); }
+	// BW1W120 inlined BW1M119 null
+	void SetWoodGraphic(uint16_t graphic)
+	{
+		Flags = graphic * (VILLAGER_FLAG_WOOD_GRAPHIC / 3) | (Flags & ~VILLAGER_FLAG_WOOD_GRAPHIC);
+	}
 	// BW1W120 0051baf0 BW1M119 010563d0
 	void DrawCarriedObject();
 	// BW1W120 0074fb80 BW1M119 01579cb0
@@ -611,9 +688,9 @@ public:
 	// BW1W120 0074fd60 BW1M119 01579570
 	void DeleteDependancys();
 	// BW1W120 0074fec0 BW1M119 01579420
-	bool UnemployedJobs();
+	bool32_t UnemployedJobs();
 	// BW1W120 0074ff60 BW1M119 015793e0
-	bool SetupJobLocation();
+	bool32_t SetupJobLocation();
 	// BW1W120 00750060 BW1M119 0109c740
 	void FinishedIntoOutOfAnimation();
 	// BW1W120 007501a0 BW1M119 01062720
@@ -623,9 +700,9 @@ public:
 	// BW1W120 00750330 BW1M119 01578d20
 	Villager* GetSpouse();
 	// BW1W120 00750370 BW1M119 01578bc0
-	Villager* LookAroundForVillagerInState(VILLAGER_STATES param_1, unsigned long param_2);
+	Villager* LookAroundForVillagerInState(VILLAGER_STATES state, uint32_t count);
 	// BW1W120 00750410 BW1M119 0104dec0
-	int CheckEveryTime();
+	bool32_t CheckEveryTime();
 	// BW1W120 00750670 BW1M119 01071370
 	uint32_t GetGameTurnsSinceLastChecked();
 	// BW1W120 00750690 BW1M119 015789d0
@@ -633,83 +710,87 @@ public:
 	// BW1W120 007506a0 BW1M119 01071410
 	void SetGameTurnLastChecked();
 	// BW1W120 007506c0 BW1M119 01578500
-	void VillagerDead(DEATH_REASON param_1, GPlayer* param_2, float param_3, int param_4);
+	void VillagerDead(DEATH_REASON reason, GPlayer* player, float damage, bool32_t drop_resource);
 	// BW1W120 00750940 BW1M119 01578230
-	void CreateDroppedResource(LHPoint* param_1, LHPoint* param_2, LHPoint* param_3);
+	void CreateDroppedResource(LHPoint* velocity, LHPoint* initial_angular_velocity, LHPoint* angular_velocity);
 	// BW1W120 00750b50 BW1M119 01578000
 	void TownDeleted();
 	// BW1W120 00750bb0 BW1M119 01577e20
-	void DebugText(int param_1);
+	void DebugText(bool32_t drawing);
 	// BW1W120 00750de0 BW1M119 01577d90
 	void SetAbode(Abode* abode);
 	// BW1W120 00750e10 BW1M119 01577c40
-	bool GetRandomLookAhead(MapCoords* param_1, float param_2);
+	bool GetRandomLookAhead(MapCoords* pos, float distance);
 	// BW1W120 00750ed0 BW1M119 0106af80
-	void SetSpeed(int base_speed, int scale_speed);
+	void SetSpeed(int base_speed, bool32_t scale_speed);
 	// BW1W120 00751050 BW1M119 01024570
-	int CheckChildGrownUp();
+	bool32_t CheckChildGrownUp();
 	// BW1W120 00751110 BW1M119 01577ad0
 	bool32_t IsAMother();
 	// BW1W120 00751190 BW1M119 01577a50
 	bool32_t StartMoveToObject(Object* object, VILLAGER_STATES state);
 	// BW1W120 007511b0 BW1M119 0109ea90
-	uint16_t DropResource(RESOURCE_TYPE param_1, unsigned short param_2);
+	uint16_t DropResource(RESOURCE_TYPE type, uint16_t amount);
 	// BW1W120 007511e0 BW1M119 01577910
-	uint16_t DropFood(unsigned short food_amount);
+	uint16_t DropFood(uint16_t food_amount);
 	// BW1W120 00751240 BW1M119 01577820
-	uint16_t DropWood(unsigned short wood_amount);
+	uint16_t DropWood(uint16_t wood_amount);
 	// BW1W120 007512a0 BW1M119 01577760
-	bool IsEnoughFoodInStoragePitForDinner();
+	bool32_t IsEnoughFoodInStoragePitForDinner();
 	// BW1W120 007512e0 BW1M119 015775c0
-	Pot* FindPotAroundToGoto(RESOURCE_TYPE param_1, unsigned long& param_2, int param_3);
+	Pot* FindPotAroundToGoto(RESOURCE_TYPE type, uint32_t& best_dist, bool32_t not_full);
 	// BW1W120 007513f0 BW1M119 01577450
-	int16_t PickupResource(RESOURCE_TYPE resource_type, short amount, unsigned char wood_graphic);
+	int16_t PickupResource(RESOURCE_TYPE resource_type, short amount, uint8_t wood_graphic);
 	// BW1W120 00751490 BW1M119 0109ed20
 	void PickupFood(short amount);
 	// BW1W120 007514b0 BW1M119 01577320
-	void PickupWood(short amount, unsigned char wood_graphic);
+	void PickupWood(short amount, uint8_t wood_graphic);
 	// BW1W120 007514d0 BW1M119 01004c20
 	int16_t GetFoodCapacity();
 	// BW1W120 007514f0 BW1M119 01577270
 	int16_t GetWoodCapacity();
 	// BW1W120 00751520 BW1M119 01577170
-	bool IsRandomlyLazy();
+	bool32_t IsRandomlyLazy();
 	// BW1W120 00751570 BW1M119 010007e0
-	uint16_t GetResourceHeld(RESOURCE_TYPE& type);
+	uint32_t GetResourceHeld(RESOURCE_TYPE& type);
 	// BW1W120 007516e0 BW1M119 01003ba0
 	bool32_t CheckTakeResourcesToStoragePit();
 	// BW1W120 00751720 BW1M119 01576d30
 	bool32_t DiscipleDecideWhatToDo();
 	// BW1W120 00751970 BW1M119 01576cf0
-	bool GetPrayerSite();
+	bool32_t GetPrayerSite();
 	// BW1W120 00751980 BW1M119 01576c20
-	bool RestartDance(VILLAGER_STATES state);
+	bool32_t RestartDance(VILLAGER_STATES state);
 	// BW1W120 00751ab0 BW1M119 015769c0
-	char* GetVillagerText(char* param_1);
+	char* GetVillagerText(char* buffer);
 	// BW1W120 00751d20 BW1M119 01576320
-	GJobInfo* GetJobInfo(unsigned char job) const;
-	// BW1W120 00751d40 BW1M119 inlined
-	bool FUN00751d40();
+	GJobInfo* GetJobInfo(uint8_t job) const;
+	// BW1W120 00751d40 BW1M119 015762e0
+	bool32_t SetAlternativeJob();
 	// BW1W120 00751e50 BW1M119 01575d30
 	void PopFromPrevious();
 	// BW1W120 00751ea0 BW1M119 01575cf0
 	Football* GetFootball();
+	// BW1W120 00751eb0 BW1M119 01575c70
+	PFootball* GetPFootball();
 	// BW1W120 00751ee0 BW1M119 01575c10
 	GTribeInfo* GetTribe();
 	// BW1W120 00751f10 BW1M119 0108c910
 	StoragePit* GetStoragePit();
 	// BW1W120 00751f40 BW1M119 01575af0
 	VILLAGER_STATES GetVillagerAvailableState();
-	// BW1W120 00751f70 BW1M119 inlined
-	VILLAGER_STATES FUN_00751f70();
+	// BW1W120 00751f70 BW1M119 01575a70
+	bool32_t IsCanBeCalledToDinner();
 	// BW1W120 00751fa0 BW1M119 010039e0
 	void ArriveHome();
 	// BW1W120 00751fd0 BW1M119 010a1b50
 	void LeaveHome();
 	// BW1W120 00752120 BW1M119 0107e950
-	uint32_t CanPauseForASecond(VILLAGER_STATES state);
+	uint32_t CanPauseForASecond(uint8_t state);
 	// BW1W120 00752160 BW1M119 0100c480
 	Abode* GetAbode();
+	// BW1W120 00752170 BW1M119 01575630
+	bool32_t IsInTown();
 	// BW1W120 007521d0 BW1M119 0104dce0
 	uint32_t CallState();
 	// BW1W120 00752210 BW1M119 01022dd0
@@ -723,29 +804,31 @@ public:
 	// BW1W120 007524d0 BW1M119 0109f200
 	bool IsStateEntryFunctionSameAs(unsigned long state_a, unsigned long state_b) const;
 	// BW1W120 007525b0 BW1M119 01574fa0
-	bool IsReactiveState(unsigned long state);
+	static bool32_t IsReactiveState(unsigned long state);
+	// BW1W120 007525d0 BW1M119 01574f20
+	char* GetStateText();
 	// BW1W120 00752600 BW1M119 01022ae0
 	bool32_t IsHungry();
 	// BW1W120 00752620 BW1M119 0106cf00
-	bool IsWoman();
+	bool32_t IsWoman();
 	// BW1W120 00752690 BW1M119 015749f0
-	bool MakeVillagesMeet(Villager* param_1, VILLAGER_STATES param_2, float param_3);
+	bool32_t MakeVillagesMeet(Villager* villager, VILLAGER_STATES state, float distance);
 	// BW1W120 00752760 BW1M119 01574960
-	bool MakeVillagerFaceObject(Object* object);
+	bool32_t MakeVillagerFaceObject(Object* object);
 	// BW1W120 007527e0 BW1M119 01574800
-	bool32_t ExitDance(unsigned char param_1);
+	bool32_t ExitDance(uint8_t state);
 	// BW1W120 00752820 BW1M119 01574750
-	bool32_t IsAvailableForWorshipSite(int param_1);
+	bool32_t IsAvailableForWorshipSite(bool32_t allow_disciple);
 	// BW1W120 00752860 BW1M119 01574690
 	bool32_t IsAtOrOnTheWayToWorshipSite();
 	// BW1W120 00752a90 BW1M119 015740d0
-	void SetScaleForAge(unsigned long param_1);
+	void SetScaleForAge(uint32_t age);
 	// BW1W120 00752b80 BW1M119 01573fd0
 	bool32_t SetStateWhenTappedOnAbode();
-	// BW1W120 00753140 BW1M119 inlined
-	uint32_t FUN_00753140();
+	// BW1W120 00753140 BW1M119 01573610
+	bool IsInBuildingState();
 	// BW1W120 007531a0 BW1M119 01573570
-	bool IsVagrant();
+	bool32_t IsVagrant();
 	// BW1W120 007531d0 BW1M119 01573270
 	void ReleaseFromScript();
 	// BW1W120 00753340 BW1M119 015731c0
@@ -755,13 +838,13 @@ public:
 	// BW1W120 00753430 BW1M119 01053cf0
 	void ProcessFoodSpeedup();
 	// BW1W120 00753470 BW1M119 01572c90
-	void FindPosOutsideAbode(Abode* param_1);
-	// BW1W120 00753540 BW1M119 inlined
-	Abode* FUN_00753540();
+	MapCoords FindPosOutsideAbode(Abode* abode);
+	// BW1W120 00753540 BW1M119 01572c10
+	void LogVillager();
 	// BW1W120 00753560 BW1M119 0106cd50
-	void AdjustTownModifier(VILLAGER_STATES state, int param_2);
+	void AdjustTownModifier(VILLAGER_STATES state, bool32_t add);
 	// BW1W120 00753760 BW1M119 0105b7f0
-	void SetStateSpeed(unsigned char param_1);
+	void SetStateSpeed(uint8_t state);
 	// BW1W120 00753b50 BW1M119 0109bb10
 	uint32_t SetupNothingToDo();
 	// BW1W120 00753c70 BW1M119 01011020
@@ -777,118 +860,118 @@ public:
 	// BW1W120 007540d0 BW1M119 01572140
 	bool32_t DiscipleNothingToDo();
 	// BW1W120 00754140 BW1M119 01572070
-	bool32_t EnterDiscipleNothingToDo(unsigned char param_1, unsigned char param_2);
+	bool32_t EnterDiscipleNothingToDo(uint8_t current, uint8_t destination);
 	// BW1W120 00754180 BW1M119 01571f30
-	bool32_t FindDisciplePrayerPos(MapCoords* param_1);
+	bool32_t FindDisciplePrayerPos(MapCoords* pos);
 	// BW1W120 007548a0 BW1M119 015715c0
-	bool32_t CallSaveStateFunction(GameOSFile& param_1, STATE_TYPE param_2);
+	bool32_t CallSaveStateFunction(GameOSFile& file, STATE_TYPE state_type);
 	// BW1W120 00754910 BW1M119 015714d0
-	bool32_t CallLoadStateFunction(GameOSFile& param_1, STATE_TYPE param_2);
+	bool32_t CallLoadStateFunction(GameOSFile& file, STATE_TYPE state_type);
 	// BW1W120 00754980 BW1M119 01571420
-	bool32_t SaveStateFunction(GameOSFile& param_1);
+	bool32_t SaveStateFunction(GameOSFile& file);
 	// BW1W120 007549b0 BW1M119 01571360
-	bool32_t LoadStateFunction(GameOSFile& param_1);
+	bool32_t LoadStateFunction(GameOSFile& file);
 	// BW1W120 00754a00 BW1M119 01571280
-	bool32_t SaveBuilding(GameOSFile& param_1);
+	bool32_t SaveBuilding(GameOSFile& file);
 	// BW1W120 00754a60 BW1M119 015711b0
-	bool32_t LoadBuilding(GameOSFile& param_1);
+	bool32_t LoadBuilding(GameOSFile& file);
 	// BW1W120 00754ac0 BW1M119 01571090
-	bool32_t SaveDance(GameOSFile& param_1);
+	bool32_t SaveDance(GameOSFile& file);
 	// BW1W120 00754b60 BW1M119 01570f80
-	bool32_t LoadDance(GameOSFile& param_1);
+	bool32_t LoadDance(GameOSFile& file);
 	// BW1W120 00754c00 BW1M119 01570eb0
-	bool32_t SaveWorship(GameOSFile& param_1);
+	bool32_t SaveWorship(GameOSFile& file);
 	// BW1W120 00754c60 BW1M119 01570de0
-	bool32_t LoadWorship(GameOSFile& param_1);
+	bool32_t LoadWorship(GameOSFile& file);
 	// BW1W120 00754cc0 BW1M119 01570d20
-	bool32_t SaveDead(GameOSFile& param_1);
+	bool32_t SaveDead(GameOSFile& file);
 	// BW1W120 00754d20 BW1M119 01570c60
-	bool32_t LoadDead(GameOSFile& param_1);
+	bool32_t LoadDead(GameOSFile& file);
 	// BW1W120 00754d80 BW1M119 01570b90
-	bool32_t SaveInHand(GameOSFile& param_1);
+	bool32_t SaveInHand(GameOSFile& file);
 	// BW1W120 00754de0 BW1M119 01570ac0
-	bool32_t LoadInHand(GameOSFile& param_1);
+	bool32_t LoadInHand(GameOSFile& file);
 	// BW1W120 00754e40 BW1M119 01570a50
-	bool32_t SaveFishing(GameOSFile& param_1);
+	bool32_t SaveFishing(GameOSFile& file);
 	// BW1W120 00754e60 BW1M119 015709e0
-	bool32_t LoadFishing(GameOSFile& param_1);
+	bool32_t LoadFishing(GameOSFile& file);
 	// BW1W120 00754e80 BW1M119 01570900
-	bool32_t SaveFarming(GameOSFile& param_1);
+	bool32_t SaveFarming(GameOSFile& file);
 	// BW1W120 00754ef0 BW1M119 01570830
-	bool32_t LoadFarming(GameOSFile& param_1);
+	bool32_t LoadFarming(GameOSFile& file);
 	// BW1W120 00754f60 BW1M119 015706b0
-	bool32_t SaveFootball(GameOSFile& param_1);
+	bool32_t SaveFootball(GameOSFile& file);
 	// BW1W120 00755040 BW1M119 01570550
-	bool32_t LoadFootball(GameOSFile& param_1);
+	bool32_t LoadFootball(GameOSFile& file);
 	// BW1W120 00755120 BW1M119 01570430
-	bool32_t SaveShepherd(GameOSFile& param_1);
+	bool32_t SaveShepherd(GameOSFile& file);
 	// BW1W120 007551c0 BW1M119 01570320
-	bool32_t LoadShepherd(GameOSFile& param_1);
+	bool32_t LoadShepherd(GameOSFile& file);
 	// BW1W120 00755260 BW1M119 01570160
-	bool32_t SaveInScript(GameOSFile& param_1);
+	bool32_t SaveInScript(GameOSFile& file);
 	// BW1W120 00755370 BW1M119 0156ffc0
-	bool32_t LoadInScript(GameOSFile& param_1);
+	bool32_t LoadInScript(GameOSFile& file);
 	// BW1W120 00755470 BW1M119 0156fe00
-	bool32_t SaveScriptPos(GameOSFile& param_1);
+	bool32_t SaveScriptPos(GameOSFile& file);
 	// BW1W120 00755580 BW1M119 0156fc60
-	bool32_t LoadScriptPos(GameOSFile& param_1);
+	bool32_t LoadScriptPos(GameOSFile& file);
 	// BW1W120 00755680 BW1M119 0156fb80
-	bool32_t SaveFire(GameOSFile& param_1);
+	bool32_t SaveFire(GameOSFile& file);
 	// BW1W120 007556f0 BW1M119 0156fab0
-	bool32_t LoadFire(GameOSFile& param_1);
+	bool32_t LoadFire(GameOSFile& file);
 	// BW1W120 00755760 BW1M119 0156fa30
-	bool32_t SaveDiscipleNothingToDo(GameOSFile& param_1);
+	bool32_t SaveDiscipleNothingToDo(GameOSFile& file);
 	// BW1W120 00755780 BW1M119 0156f9b0
-	bool32_t LoadDiscipleNothingToDo(GameOSFile& param_1);
+	bool32_t LoadDiscipleNothingToDo(GameOSFile& file);
 	// BW1W120 007557a0 BW1M119 0156f8d0
-	bool32_t SaveTrader(GameOSFile& param_1);
+	bool32_t SaveTrader(GameOSFile& file);
 	// BW1W120 00755810 BW1M119 0156f800
-	bool32_t LoadTrader(GameOSFile& param_1);
+	bool32_t LoadTrader(GameOSFile& file);
 	// BW1W120 00755880 BW1M119 0156f790
-	bool32_t SaveInspectObject(GameOSFile& param_1);
+	bool32_t SaveInspectObject(GameOSFile& file);
 	// BW1W120 007558a0 BW1M119 0156f720
-	bool32_t LoadInspectObject(GameOSFile& param_1);
+	bool32_t LoadInspectObject(GameOSFile& file);
 	// BW1W120 007558c0 BW1M119 0156f6e0
-	bool32_t SaveReaction(GameOSFile& param_1);
+	bool32_t SaveReaction(GameOSFile& file);
 	// BW1W120 007558d0 BW1M119 0156f6a0
-	bool32_t LoadReaction(GameOSFile& param_1);
+	bool32_t LoadReaction(GameOSFile& file);
 	// BW1W120 007558e0 BW1M119 0156f580
-	bool32_t SaveClearArea(GameOSFile& param_1);
+	bool32_t SaveClearArea(GameOSFile& file);
 	// BW1W120 00755980 BW1M119 0156f470
-	bool32_t LoadClearArea(GameOSFile& param_1);
+	bool32_t LoadClearArea(GameOSFile& file);
 	// BW1W120 00755a20 BW1M119 0156f390
-	bool32_t SaveBreeder(GameOSFile& param_1);
+	bool32_t SaveBreeder(GameOSFile& file);
 	// BW1W120 00755a80 BW1M119 0156f2c0
-	bool32_t LoadBreeder(GameOSFile& param_1);
+	bool32_t LoadBreeder(GameOSFile& file);
 	// BW1W120 00755ae0 BW1M119 0156f250
-	bool32_t SaveForesting(GameOSFile& param_1);
+	bool32_t SaveForesting(GameOSFile& file);
 	// BW1W120 00755b00 BW1M119 0156f1e0
-	bool32_t LoadForesting(GameOSFile& param_1);
+	bool32_t LoadForesting(GameOSFile& file);
 	// BW1W120 00755b20 BW1M119 0156f150
-	bool32_t SaveFootPath(GameOSFile& param_1);
+	bool32_t SaveFootPath(GameOSFile& file);
 	// BW1W120 00755b50 BW1M119 0156f0c0
-	bool32_t LoadFootPath(GameOSFile& param_1);
+	bool32_t LoadFootPath(GameOSFile& file);
 	// BW1W120 00755b80 BW1M119 0156ef90
-	bool32_t SaveInspectionReaction(GameOSFile& param_1);
+	bool32_t SaveInspectionReaction(GameOSFile& file);
 	// BW1W120 00755c20 BW1M119 0156ee70
-	bool32_t LoadInspectionReaction(GameOSFile& param_1);
+	bool32_t LoadInspectionReaction(GameOSFile& file);
 	// BW1W120 00755cc0 BW1M119 0156ed40
-	bool32_t SaveMagicTreeReaction(GameOSFile& param_1);
+	bool32_t SaveMagicTreeReaction(GameOSFile& file);
 	// BW1W120 00755d60 BW1M119 0156ec20
-	bool32_t LoadMagicTreeReaction(GameOSFile& param_1);
+	bool32_t LoadMagicTreeReaction(GameOSFile& file);
 	// BW1W120 00755e00 BW1M119 0156eaf0
-	bool32_t SaveHideInBuilding(GameOSFile& param_1);
+	bool32_t SaveHideInBuilding(GameOSFile& file);
 	// BW1W120 00755ea0 BW1M119 0156e9d0
-	bool32_t LoadHideInBuilding(GameOSFile& param_1);
+	bool32_t LoadHideInBuilding(GameOSFile& file);
 	// BW1W120 00755f40 BW1M119 0156e900
-	bool32_t SaveShieldReaction(GameOSFile& param_1);
+	bool32_t SaveShieldReaction(GameOSFile& file);
 	// BW1W120 00755fa0 BW1M119 0156e830
-	bool32_t LoadShieldReaction(GameOSFile& param_1);
+	bool32_t LoadShieldReaction(GameOSFile& file);
 	// BW1W120 00756000 BW1M119 0100c4b0
 	uint32_t SetVillagerDisciple(GameThing* interacted_thing, VILLAGER_DISCIPLE disciple, int unused);
 	// BW1W120 00756170 BW1M119 0156e570
-	void ShowDiscipleIcon(VILLAGER_DISCIPLE param_1);
-	// BW1W120 00756230 BW1M119 016e914c
+	void ShowDiscipleIcon(VILLAGER_DISCIPLE disciple);
+	// BW1W120 00756230 BW1M119 0156e530
 	void DebugValidateState();
 	// BW1W120 00756240 BW1M119 0156e3e0
 	void ForceMoveVillagerToAbode(Abode* abode);
@@ -899,9 +982,9 @@ public:
 	// BW1W120 00756540 BW1M119 0156dd40
 	bool32_t ScriptInCrowd();
 	// BW1W120 00756570 BW1M119 0156dd00
-	bool32_t SaveLanded(GameOSFile& param_1);
+	bool32_t SaveLanded(GameOSFile& file);
 	// BW1W120 00756580 BW1M119 0156dcc0
-	bool32_t LoadLanded(GameOSFile& param_1);
+	bool32_t LoadLanded(GameOSFile& file);
 	// BW1W120 007569a0 BW1M119 0156d3c0
 	void MoveToObjectValidate();
 	// BW1W120 007569d0 BW1M119 0156d330
@@ -914,8 +997,10 @@ public:
 	void WallhugAndReactionValidate();
 	// BW1W120 00756aa0 BW1M119 0156cfe0
 	void ClosestObjectValidate();
-	// BW1W120 00756bc0 BW1M119 inlined
-	void FUN_00756bc0(float param_1);
+	// BW1W120 00756bc0 BW1M119 0156ccf0
+	void IncreaseNumWoundedInTown();
+	// BW1W120 00756bd0 BW1M119 0156cc70
+	void DecreaseNumWoundedInTown();
 	// BW1W120 00756be0 BW1M119 0156cb60
 	void FindChildrenAndOrphanThem();
 	// BW1W120 00756d30 BW1M119 0157b5f0
@@ -1039,7 +1124,7 @@ public:
 	// BW1W120 007595e0 BW1M119 0157c7a0
 	uint32_t CheckForScaffoldForBuildingSite(BuildingSite* param_1);
 	// BW1W120 007595f0 BW1M119 0157c760
-	bool32_t IsScaffoldValid();
+	bool IsScaffoldValid();
 	// BW1W120 00759600 BW1M119 0157c710
 	bool32_t ExitBringScaffoldToBuildingSite(unsigned char param_1);
 	// BW1W120 00759610 BW1M119 0157c490
@@ -1147,11 +1232,11 @@ public:
 	// BW1W120 0075bc20 BW1M119 0109cc60
 	uint32_t GetAmountOfFoodToEat();
 	// BW1W120 0075bcc0 BW1M119 0105a4c0
-	bool CheckHungry();
+	bool32_t CheckHungry();
 	// BW1W120 0075bf00 BW1M119 01098ca0
 	bool32_t CheckSatisfyOwnFoodDesire();
 	// BW1W120 0075bf20 BW1M119 01582d50
-	bool32_t EatFoodHeld();
+	float EatFoodHeld();
 	// BW1W120 0075c000 BW1M119 01582cc0
 	bool32_t EatFood();
 	// BW1W120 0075c040 BW1M119 01582be0
@@ -1549,7 +1634,7 @@ public:
 	// BW1W120 00765140 BW1M119 01598350
 	bool32_t ApproachHandReaction();
 	// BW1W120 007651a0 BW1M119 015981d0
-	bool32_t FindNearbyVillagerWhoIsntReacting();
+	Villager* FindNearbyVillagerWhoIsntReacting();
 	// BW1W120 00765320 BW1M119 01597ef0
 	bool32_t ArrivesAtPickupBallReaction();
 	// BW1W120 007653f0 BW1M119 01597e20
@@ -1601,9 +1686,9 @@ public:
 	// BW1W120 007673a0 BW1M119 01594050
 	bool32_t WaitForMate();
 	// BW1W120 00767410 BW1M119 01594010
-	bool32_t EnterDrowning(unsigned char param_1, unsigned char param_2);
+	bool32_t EnterDrowning(unsigned char current_state, unsigned char previous_state);
 	// BW1W120 00767420 BW1M119 01593fd0
-	bool32_t ExitDrowning(unsigned char param_1);
+	bool32_t ExitDrowning(unsigned char state);
 	// BW1W120 007678a0 BW1M119 0159d750
 	bool32_t InspectCreatureReaction();
 	// BW1W120 00767970 BW1M119 0159d610
@@ -1623,13 +1708,13 @@ public:
 	// BW1W120 00767f70 BW1M119 0159cc60
 	bool32_t MoveTowardsCreatureReaction();
 	// BW1W120 007682a0 BW1M119 0159c3d0
-	void CalculateNearestFreeDestination(MapCoords* param_1);
+	void CalculateNearestFreeDestination(MapCoords* destination);
 	// BW1W120 007683f0 BW1M119 0159c370
 	void UpdateAttitudeToCreature();
 	// BW1W120 00768400 BW1M119 0159c150
-	bool32_t UpdateReactiveStateFromAttitudeToCreature();
+	void UpdateReactiveStateFromAttitudeToCreature();
 	// BW1W120 00768510 BW1M119 0159c0c0
-	void SetupMoveToCreatureReaction(const MapCoords& param_1, unsigned char param_2);
+	void SetupMoveToCreatureReaction(const MapCoords& destination, uint8_t state);
 	// BW1W120 00768680 BW1M119 0159e750
 	bool32_t SetupScriptWanderToPos(const MapCoords& pos, float radius, unsigned short min_turns,
 	                                unsigned short max_turns);
@@ -1798,7 +1883,7 @@ public:
 	// BW1W120 0076bcc0 BW1M119 015a5880
 	bool32_t GotoWorshipSiteForWorship();
 	// BW1W120 0076bda0 BW1M119 015a57a0
-	bool32_t SetGotoWorshipSpeed();
+	void SetGotoWorshipSpeed();
 	// BW1W120 0076be00 BW1M119 015a5680
 	bool32_t ArrivesAtWorshipSiteForWorship();
 	// BW1W120 0076bec0 BW1M119 015a54b0
@@ -1830,7 +1915,7 @@ public:
 	// BW1W120 0076c3f0 BW1M119 015a4920
 	bool32_t AddVillagerToWorshipSite();
 	// BW1W120 0076c440 BW1M119 015a47e0
-	bool RemoveVillagerFromWorshipSite();
+	bool32_t RemoveVillagerFromWorshipSite();
 	// BW1W120 0076c4c0 BW1M119 015a46d0
 	bool32_t StartWorshippingAtWorshipSite();
 	// BW1W120 0076c550 BW1M119 015a45d0
@@ -1840,15 +1925,15 @@ public:
 	// BW1W120 0076c680 BW1M119 015a4400
 	bool32_t WorshippingAtWorshipSite();
 	// BW1W120 0076c6e0 BW1M119 015a42a0
-	bool StartWorshippingCreature(Creature* creature);
+	bool32_t StartWorshippingCreature(Creature* creature);
 	// BW1W120 0076c7c0 BW1M119 015a4210
 	bool32_t WorshippingCreature();
 	// BW1W120 0076c800 BW1M119 015a40c0
-	bool32_t ReduceVillagerLifeByChant();
+	int ReduceVillagerLifeByChant();
 	// BW1W120 0076c890 BW1M119 015a4020
-	bool32_t ProcessInWorship();
+	int ProcessInWorship();
 	// BW1W120 0076c8d0 BW1M119 015a3f30
-	bool32_t CheckRequestGoHome();
+	void CheckRequestGoHome();
 	// BW1W120 0076c930 BW1M119 015a3df0
 	bool32_t CheckNeededForWorshipSiteBuilding();
 	// BW1W120 0076c9a0 BW1M119 015a3cc0
@@ -1856,7 +1941,7 @@ public:
 	// BW1W120 0076ca30 BW1M119 015a3b50
 	bool32_t GetFoodAtWorshipSite();
 	// BW1W120 0076caf0 BW1M119 015a3b00
-	bool32_t GetFoodDesireAtWorshipSite();
+	float GetFoodDesireAtWorshipSite();
 	// BW1W120 0076cb00 BW1M119 015a3a20
 	bool32_t GotoAltarForRest();
 	// BW1W120 0076cb80 BW1M119 015a3990
@@ -1971,7 +2056,7 @@ public:
 	uint32_t BuildingIntoOutofAnimation(uint8_t param_1, uint8_t param_2);
 
 	// validate slot
-	// BW1W120 00756990 BW1M119 016e91c4
+	// BW1W120 00756990 BW1M119 0105a350
 	void WallhugValidate();
 	// BW1W120 inlined BW1M119 0106cfb0
 	const GVillagerInfo* GetInfo() const { return (const GVillagerInfo*)info; }
@@ -1989,28 +2074,29 @@ public:
 	// BW1W120 00756740 BW1M119 0156d9b0
 	virtual ~MissionaryControl();
 	// BW1W120 00756870 BW1M119 0156d700
-	virtual void ToBeDeleted(int param_1);
-	// BW1W120 00756700 BW1M119 0149bc10
-	virtual GPlayer* GetPlayer();
-	// BW1W120 00756730 BW1M119 0156c870
-	virtual char* GetDebugText();
+	virtual void ToBeDeleted(int delete_now);
 	// BW1W120 007568a0 BW1M119 0156d660
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 007568e0 BW1M119 0156d5c0
-	virtual uint32_t Save(GameOSFile& file);
-	// BW1W120 00756720 BW1M119 0156c830
-	virtual uint32_t GetSaveType();
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 00756920 BW1M119 0156d4c0
-	virtual float GetImpressiveValue(Living* param_1, Reaction* param_2);
+	virtual float GetImpressiveValue(Living* living, Reaction* reaction);
+
+	// BW1W120 00756700 BW1M119 0149bc10
+	virtual GPlayer* GetPlayer() { return reaction != NULL ? reaction->GetPlayer() : NULL; }
 	// BW1W120 00756710 BW1M119 0156c7f0
-	virtual const char* GetText();
+	virtual const char* GetText() { return "MissionaryControl"; }
+	// BW1W120 00756720 BW1M119 0156c830
+	virtual uint32_t GetSaveType() { return GAME_THING_TYPE_MISSIONARY_CONTROL; }
+	// BW1W120 00756730 BW1M119 0156c870
+	virtual char* GetDebugText() { return "MissionaryControl:"; }
 
 	// Constructors
 
 	// BW1W120 007566c0 BW1M119 0156db40
 	MissionaryControl();
 	// BW1W120 00756760 BW1M119 0156da50
-	MissionaryControl(Villager* param_1, GPlayer* param_2);
+	MissionaryControl(Villager* missionary, GPlayer* player);
 
 	// Non-virtual methods
 

@@ -27,9 +27,9 @@ public:
 	// BW1W120 00722230 BW1M119 01521740
 	virtual char* GetDebugText();
 	// BW1W120 00722520 BW1M119 01521870
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 00722590 BW1M119 01521780
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 00722220 BW1M119 01521700
 	virtual uint32_t GetSaveType();
 	// BW1W120 00722490 BW1M119 01521a70
@@ -46,6 +46,8 @@ public:
 
 	// BW1W120 007221e0 BW1M119 01522010
 	SpellCreature();
+	// BW1W120 00722270 BW1M119 01521f80
+	SpellCreature(MAGIC_TYPE type, GameThing* caster);
 };
 
 #endif /* BW1_DECOMP_SPELL_CREATURE_INCLUDED_H */

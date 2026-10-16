@@ -13,6 +13,8 @@
 
 class Base;
 class Creature;
+class GFeatureInfo;
+class GMultiMapFixedInfo;
 class GameThing;
 class GameThingWithPos;
 class LHOSFile;
@@ -34,8 +36,6 @@ public:
 	virtual bool32_t IsDrawBuilding();
 	// BW1W120 005273d0 BW1M119 010d5cb0
 	virtual PlannedMultiMapFixed* ConvertToPlanned();
-	// BW1W120 00422e90 BW1M119 010ab260
-	virtual ~Feature();
 	// BW1W120 00422e80 BW1M119 010d6380
 	virtual char* GetDebugText();
 	// BW1W120 00422e70 BW1M119 010d6340
@@ -63,6 +63,20 @@ public:
 
 	// BW1W120 inlined BW1M119 0130dbd0
 	Feature() {}
+	// BW1W120 inlined BW1M119 010ab2f0
+	Feature(const MapCoords& coords, const GFeatureInfo* info, float y_angle, float scale, float percent_built,
+	        bool32_t under_construction)
+		: MultiMapFixed(coords, (const GMultiMapFixedInfo*)info, y_angle, scale, percent_built, under_construction)
+	{
+	}
+	// BW1W120 inlined BW1M119 010ab260
+	~Feature() {}
+
+	// Static methods
+
+	// BW1W120 00527350 BW1M119 010d5e70
+	static Feature* Create(const MapCoords& coords, const GFeatureInfo* info, float y_angle, float scale,
+	                       float percent_built, bool32_t under_construction);
 };
 
 #endif /* BW1_DECOMP_FEATURE_INCLUDED_H */

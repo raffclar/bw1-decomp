@@ -32,6 +32,7 @@ class PhysicsObject;
 class PlannedMultiMapFixed;
 class TotemStatue;
 class Town;
+class SpellIcon;
 class TownCentreSpellIcon;
 class Villager;
 
@@ -52,9 +53,9 @@ public:
 	// BW1W120 0055dba0 BW1M119 01565670
 	virtual char* GetDebugText() { return "TownCentre:"; }
 	// BW1W120 00744880 BW1M119 01563370
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 00744830 BW1M119 01563410
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0055db90 BW1M119 01565630
 	virtual uint32_t GetSaveType() { return GAME_THING_TYPE_TOWN_CENTRE; }
 	// BW1W120 007448c0 BW1M119 015632f0
@@ -141,6 +142,10 @@ public:
 	MapCoords* GetTotemPos(MapCoords* coords);
 	// BW1W120 00743fa0 BW1M119 015645f0
 	TownCentreSpellIcon* FindSpellIcon(SPELL_SEED_TYPE type);
+	// BW1W120 00743ff0 BW1M119 01564520
+	int GetSpellIconIndex(SpellIcon* icon);
+	// BW1W120 00744290 BW1M119 01563ec0
+	void RemoveSpellFromArray(TownCentreSpellIcon* icon);
 	// BW1W120 00744010 BW1M119 01564490
 	void AddPowerUp(SPELL_SEED_TYPE seed_type, POWER_UP_TYPE power_up_type);
 	// BW1W120 00744030 BW1M119 01564400

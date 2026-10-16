@@ -18,19 +18,23 @@ struct PhysOb;
 struct Point2D;
 struct RPHolder;
 
+#define ANIMATED_STATIC_GATE_STONE_COUNT 3
+
 class AnimatedStatic : public Feature
 {
 public:
-	uint8_t field_0x7c[0x1c];
+	uint32_t GateType;
+	Object*  GateStones[ANIMATED_STATIC_GATE_STONE_COUNT];
+	uint32_t GateStoneIndices[ANIMATED_STATIC_GATE_STONE_COUNT];
 
 	// Override methods
 
 	// BW1W120 00422190 BW1M119 010a84b0
 	virtual char* GetDebugText();
 	// BW1W120 00422bc0 BW1M119 010a9920
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 00422aa0 BW1M119 010a9c10
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 00422180 BW1M119 010a8470
 	virtual uint32_t GetSaveType();
 	// BW1W120 00422770 BW1M119 01030890
@@ -49,7 +53,7 @@ public:
 	// BW1W120 004221a0 BW1M119 010a9070
 	virtual ~AnimatedStatic();
 	// BW1W120 004225a0 BW1M119 010aa4c0
-	virtual void ToBeDeleted(int param_1);
+	virtual void ToBeDeleted(int delete_now);
 	// BW1W120 00422300 BW1M119 010aa720
 	virtual void CallVirtualFunctionsForCreation(const MapCoords& param_1);
 	// BW1W120 00422650 BW1M119 010aa210

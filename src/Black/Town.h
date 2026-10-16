@@ -12,7 +12,7 @@
 #include "Artifact.h"             /* For struct TownArtifact */
 #include "Belief.h"               /* For struct GBelief */
 #include "BuildingSite.h"         /* For struct BuildingSite */
-#include "Camera.h"               /* For struct CameraStore */
+#include "CameraStore.h"          /* For struct CameraStore */
 #include "Container.h"            /* For struct Container */
 #include "EffectValues.h"         /* For struct EffectValues */
 #include "Field.h"                /* For struct Field */
@@ -127,7 +127,7 @@ public:
 	// lower there.
 	int ZeroBaseInfluence;
 #endif
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 	// Absent from BW1W110 and BW1W100: ZeroBaseInfluence keeps its offset in BW1W110 while TemporaryResourceStorePots and every
 	// later member sit 4 bytes lower.
 	bool32_t CompleteNewTownBuilt;
@@ -224,9 +224,9 @@ public:
 	// BW1W120 0073af80 BW1M119 0155e850
 	virtual uint16_t GetNumberOfInstanceForGlobalList();
 	// BW1W120 0073f450 BW1M119 01553ef0
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 0073ed30 BW1M119 01555e20
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 007412e0 BW1M119 01550e80
 	virtual void ResolveLoad();
 	// BW1W120 0073bc40 BW1M119 0155d6b0
@@ -690,6 +690,8 @@ public:
 	void CheckWhenNewBuildingCreated(MultiMapFixed& building);
 	// BW1W120 00741540 BW1M119 01550840
 	void ShuffleVillagersAroundAbodes();
+	// BW1W120 004e4d00 BW1M119 015eb6f0
+	Abode* GetMostImportantAbodeOnFire();
 	// BW1W120 00741820 BW1M119 015506e0
 	float GetDesireToGiveWorshippers();
 	// BW1W120 00741920 BW1M119 015505f0
@@ -712,7 +714,7 @@ public:
 	// Defined in other translation units
 
 	// BW1W120 007436f0 BW1M119 01562d50
-	void GetTownAttitudeToCreature(Creature* creature);
+	uint32_t GetTownAttitudeToCreature(Creature* creature);
 	// BW1W120 00743720 BW1M119 01562b70
 	void CreateCreatureInfo(Creature* creature);
 	// BW1W120 007437f0 BW1M119 01073a90
@@ -727,6 +729,10 @@ public:
 	void SetInStateOfEmergency();
 	// BW1W120 00747a40 BW1M119 01569350
 	int CalculateFoodSpareForWorship();
+	// BW1W120 00747c60 BW1M119 01569130
+	uint32_t CalculateActualNumberOfBuildings();
+	// BW1W120 00747c70 BW1M119 01569090
+	uint32_t CalculateDesiredNumberOfBuildings();
 	// BW1W120 00747ea0 BW1M119 01568b10
 	bool32_t GetBestRepairBuildingSite();
 	// BW1W120 007635d0 BW1M119 010158b0

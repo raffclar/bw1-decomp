@@ -10,8 +10,10 @@ Usage (called by ninja automatically):
 """
 
 import argparse
+import base64
 import json
 import struct
+import zlib
 import yaml
 from datetime import datetime
 from enum import IntEnum
@@ -103,6 +105,7 @@ BW1W110_LINK_TIME = datetime.fromisoformat('2001-06-26T15:07:58+00:00')
 BW1W110_PDB_TIME = datetime.fromisoformat('2001-06-04T14:50:17+00:00')
 BW1W120_LINK_TIME = datetime.fromisoformat('2002-06-18T06:13:22+00:00')
 BW1W120_PDB_TIME = datetime.fromisoformat('2002-05-27T11:24:14+00:00')
+BW1W130_LINK_TIME = datetime.fromisoformat('2003-03-06T21:30:42+00:00')
 
 # The CodeView record an IMAGE_DEBUG_DIRECTORY of type IMAGE_DEBUG_TYPE_CODEVIEW
 # points at: a reference to the (unshipped) .pdb rather than debug info itself.
@@ -117,12 +120,16 @@ __CV_INFO_PDB20_format__ = ('CV_INFO_PDB20', [
 ])
 
 
+# 1.30 has two reserved slots after the Rich header where every earlier version has three.
+RICH_RESERVED_SLOTS = {"BW1W130": 2}
+
+
 def rich_header_size(records):
     return len(RICH_PREAMBLE) + len(records) * RICH_RECORD_SIZE + len(RICH_TRAILER)
 
 
-def pe_offset_after_rich_header(records):
-    return LLDLINK_STUB_SIZE + rich_header_size(records) + RICH_HEADER_PAD
+def pe_offset_after_rich_header(records, reserved_slots=RICH_HEADER_RESERVED_SLOTS):
+    return LLDLINK_STUB_SIZE + rich_header_size(records) + reserved_slots * RICH_RECORD_SIZE
 
 
 # Version-specific Rich header data, decoded from each original exe.
@@ -194,6 +201,64 @@ BW1W120_RICH_RECORDS = [
     RichRecord(RichProductID.LINKER600,    8447,  26),
 ]
 
+
+BW1W130_RICH_KEY = 0x10EE403D   # extracted from original exe at offset 0x134
+BW1W130_RICH_RECORDS = [
+    RichRecord(RichProductID.UTC12_C,      8168,   1),
+    RichRecord(RichProductID.UTC12_C,      8447,  23),
+    RichRecord(RichProductID.UTC70_CPP,    9178,   1),
+    RichRecord(RichProductID.ALIAS_OBJ,    7291,  14),
+    RichRecord(RichProductID.MASM613,      7299,  43),
+    RichRecord(RichProductID.UTC70_C,      9178,   1),
+    RichRecord(RichProductID.IMPORT_VS2002, 9210,  6),
+    RichRecord(RichProductID.UTC12_C,      8799,  35),
+    RichRecord(RichProductID.UTC12_CPP,    8799,   7),
+    RichRecord(RichProductID.UTC12_CPP,    8047,  26),
+    RichRecord(RichProductID.UTC12_C,      8047, 202),
+    RichRecord(RichProductID.UTC12_CPP,    8168,  12),
+    RichRecord(RichProductID.LINKER600,    8168,   2),
+    RichRecord(RichProductID.LINKER600SP5, 8034,  21),
+    RichRecord(RichProductID.IMPORT,          0, 588),
+    RichRecord(RichProductID.UTC12_CPP,    8447,   2),
+    RichRecord(RichProductID.CVTRES,       1735,   1),
+    RichRecord(RichProductID.UTC12_CPP,    8966, 645),
+    RichRecord(RichProductID.IMPORT_OLD,      0,   7),
+    RichRecord(RichProductID.LINKER600,    8447,  28),
+]
+
+
+BW1WCI_LHAUDIO_RICH_KEY = 0x07EFD270   # extracted from original dll at offset 0xf4
+BW1WCI_LHAUDIO_RICH_SLOTS = 1
+BW1WCI_LHAUDIO_RICH_RECORDS = [
+    RichRecord(RichProductID.ALIAS_OBJ,    7291,   2),
+    RichRecord(RichProductID.UTC12_CPP,    8797,   8),
+    RichRecord(RichProductID.MASM613,      7299,  30),
+    RichRecord(RichProductID.UTC12_C,      8797, 119),
+    RichRecord(RichProductID.UTC12_C,      8799,   9),
+    RichRecord(RichProductID.UTC70_CPP,    8830,   1),
+    RichRecord(RichProductID.IMPORT_OLD,      0,   1),
+    RichRecord(RichProductID.LINKER600SP5, 8034,  11),
+    RichRecord(RichProductID.IMPORT,          0, 142),
+    RichRecord(RichProductID.UTC12_CPP,    8799,  22),
+    RichRecord(RichProductID.CVTRES,       1735,   1),
+    RichRecord(RichProductID.LINKER600,    8447,  37),
+]
+
+BW1WCI_LHMULTIPLAYER_RICH_KEY = 0xE12299CA   # extracted from original dll at offset 0xec
+BW1WCI_LHMULTIPLAYER_RICH_SLOTS = 3
+BW1WCI_LHMULTIPLAYER_RICH_RECORDS = [
+    RichRecord(RichProductID.UTC12_C,      8799,  23),
+    RichRecord(RichProductID.ALIAS_OBJ,    7291,   3),
+    RichRecord(RichProductID.UTC12_CPP,    8047,  10),
+    RichRecord(RichProductID.MASM613,      7299,  23),
+    RichRecord(RichProductID.UTC12_C,      8047, 144),
+    RichRecord(RichProductID.UTC12_C,      8447,  12),
+    RichRecord(RichProductID.UTC12_CPP,    8168,   3),
+    RichRecord(RichProductID.LINKER600SP5, 8034,  11),
+    RichRecord(RichProductID.IMPORT,          0, 182),
+    RichRecord(RichProductID.UTC12_CPP,    8966,  28),
+    RichRecord(RichProductID.LINKER600,    8447,   3),
+]
 
 BW1W100_LHAUDIO_RICH_KEY = 0x52ED8B05   # extracted from original dll at offset 0xec
 BW1W100_LHAUDIO_RICH_SLOTS = 2
@@ -312,6 +377,19 @@ BW1W120_LHDIALOG_RICH_RECORDS = BW1W100_LHDIALOG_RICH_RECORDS
 
 def write_bytes(pe, offset, data):
     pe.__data__[offset:offset + len(data)] = data
+
+
+def mark_imports_bound(pe):
+    """SafeDisc stamps every import descriptor as bound (TimeDateStamp and
+    ForwarderChain 0xFFFFFFFF), with no bound import directory and the IAT left
+    unbound."""
+    # pefile writes its parsed descriptors back over the raw bytes, so stamp
+    # those.
+    if not hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+        pe.parse_data_directories(directories=[pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT']])
+    for entry in pe.DIRECTORY_ENTRY_IMPORT:
+        entry.struct.TimeDateStamp = 0xFFFFFFFF
+        entry.struct.ForwarderChain = 0xFFFFFFFF
 
 
 def xor_dword(key, value):
@@ -501,12 +579,25 @@ BW1W120_CPU_DISP_TEXT = 0x008A25B0
 
 def call_rel32(target):
     """`call target`, encoded for the address it is placed at."""
-    return lambda address: b'\xe8' + ((target - (address + 5)) & 0xFFFFFFFF).to_bytes(4, 'little')
+    return lambda pe, address: b'\xe8' + ((target - (address + 5)) & 0xFFFFFFFF).to_bytes(4, 'little')
 
 
 def call_indirect(slot):
     """`call [slot]`, an absolute indirect call such as through an import slot."""
-    return lambda address: b'\xff\x15' + slot.to_bytes(4, 'little')
+    return lambda pe, address: b'\xff\x15' + slot.to_bytes(4, 'little')
+
+
+def jmp_run(target):
+    """1.30's padding run up to the next 16-byte boundary: a copy of the bytes in front of
+    `target` whose last five are replaced by `jmp target`."""
+
+    def encode(pe, address):
+        end = (address | 0xF) + 1
+        offset = pe.get_offset_from_rva(target - pe.OPTIONAL_HEADER.ImageBase)
+        copy = bytes(pe.__data__[offset - (end - address):offset - 5])
+        return copy + b'\xe9' + ((target - end) & 0xFFFFFFFF).to_bytes(4, 'little')
+
+    return encode
 
 
 # SafeDisc left calls in inter-function padding that cl6 fills with nops. Absolute
@@ -530,6 +621,10 @@ BW1W120_SAFEDISC_CALLS = (
     (0x004619AA, call_indirect(0x008A9970)),  # CameraModeScript
     (0x00461B7B, call_rel32(0x00401879)),  # CameraModeScript
     (0x0046B7AB, call_rel32(0x00401879)),  # Container
+    (0x004C4C5B, call_rel32(0x00401879)),  # CreatureAttitudeToCreature
+    (0x004C4F5A, call_indirect(0x008A900C)),  # CreatureAttitudeToCreature: __imp__GetUserNameA@4
+    (0x004C4FAA, call_indirect(0x008A9888)),  # CreatureAttitudeToCreature: __imp__mmioAscend@4
+    (0x004DF26B, call_rel32(0x00401879)),  # CreatureMentalEditor
     (0x0052DB8B, call_rel32(0x00401879)),  # Fixed
     (0x0052E3FA, call_indirect(0x008A901C)),  # Fixed: __imp__TrackMouseEvent@4
     (0x0052EE0A, call_indirect(0x008A97AC)),  # Fixed: __imp__ShellExecuteA@4
@@ -557,6 +652,14 @@ BW1W120_SAFEDISC_CALLS = (
     (0x0056F9DB, call_rel32(0x004017F9)),  # GameThing
     (0x0056FB0B, call_rel32(0x004017F9)),  # GameThing
     (0x005703CA, call_indirect(0x008A96E4)),  # GameThing: __imp__LHSampleSetVolume...
+    (0x00578B0A, call_indirect(0x008A903C)),  # GestureSystem: __imp__DirectXSetupGetVersion
+    (0x00578E1A, call_indirect(0x008A97B8)),  # GestureSystemData
+    (0x00578E9A, call_indirect(0x008A9490)),  # GestureSystemData
+    (0x00578F2B, call_rel32(0x004017F9)),  # GestureSystemData
+    (0x0057901B, call_rel32(0x004017F9)),  # GestureSystemData
+    (0x005799FB, call_rel32(0x004017F9)),  # GestureSystemDataList
+    (0x00579AAA, call_indirect(0x008A9978)),  # GestureSystemDataList: __imp__CoFileTimeToDosDateTime@12
+    (0x00579AEA, call_indirect(0x008A9180)),  # GestureSystemDataList: __imp__EnterCriticalSection@4
     (0x00583E6B, call_rel32(0x004017F9)),  # GJProperty
     (0x005854AA, call_indirect(0x008A9034)),  # GJProperty: __imp__DirectInputCreateA@4
     (0x0058600A, call_indirect(0x008A90A0)),  # GJProperty: __imp_?GetCurrentPosition@CImmMouse@@UAEHAAJ0@Z
@@ -642,6 +745,15 @@ BW1W120_SAFEDISC_CALLS = (
     (0x0063B8CB, call_rel32(0x004017F9)),  # OnMapTrajectory
 )
 
+
+# 1.30's SafeDisc left jumps instead: each run of padding nops up to the next 16-byte
+# boundary ends in a `jmp` back to the start of an earlier run (see `jmp_run`).
+BW1W130_SAFEDISC_CALLS = (
+    (0x004E15D3, jmp_run(0x004E1579)),  # CreatureMentalEditor
+    (0x004E16D1, jmp_run(0x004E15D3)),  # CreatureMentalEditor
+)
+
+
 BW1W100_GAMETHING_INCREMENTAL = (
     (0x840, b'\x33\xc0\xc3\x90\x90', b'\xe9\x7b\x5f\xec\xff'),  # 0053eee0: jmp 0x404e60 (GameThing::GetSaveType)
 )
@@ -663,9 +775,10 @@ def substitute_code(pe, base, rows):
 def restore_calls(pe, rows):
     code = []
     for address, call in rows:
-        shipped = call(address)
+        shipped = call(pe, address)
         code.append((address, b'\x90' * len(shipped), shipped))
     substitute_code(pe, 0, code)
+
 
 
 def insert_header_padding(pe, at, count):
@@ -850,6 +963,7 @@ def apply_BW1W120_patch(pe, cfg, out_dir, modules):
     apply_patch_safedisc(pe, cfg)
     apply_BW1W120_patch_safedisc_cleaner(pe)
     apply_BW1_common_patch(pe, cfg)
+    mark_imports_bound(pe)
 
     # Different safedisc decryptor easter egg
     # https://www.beatport.com/nl/track/crazy-bad-bwoy/682050
@@ -869,6 +983,115 @@ def apply_BW1W120_patch(pe, cfg, out_dir, modules):
     apply_modules_patch(out_dir, cfg, modules)
 
 
+def apply_BW1W130_patch(pe, cfg, out_dir, modules):
+    restore_calls(pe, BW1W130_SAFEDISC_CALLS)
+    ste = section_table_end(pe)
+    insert_header_padding(pe, ste, SAFEDISC_SECTION_BUMP)
+    # This decryptor also took "r 32-bit" off the front of the first comment
+    write_bytes(pe, ste + SAFEDISC_SECTION_BUMP, b'\x00' * (EXESTR_PREFIX_ERASE + len(b'r 32-bit')))
+
+    apply_patch_safedisc(pe, cfg)
+    # 4-byte marker immediately before IMAGE_NT_HEADERS; this SafeDisc Cleaner signs 0x2DAD.
+    write_bytes(pe, pe_offset_after_rich_header(BW1W130_RICH_RECORDS, RICH_RESERVED_SLOTS["BW1W130"]) - 4, bytes([0x0D, 0x00, 0x2D, 0xAD]))
+    apply_BW1_common_patch(pe, cfg)
+    mark_imports_bound(pe)
+
+    # Another decryptor easter egg
+    write_bytes(pe, 0x00000350, b'Myth / Deviance ')
+
+    # The debug directory names an NB10 record at the file's end, which the decryptor cut off
+    # (see force_size); only the entry itself survives.
+    restore_debug_directory(pe, 0x008ae9c0, BW1W130_LINK_TIME, 0x008c4000, 0x36)
+
+    apply_modules_patch(out_dir, cfg, modules)
+
+
+# --- BW1WCI ----------------------------------------------------------------------------------
+#
+# Creature Isle's executable is not link.exe output wrapped by SafeDisc but a rebuilt container:
+# nine sections (three of them SafeDisc/unpacker leftovers) in a fixed order and file alignment,
+# the import tables rebuilt in the last one, no Rich header, and a cracker's NFO in the header
+# padding. lld-link sorts non-standard sections by name, so the image is reassembled here from the
+# linked sections' contents.
+
+# name, RVA, virtual size, raw offset, raw size
+BW1WCI_SECTIONS = (
+    (b".text", 0x1000, 0x4D3000, 0x600, 0x4D2B2D),
+    (b".rdata", 0x4D4000, 0x162000, 0x4D3200, 0x161EB5),
+    (b".data", 0x636000, 0x60F000, 0x635200, 0x279E40),
+    (b".data1", 0xC45000, 0x1000, 0x8AF200, 0xB24),
+    (b"SELFMOD", 0xC46000, 0x1000, 0x8AFE00, 0xBED),
+    (b".rsrc", 0xC47000, 0x4000, 0x8B0A00, 0x393D),
+    (b"stxt774", 0xC4B000, 0x1000, 0x8B4400, 0x800),
+    (b"stxt371", 0xC4C000, 0x4000, 0x8B4C00, 0x3D62),
+    (b".MGD32", 0xC50000, 0x5200, 0x8B8A00, 0x5200),
+)
+BW1WCI_SECTION_FLAGS = 0xC0000040
+BW1WCI_FILE_SIZE = 0x8BDC00
+BW1WCI_HEADERS_END = 0x600
+BW1WCI_PE_OFFSET = 0x80
+# The header padding after the section table: the decryptor's NFO.
+BW1WCI_NFO_OFFSET = 0x2E0
+BW1WCI_NFO = zlib.decompress(base64.b64decode(
+    "eNrVkrsNxDAIhlOfdDt4/wqzDkhsYh1vki7tOYUNP3wGnOt6t74f+9Y6IsjM677MFtKFdy+ietpyWeqggQbzMLOLxxgU2zQX"
+    "GmoHggwK6+EuWniIi0W09ag1my/TJARtg0gkC4Ul3NimRR3aMcmjhGKYDZ3mgoh3mgEwLMh4qZSTBXGy9zQE4OkuqHe33rSY"
+    "o85inWynhpYQrAnsnmPqUHrRTk1kWksKxO4PF4I+Vd6D8zSqT2GC8yOAn+zC60/XD6EILeo="
+))
+# Directories the rebuilt container points at: the debug directory and the IAT, which sit in
+# .rdata and .MGD32 respectively (the import directory itself is in config.yml).
+BW1WCI_DEBUG_DIRECTORY = (0x4D4980, 0x1C)
+BW1WCI_IAT_DIRECTORY = (0xC4FAA0, 0xB0)
+BW1WCI_CHECKSUM = 0x10010
+BW1WCI_COFF_SYMTAB_POINTER = 0x4854  # "TH" of the decryptor's "MYTH" signature
+BW1WCI_SIZE_OF_HEADERS = 0x1000
+
+
+def build_BW1WCI_exe(linked, cfg):
+    """The shipped executable's container around the linked sections' contents."""
+    lpe = pefile.PE(data=linked)
+    contents = {}
+    for section in lpe.sections:
+        name = section.Name.rstrip(b"\0")
+        if name not in contents and section.SizeOfRawData:
+            contents[name] = section.get_data()
+    out = bytearray(BW1WCI_FILE_SIZE)
+
+    # DOS header and stub: lld-link's, with the fields MSVC 6's linker leaves
+    out[:BW1WCI_PE_OFFSET] = linked[:BW1WCI_PE_OFFSET]
+    struct.pack_into("<HH", out, 2, BW1WCI_PE_OFFSET + len(RICH_PREAMBLE), MSVC6_E_CP)
+    struct.pack_into("<H", out, 0x0C, MSVC6_E_MAXALLOC)
+    struct.pack_into("<H", out, 0x10, MSVC6_E_SP)
+
+    stamp = int(datetime.fromisoformat(cfg["timestamp"]).timestamp())
+    coff = struct.pack("<4sHHIIIHH", b"PE\0\0", 0x14C, len(BW1WCI_SECTIONS), stamp, BW1WCI_COFF_SYMTAB_POINTER, 0, 0xE0, 0x10F)
+    directories = [(0, 0)] * 16
+    directories[0] = (cfg["entry_export_addr"] - 0x400000, cfg["entry_export_size"])
+    directories[1] = (cfg["entry_import_addr"] - 0x400000, cfg["entry_import_size"])
+    directories[2] = (cfg["entry_resource_addr"] - 0x400000, cfg["entry_resource_size"])
+    directories[6] = (BW1WCI_DEBUG_DIRECTORY[0], BW1WCI_DEBUG_DIRECTORY[1])
+    directories[12] = BW1WCI_IAT_DIRECTORY
+    optional = struct.pack(
+        "<HBBIIIIIIIIIHHHHHHIIIIHHIIIIII",
+        0x10B, 6, 0, cfg["size_of_code"], cfg["size_of_initialized_data"], 0, lpe.OPTIONAL_HEADER.AddressOfEntryPoint,
+        0x1000, BW1WCI_SECTIONS[1][1], 0x400000, 0x1000, 0x200, 4, 0, 0, 0, 4, 0, 0, cfg["size_of_image"],
+        BW1WCI_SIZE_OF_HEADERS, BW1WCI_CHECKSUM, 2, 0, 0x100000, 0x1000, 0x100000, 0x1000, 0, 16,
+    ) + b"".join(struct.pack("<II", *d) for d in directories)
+    out[BW1WCI_PE_OFFSET : BW1WCI_PE_OFFSET + len(coff)] = coff
+    at = BW1WCI_PE_OFFSET + len(coff)
+    out[at : at + len(optional)] = optional
+    at += len(optional)
+    for name, rva, vsize, raw, rsize in BW1WCI_SECTIONS:
+        out[at : at + 40] = struct.pack("<8sIIIIIIHHI", name, vsize, rva, rsize, raw, 0, 0, 0, 0, BW1WCI_SECTION_FLAGS)
+        at += 40
+    assert at == BW1WCI_NFO_OFFSET
+    out[BW1WCI_NFO_OFFSET : BW1WCI_NFO_OFFSET + len(BW1WCI_NFO)] = BW1WCI_NFO
+
+    for name, rva, vsize, raw, rsize in BW1WCI_SECTIONS:
+        body = contents[name][:rsize]
+        out[raw : raw + len(body)] = body
+    return bytes(out)
+
+
 PATCHES = {
     "BW1W100": (BW1W100_RICH_KEY, BW1W100_RICH_RECORDS, apply_BW1W100_patch, {
         "LHAudio":       (BW1W100_LHAUDIO_RICH_KEY,       BW1W100_LHAUDIO_RICH_RECORDS,       BW1W100_LHAUDIO_RICH_SLOTS),
@@ -884,6 +1107,20 @@ PATCHES = {
     }),
     "BW1W120": (BW1W120_RICH_KEY, BW1W120_RICH_RECORDS, apply_BW1W120_patch, {}),
     "BW1W120": (BW1W120_RICH_KEY, BW1W120_RICH_RECORDS, apply_BW1W120_patch, {
+        "LHAudio":       (BW1W120_LHAUDIO_RICH_KEY,       BW1W120_LHAUDIO_RICH_RECORDS,       BW1W120_LHAUDIO_RICH_SLOTS),
+        "LHLog":         (BW1W120_LHLOG_RICH_KEY,         BW1W120_LHLOG_RICH_RECORDS,         BW1W120_LHLOG_RICH_SLOTS),
+        "LHMultiplayer": (BW1W120_LHMULTIPLAYER_RICH_KEY, BW1W120_LHMULTIPLAYER_RICH_RECORDS, BW1W120_LHMULTIPLAYER_RICH_SLOTS),
+        "LHDialog":      (BW1W120_LHDIALOG_RICH_KEY,      BW1W120_LHDIALOG_RICH_RECORDS,      BW1W120_LHDIALOG_RICH_SLOTS),
+    }),
+    # LHLog shipped unchanged from 1.10 and LHDialog from 1.20
+    "BW1WCI": (None, None, None, {
+        "LHAudio":       (BW1WCI_LHAUDIO_RICH_KEY,        BW1WCI_LHAUDIO_RICH_RECORDS,        BW1WCI_LHAUDIO_RICH_SLOTS),
+        "LHLog":         (BW1W110_LHLOG_RICH_KEY,         BW1W110_LHLOG_RICH_RECORDS,         BW1W110_LHLOG_RICH_SLOTS),
+        "LHMultiplayer": (BW1WCI_LHMULTIPLAYER_RICH_KEY,  BW1WCI_LHMULTIPLAYER_RICH_RECORDS,  BW1WCI_LHMULTIPLAYER_RICH_SLOTS),
+        "LHDialog":      (BW1W120_LHDIALOG_RICH_KEY,      BW1W120_LHDIALOG_RICH_RECORDS,      BW1W120_LHDIALOG_RICH_SLOTS),
+    }),
+    # The module DLLs shipped unchanged in 1.30
+    "BW1W130": (BW1W130_RICH_KEY, BW1W130_RICH_RECORDS, apply_BW1W130_patch, {
         "LHAudio":       (BW1W120_LHAUDIO_RICH_KEY,       BW1W120_LHAUDIO_RICH_RECORDS,       BW1W120_LHAUDIO_RICH_SLOTS),
         "LHLog":         (BW1W120_LHLOG_RICH_KEY,         BW1W120_LHLOG_RICH_RECORDS,         BW1W120_LHLOG_RICH_SLOTS),
         "LHMultiplayer": (BW1W120_LHMULTIPLAYER_RICH_KEY, BW1W120_LHMULTIPLAYER_RICH_RECORDS, BW1W120_LHMULTIPLAYER_RICH_SLOTS),
@@ -931,6 +1168,15 @@ def apply_modules_patch(out_dir, cfg, modules):
             apply_module_patch(pe, module_cfg, pe_metadata)
 
         data[:] = pe.write()
+        if pe_metadata:
+            # link.exe sizes .reloc on its own terms (padded well past the entries); the file must
+            # reach the end of the raw data it claims
+            reloc = find_section_header(pe, '.reloc')
+            needed = (pe_metadata["reloc_virtual_size"] + 0xFFF) & ~0xFFF
+            if reloc.SizeOfRawData < needed:
+                reloc.SizeOfRawData = needed
+                data[:] = pe.write()
+                data += b'\x00' * (reloc.PointerToRawData + needed - len(data))
         # Trailing data (e.g. the CodeView debug record) that lld-link drops.
         if pe_metadata:
             data += bytes(pe_metadata["trailing_data"])
@@ -958,10 +1204,16 @@ def main():
     out = args.output if args.output is not None else args.input
     out.parent.mkdir(parents=True, exist_ok=True)
 
+    if rich_key is None:
+        # a container of its own (see build_BW1WCI_exe)
+        out.write_bytes(build_BW1WCI_exe(args.input.read_bytes(), cfg))
+        apply_modules_patch(out.parent, cfg, modules)
+        return
+
     data = bytearray(args.input.read_bytes())
     pe   = pefile.PE(data=data)
 
-    insert_rich_header(pe, rich_key, rich_records)
+    insert_rich_header(pe, rich_key, rich_records, RICH_RESERVED_SLOTS.get(args.version, RICH_HEADER_RESERVED_SLOTS))
     zero_code_section_padding(pe)
     apply_safedisc(pe, cfg, out.parent, modules)
 

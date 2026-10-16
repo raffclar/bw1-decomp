@@ -13,6 +13,7 @@
 enum COLLIDE_TYPE
 {
 	COLLIDE_TYPE_NONE = 0x0,
+	COLLIDE_TYPE_FIXED = 0x8,
 };
 
 // Forward Declares
@@ -20,6 +21,7 @@ enum COLLIDE_TYPE
 class Citadel;
 class Game3DObject;
 class GameThingWithPos;
+struct LH3DColor;
 struct LHPoint;
 struct MapCell;
 struct MapCellIterator;
@@ -40,6 +42,10 @@ struct JustMapXZ
 	JustMapXZ() { Init(0, 0); }
 	// BW1W120 inlined BW1M119 015a0680
 	JustMapXZ(unsigned short cell_x, unsigned short cell_z) : x(cell_x), z(cell_z) {}
+	// BW1W120 005e17c0 BW1M119 01108810
+	JustMapXZ(const MapCoords& coords);
+	// BW1W120 inlined BW1M119 0159c6a0
+	JustMapXZ(const JustMapXZ& other) : x(other.x), z(other.z) {}
 
 	// Non-virtual methods
 
@@ -157,11 +163,11 @@ struct MapCoords : public LH3DMapCoords
 	// BW1W120 inlined BW1M119 010247e0
 	void SetMetersZ(float meters);
 	// BW1W120 inlined BW1M119 inlined
-	void SetX(float _x) { SetWholeX((long)(_x * (float)0x10000 / 10.0f)); }
+	void SetX(float _x) { SetWholeX((long)(_x * MAP_COORDS_UNITS_PER_CELL / MAP_COORDS_METRES_PER_CELL)); }
 	// BW1W120 inlined BW1M119 0104d810
 	void SetWholeX(long _x) { x = _x; }
 	// BW1W120 inlined BW1M119 inlined
-	void SetZ(float _z) { SetWholeZ((long)(_z * (float)0x10000 / 10.0f)); }
+	void SetZ(float _z) { SetWholeZ((long)(_z * MAP_COORDS_UNITS_PER_CELL / MAP_COORDS_METRES_PER_CELL)); }
 	// BW1W120 inlined BW1M119 0104d850
 	void SetWholeZ(long _z) { z = _z; }
 	// Inliner IL size: 42
@@ -182,6 +188,8 @@ struct MapCoords : public LH3DMapCoords
 	void SetAltitude(float _altitude) { altitude = _altitude; }
 	// BW1W120 00603430 BW1M119 0104c540
 	MapCell* ToMap() const;
+	// BW1W120 006024d0 BW1M119 011a6820
+	void ShowMapCell(LH3DColor* color) const;
 	// BW1W120 006034b0 BW1M119 0102f600
 	Object* GetFirstObjectFixed() const;
 	// BW1W120 006034d0 BW1M119 0102f0e0
@@ -198,8 +206,8 @@ struct MapCoords : public LH3DMapCoords
 	bool32_t IsSuitableForFixedAbodeInTown(MESH_LIST mesh, const Town* town, float y_angle, float scale) const;
 	// BW1W120 006038b0 BW1M119 015aa7d0
 	bool32_t IsSuitableForFixed(MESH_LIST mesh, float param_2, float param_3) const;
-	// BW1W120 00603dc0 BW1M119 01121940
-	void IsSuitableForFixed(Game3DObject* object) const;
+	// BW1W120 00604020 BW1M119 01121940
+	bool32_t IsSuitableForFixed(Game3DObject* object) const;
 	// BW1W120 00603dc0 BW1M119 0154e6c0
 	bool32_t IsSuitableForAbodeBuildFixed(Game3DObject* object, float param_2, float param_3, Object* param_4) const;
 	// BW1W120 006045c0 BW1M119 0101c170

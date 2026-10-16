@@ -4,6 +4,9 @@
 #include <assert.h> /* For static_assert */
 #include <stdint.h> /* For uint32_t */
 
+#include <chlasm/CreatureEnum.h> /* For NUM_CREATURE_DESIRE_SOURCES */
+#include <re_common.h>           /* For ARRAY_SIZE */
+
 #include "BaseInfo.h"    /* For struct GBaseInfo */
 #include "InfoLoaders.h" /* For INFO_DATA_BLOCK */
 
@@ -14,14 +17,18 @@ class Base;
 class CreatureSourceBoundsInfo : public GBaseInfo
 {
 public:
-	uint8_t field_0x10[0xc];
+	float MinThreshold;
+	float MaxThreshold;
+	float FeedbackScale;
 
 	// Override methods
 
-	// BW1W120 004dd400 BW1M119 012629a0
-	virtual ~CreatureSourceBoundsInfo();
 	// BW1W120 004dd3a0 BW1M119 01262d00
-	virtual GBaseInfo* GetBaseInfo(uint32_t& param_1);
+	virtual GBaseInfo* GetBaseInfo(uint32_t& num_infos)
+	{
+		num_infos = ARRAY_SIZE(ThresholdBounds);
+		return ThresholdBounds;
+	}
 
 	// Static data
 
@@ -34,8 +41,9 @@ public:
 	static CreatureSourceBoundsInfo* GetThresholdBounds() { return ThresholdBounds; }
 
 	// TODO(#377): The original declared this class in CreatureMentalDesireSource.h.
-	INFO_DATA_BLOCK(field_0x10, field_0x10)
+	INFO_DATA_BLOCK(MinThreshold, FeedbackScale)
 	INFO_ROOT_LOADERS("CreatureMentalDesireSource.h", 33)
 };
+static_assert(sizeof(CreatureSourceBoundsInfo) == 0x1c, "Data type is of wrong size");
 
 #endif /* BW1_DECOMP_CREATURE_SOURCE_BOUNDS_INFO_INCLUDED_H */

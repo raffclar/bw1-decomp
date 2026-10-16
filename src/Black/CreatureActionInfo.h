@@ -16,13 +16,39 @@ class Base;
 class CreatureActionInfo : public GBaseInfo
 {
 public:
-	uint8_t          field_0x10[0x98];
-	uint32_t         field_0xa8;
-	uint8_t          field_0xac[0x18];
-	CREATURE_DESIRES Desire;
-	uint8_t          field_0xc8[0x1c];
-	uint32_t         field_0xe4;
-	uint8_t          field_0xe8[0x28];
+	float                       StrengthGain;
+	float                       EnergyCost;
+	float                       ExhaustionCost;
+	IMPRESSIVE_TYPE             ImpressiveType;
+	float                       ImpressiveValue;
+	char                        Name[0x20];
+	uint8_t                     field_0x44[0x60];
+	bool32_t                    NeedsObjectToActOn;
+	CREATURE_DESIRES            PlanIndex;
+	CREATURE_ACTION_KNOWN_ABOUT KnownAboutCategory;
+	CREATURE_ACTION_KNOWN_ABOUT KnownAboutCategory2;
+	MAGIC_TYPE                  MagicType;
+	bool32_t                    ExcludesCarriedObject;
+	uint8_t                     field_0xbc[0x8];
+	CREATURE_DESIRES            Desire;
+	uint8_t                     field_0xc8[0x8];
+	float                       CompletionFactor;
+	float                       FullSkillCount;
+	bool32_t                    CompletionEnabled;
+	uint8_t                     field_0xdc[0x4];
+	float                       LearnWindow;
+	float                       InitialOpinion;
+	uint8_t                     field_0xe8[0x4];
+	bool32_t                    WorthFollowing;
+	uint8_t                     field_0xf0[0xc];
+	float                       HowNiceChange;
+	bool32_t                    Learnable;
+	bool32_t                    IsRecoveryAction;
+#ifdef VERSION_BW1W100
+	uint8_t field_0x108[0x4];
+#else
+	uint8_t field_0x108[0x8];
+#endif // VERSION_BW1W100
 
 	// Override methods
 
@@ -40,9 +66,13 @@ public:
 	static CreatureActionInfo* GetInfo() { return g_CreatureActionInfos; }
 
 	// TODO(#377): The original declared this class in CreatureAction.h.
-	INFO_DATA_BLOCK(field_0x10, field_0xe8)
+	INFO_DATA_BLOCK(StrengthGain, field_0x108)
 	INFO_ROOT_LOADERS("CreatureAction.h", 46)
 };
+#ifdef VERSION_BW1W100
+static_assert(sizeof(CreatureActionInfo) == 0x10c, "Data type is of wrong size");
+#else
 static_assert(sizeof(CreatureActionInfo) == 0x110, "Data type is of wrong size");
+#endif // VERSION_BW1W100
 
 #endif /* BW1_DECOMP_CREATURE_ACTION_INFO_INCLUDED_H */

@@ -8,6 +8,8 @@
 
 // Forward Declares
 
+class GAnimalInfo;
+
 class Base;
 class Creature;
 class GameThing;
@@ -22,7 +24,7 @@ public:
 	// BW1W120 0041fe70 BW1M119 0117e8e0
 	virtual bool32_t DecideWhatToDo();
 	// BW1W120 004203c0 BW1M119 0117f4e0
-	virtual uint8_t FleeFromPredatorPriority(Reaction* param_1, Reaction* param_2);
+	virtual uint8_t FleeFromPredatorPriority(Reaction* reaction, Reaction* current_reaction);
 	// BW1W120 0041fe40 BW1M119 0117ea70
 	virtual bool32_t Eat();
 	// BW1W120 0041ff40 BW1M119 0117e770
@@ -60,12 +62,14 @@ public:
 	// BW1W120 0041fd70 BW1M119 0117ed60
 	virtual uint32_t GetSaveType();
 	// BW1W120 0041fc70 BW1M119 0117a340
-	virtual bool32_t CanBeFrighteningToCreature(Creature* param_1);
+	virtual bool32_t CanBeFrighteningToCreature(Creature* creature);
 	// BW1W120 0041c1a0 BW1M119 01178af0
 	virtual uint32_t StandAnimation();
 
 	// BW1W120 0055e4d0 BW1M119 0130e2e0
 	Lion() {}
+	// BW1W120 0041fd30 BW1M119 0117ecc0
+	Lion(const MapCoords& coords, const GAnimalInfo* info, unsigned long age);
 };
 
 #endif /* BW1_DECOMP_ANIMAL_LION_INCLUDED_H */

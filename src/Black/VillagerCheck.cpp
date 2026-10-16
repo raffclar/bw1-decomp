@@ -94,10 +94,11 @@ bool32_t Villager::CheckInteractWithAbode()
 	MultiMapFixed* mmf = dynamic_cast<MultiMapFixed*>((Object*)TargetThing);
 	if (mmf != NULL && mmf->IsAvailable())
 	{
+		bool sameTown;
 		if ((!mmf->IsBuilt() || mmf->GetDesireToBeRepaired() > 0.0f) && mmf->GetPlayer() == GetPlayer() &&
-		    (mmf->GetTown() == GetTown() || mmf->IsTownCentre()))
+		    ((sameTown = mmf->GetTown() == GetTown()) || mmf->IsTownCentre()))
 		{
-			if (mmf->GetTown() != GetTown())
+			if (!sameTown)
 				ForceMoveVillagerToAbode((Abode*)mmf);
 			if (SetupBuildingObject(mmf) == 1)
 			{
@@ -219,7 +220,7 @@ bool32_t Villager::CheckInteractWithVillager()
 // BW1W120 00757820 BW1M119 0157a390
 void Villager::SetDiscipleFollower(VILLAGER_DISCIPLE disciple_type)
 {
-	Flags |= 0x400;
+	Flags |= VILLAGER_FLAG_DISCIPLE_FOLLOWER;
 	DiscipleType = disciple_type;
 	SetTopState(VILLAGER_STATE_DECIDE_WHAT_TO_DO);
 }

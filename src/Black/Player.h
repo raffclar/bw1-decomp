@@ -85,7 +85,7 @@ public:
 	GPlayerStartPos     StartPos;
 	LHListNode<GPlayer> next;
 	MPFEStartGameData*  StartGameData;
-#ifdef VERSION_BW1W120
+#if defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
 	std::map<int, WinCondition> Conditions;
 	float                       ScoreHistory[500];
 	int                         ScoreHistoryIndex;
@@ -141,9 +141,9 @@ public:
 	// BW1W120 0064c470 BW1M119 0149a4e0
 	virtual void UpdateSpellInfo(Spell* param_1, PSysProcessInfo* param_2);
 	// BW1W120 0064c4c0 BW1M119 01499760
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 0064c8c0 BW1M119 01498780
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 0064cc90 BW1M119 014986b0
 	virtual void SaveExtraData(GameOSFile& file);
 	// BW1W120 0064ccf0 BW1M119 01498680
@@ -360,6 +360,8 @@ public:
 	void SavePlayerAlignment(unsigned long game_turn);
 	// BW1W120 0064d2d0 BW1M119 01497bc0
 	void LoadPlayerAlignment();
+	// BW1W120 inlined BW1M119 0106b9f0
+	GAlignment* GetAlignment() { return alignment; }
 	// BW1W120 0064d360 BW1M119 01497900
 	bool FindNearestPosInsideInfluence(const MapCoords& pos, MapCoords& nearest);
 	// BW1W120 0064d530 BW1M119 0105efd0

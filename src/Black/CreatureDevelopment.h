@@ -6,6 +6,7 @@
 
 #include <chlasm/CreatureEnum.h>           /* For DEVELOPMENT_PHASE_LAST */
 #include <Lionhead/LHFile/ver3.0/LHFile.h> /* For struct LHFile */
+#include <re_common.h>                     /* For ARRAY_SIZE */
 
 #include "BaseInfo.h"    /* For struct GBaseInfo */
 #include "InfoLoaders.h" /* For INFO_DATA_BLOCK */
@@ -21,15 +22,17 @@ public:
 
 	// Override methods
 
-	// BW1W120 004db5c0 BW1M119 012601f0
-	virtual ~CreatureDevelopmentDurationEntry() {}
 	// BW1W120 004db560 BW1M119 01260700
-	virtual GBaseInfo* GetBaseInfo(uint32_t& param_1);
+	virtual GBaseInfo* GetBaseInfo(uint32_t& num_infos)
+	{
+		num_infos = ARRAY_SIZE(Infos);
+		return Infos;
+	}
 
 	// Static data
 
 	// BW1W120 00c843b0
-	static CreatureDevelopmentDurationEntry Infos[17];
+	static CreatureDevelopmentDurationEntry Infos[CREATURE_TYPE_LAST];
 
 	// Static methods
 
@@ -49,10 +52,12 @@ public:
 
 	// Override methods
 
-	// BW1W120 004db4f0 BW1M119 01260390
-	virtual ~CreatureDevelopmentPhaseEntry() {}
 	// BW1W120 004db480 BW1M119 01260640
-	virtual GBaseInfo* GetBaseInfo(uint32_t& param_1);
+	virtual GBaseInfo* GetBaseInfo(uint32_t& num_infos)
+	{
+		num_infos = ARRAY_SIZE(Infos);
+		return Infos;
+	}
 
 	// Static data
 

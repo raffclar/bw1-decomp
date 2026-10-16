@@ -128,7 +128,7 @@ inline CircleHugStateInfoT::performance CircleHugStateInfoT::evaluate(MobileWall
 	villager->goal = mwh->goal;
 	villager->step.Init(mwh->step.x, mwh->step.z, mwh->step.altitude);
 	villager->GameAngle = mwh->GameAngle;
-	villager->SetSpeed(mwh->speed * 4, 1);
+	villager->SetSpeed(mwh->speed * 4, true);
 
 	performance result;
 	if (swapped)
@@ -522,7 +522,7 @@ int MobileWallHug::MoveToObjectPos()
 			{
 				speedInMetres = targetSpeed;
 			}
-			SetSpeedInMetres(speedInMetres, 0);
+			SetSpeedInMetres(speedInMetres, false);
 		}
 		goal = pos;
 #if !defined(VERSION_BW1W100)
@@ -770,7 +770,7 @@ void MobileWallHug::SetNewWander(const MapCoords* centre, long min_dist, long ma
 	int angle = GameAngle;
 	if (centre != NULL)
 	{
-		int dist = (int)GUtils::GetDistanceInMetres_0074cd50(*centre, Pos);
+		int dist = (int)GUtils::GetDistanceInMetres(centre, &Pos);
 		if (dist > max_dist)
 		{
 			angle = GUtils::GetAngleFromXZ(Pos, *centre);
@@ -917,7 +917,7 @@ float MobileWallHug::GetSpeedInMetres() const
 	return GUtils::ConvertWholeDistanceToMeters(speed);
 }
 
-void MobileWallHug::SetSpeedInMetres(float speed_in_metres, int scale_speed)
+void MobileWallHug::SetSpeedInMetres(float speed_in_metres, bool32_t scale_speed)
 {
 	SetSpeed(GUtils::ConvertMetersToWholeDistance(speed_in_metres));
 }
@@ -954,14 +954,14 @@ float MobileWallHug::GetDefaultSpeedInMetresPerSecond()
 
 void MapCoordsToPoint2D(Point2D& point, const MapCoords& coords)
 {
-	point.x = coords.x * (10.0f / (float)0x10000);
-	point.y = coords.z * (10.0f / (float)0x10000);
+	point.x = coords.x * (MAP_COORDS_METRES_PER_CELL / MAP_COORDS_UNITS_PER_CELL);
+	point.y = coords.z * (MAP_COORDS_METRES_PER_CELL / MAP_COORDS_UNITS_PER_CELL);
 }
 
 void WholeXZToPoint2D(Point2D& point, long x, long z)
 {
-	point.x = x * (10.0f / (float)0x10000);
-	point.y = z * (10.0f / (float)0x10000);
+	point.x = x * (MAP_COORDS_METRES_PER_CELL / MAP_COORDS_UNITS_PER_CELL);
+	point.y = z * (MAP_COORDS_METRES_PER_CELL / MAP_COORDS_UNITS_PER_CELL);
 }
 
 template <> Point2D Point2DCompare<false>::origin;
@@ -1006,7 +1006,7 @@ void CircleHugInfo::ResolveLoad(MobileWallHug* mwh)
 	delete info;
 }
 
-uint32_t MobileWallHug::Save(GameOSFile& file)
+bool32_t MobileWallHug::Save(GameOSFile& file)
 {
 	if (Mobile::Save(file))
 	{
@@ -1043,12 +1043,12 @@ uint32_t MobileWallHug::Save(GameOSFile& file)
 		WRITE_SAFE(file, goal);
 		file.WritePtr(target.Get());
 		file.WriteIt(step);
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
-uint32_t MobileWallHug::Load(GameOSFile& file)
+bool32_t MobileWallHug::Load(GameOSFile& file)
 {
 	if (Mobile::Load(file))
 	{
@@ -1094,9 +1094,9 @@ uint32_t MobileWallHug::Load(GameOSFile& file)
 		file.ReadIt(goal);
 		file.ReadPtr((GameThing**)&target);
 		file.ReadIt(step);
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 // fabricated name. The step of a linear wall hug, measured from origin along the unit direction dir, against

@@ -75,9 +75,9 @@ public:
 	// BW1W120 00561b60 BW1M119 0113c5e0
 	virtual char* GetDebugText() { return "PuzzleGame: "; }
 	// BW1W120 006d9d40 BW1M119 0112fc40
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 006d96c0 BW1M119 011305d0
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 00561b50 BW1M119 0113c5a0
 	virtual uint32_t GetSaveType() { return GAME_THING_TYPE_PUZZLE_GAME; }
 	// BW1W120 00561b10 BW1M119 0113c480
@@ -163,9 +163,9 @@ public:
 	// BW1W120 00422190 BW1M119 inlined
 	virtual char* GetDebugText();
 	// BW1W120 00422bc0 BW1M119 inlined
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 00422aa0 BW1M119 inlined
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 00422180 BW1M119 inlined
 	virtual uint32_t GetSaveType();
 	// BW1W120 00422770 BW1M119 inlined
@@ -210,10 +210,26 @@ class PieceHorse : public Horse
 public:
 	// Override methods
 
+	// BW1W120 0041d820 BW1M119 01139c80
+	virtual bool32_t DecideWhatToDo();
+	// BW1W120 0041d830 BW1M119 01139cc0
+	virtual uint32_t ProcessNeeds();
+	// BW1W120 0041d840 BW1M119 01139d00
+	virtual uint32_t CheckNeeds();
 	// BW1W120 0041d860 BW1M119 01139d80
 	virtual char* GetDebugText();
 	// BW1W120 0041d850 BW1M119 01139d40
 	virtual uint32_t GetSaveType();
+
+	// BW1W120 inlined BW1M119 inlined
+	PieceHorse() {}
+	// BW1W120 inlined BW1M119 01129e20
+	PieceHorse(const MapCoords& coords, const GAnimalInfo* info, unsigned long age) : Horse(coords, info, age) {}
+
+	// Static methods
+
+	// BW1W120 0041d7c0 BW1M119 inlined
+	static PieceHorse* Create(const MapCoords& coords, const GAnimalInfo* info, unsigned long age);
 };
 
 class PieceLion : public Lion
@@ -232,10 +248,17 @@ public:
 	// BW1W120 004200c0 BW1M119 0117e4d0
 	virtual uint32_t GetSaveType();
 	// BW1W120 004200e0 BW1M119 0117e550
-	virtual bool32_t CanBeFrighteningToCreature(Creature* param_1);
+	virtual bool32_t CanBeFrighteningToCreature(Creature* creature);
 
 	// BW1W120 inlined BW1M119 inlined
 	PieceLion() {}
+	// BW1W120 inlined BW1M119 inlined
+	PieceLion(const MapCoords& coords, const GAnimalInfo* info, unsigned long age) : Lion(coords, info, age) {}
+
+	// Static methods
+
+	// BW1W120 00420040 BW1M119 0117e5e0
+	static PieceLion* Create(const MapCoords& coords, const GAnimalInfo* info, unsigned long age);
 };
 
 class PiecePig : public Pig
@@ -249,6 +272,20 @@ public:
 	virtual uint32_t GetSaveType();
 	// BW1W120 0041da70 BW1M119 0113a0d0
 	virtual bool32_t DecideWhatToDo();
+	// BW1W120 0041da60 BW1M119 0113a090
+	virtual uint32_t ProcessNeeds();
+	// BW1W120 0041da80 BW1M119 0113a110
+	virtual uint32_t CheckNeeds();
+
+	// BW1W120 inlined BW1M119 inlined
+	PiecePig() {}
+	// BW1W120 inlined BW1M119 011299a0
+	PiecePig(const MapCoords& coords, const GAnimalInfo* info, unsigned long age) : Pig(coords, info, age) {}
+
+	// Static methods
+
+	// BW1W120 0041da00 BW1M119 inlined
+	static PiecePig* Create(const MapCoords& coords, const GAnimalInfo* info, unsigned long age);
 };
 
 class PieceSheep : public Sheep
@@ -269,6 +306,13 @@ public:
 
 	// BW1W120 inlined BW1M119 0130fc30
 	PieceSheep() {}
+	// BW1W120 inlined BW1M119 0112a190
+	PieceSheep(const MapCoords& coords, const GAnimalInfo* info, unsigned long age) : Sheep(coords, info, age) {}
+
+	// Static methods
+
+	// BW1W120 0041d580 BW1M119 0117b0e0
+	static PieceSheep* Create(const MapCoords& coords, const GAnimalInfo* info, unsigned long age);
 };
 
 class PieceTortoise : public Tortoise
@@ -276,10 +320,26 @@ class PieceTortoise : public Tortoise
 public:
 	// Override methods
 
+	// BW1W120 0041dbf0 BW1M119 01139f50
+	virtual bool32_t DecideWhatToDo();
+	// BW1W120 0041dc00 BW1M119 01139f90
+	virtual uint32_t ProcessNeeds();
+	// BW1W120 0041dc10 BW1M119 01139fd0
+	virtual uint32_t CheckNeeds();
 	// BW1W120 0041dc30 BW1M119 0113a050
 	virtual char* GetDebugText();
 	// BW1W120 0041dc20 BW1M119 0113a010
 	virtual uint32_t GetSaveType();
+
+	// BW1W120 inlined BW1M119 inlined
+	PieceTortoise() {}
+	// BW1W120 inlined BW1M119 01129b50
+	PieceTortoise(const MapCoords& coords, const GAnimalInfo* info, unsigned long age) : Tortoise(coords, info, age) {}
+
+	// Static methods
+
+	// BW1W120 0041db90 BW1M119 inlined
+	static PieceTortoise* Create(const MapCoords& coords, const GAnimalInfo* info, unsigned long age);
 };
 
 class PieceVillager : public Animal
@@ -322,12 +382,20 @@ public:
 	// BW1W120 0041bba0 BW1M119 0116d090
 	virtual uint32_t GetSaveType();
 	// BW1W120 0041bbc0 BW1M119 0113c040
-	virtual bool32_t CanBeFrighteningToCreature(Creature* param_1);
+	virtual bool32_t CanBeFrighteningToCreature(Creature* creature);
 	// BW1W120 0041cfd0 BW1M119 01176020
 	virtual uint32_t StandAnimation();
 
 	// BW1W120 inlined BW1M119 0130fb80
 	PieceVillager() {}
+
+	// BW1W120 inlined BW1M119 inlined
+	PieceVillager(const MapCoords& coords, const GAnimalInfo* info, unsigned long age) : Animal(coords, info, age) {}
+
+	// Static methods
+
+	// BW1W120 0041bb20 BW1M119 0116d300
+	static PieceVillager* Create(const MapCoords& coords, const GAnimalInfo* info, unsigned long age);
 };
 
 class PieceWolf : public Wolf
@@ -346,7 +414,7 @@ public:
 	// BW1W120 00421d70 BW1M119 01181410
 	virtual uint32_t GetSaveType();
 	// BW1W120 00421d90 BW1M119 0113bbd0
-	virtual bool32_t CanBeFrighteningToCreature(Creature* param_1);
+	virtual bool32_t CanBeFrighteningToCreature(Creature* creature);
 
 	// BW1W120 inlined BW1M119 0130fb10
 	PieceWolf() {}
@@ -355,6 +423,12 @@ public:
 class PieceCow : public Cow
 {
 public:
+	// Override methods
+
+	// BW1W120 006dd490 BW1M119 01139dc0
+	virtual uint32_t ProcessNeeds();
+	// BW1W120 006dd4a0 BW1M119 01139e00
+	virtual uint32_t CheckNeeds();
 };
 
 class PuzzleCow : public PieceCow
@@ -362,12 +436,14 @@ class PuzzleCow : public PieceCow
 public:
 	// Override methods
 
+	// BW1W120 006db140 BW1M119 0112df20
+	virtual bool32_t DecideWhatToDo();
 	// BW1W120 006dd680 BW1M119 0113aef0
 	virtual char* GetDebugText();
 	// BW1W120 006dd670 BW1M119 0113aeb0
 	virtual uint32_t GetSaveType();
 	// BW1W120 006dd4b0 BW1M119 inlined
-	virtual bool32_t CanBeFrighteningToCreature(Creature* param_1);
+	virtual bool32_t CanBeFrighteningToCreature(Creature* creature);
 	// BW1W120 006dd690 BW1M119 0113af30
 	virtual bool32_t CanBecomeAPhysicsObject();
 	// BW1W120 0041c7e0 BW1M119 inlined
@@ -384,9 +460,9 @@ public:
 	// BW1W120 00561910 BW1M119 0113a430
 	virtual char* GetDebugText() { return "PuzzleGrain: "; }
 	// BW1W120 006dbe40 BW1M119 0112c5f0
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 006dbeb0 BW1M119 0112c510
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 00561900 BW1M119 0113a3f0
 	virtual uint32_t GetSaveType() { return GAME_THING_TYPE_PUZZLE_GRAIN; }
 	// BW1W120 00561920 BW1M119 0113a470
@@ -547,9 +623,9 @@ public:
 	// BW1W120 00561ae0 BW1M119 0113a310
 	virtual char* GetDebugText() { return "Immersion Mushroom: "; }
 	// BW1W120 006dbf20 BW1M119 0112c430
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 006dbf80 BW1M119 0112c350
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 00561ad0 BW1M119 0113a2d0
 	virtual uint32_t GetSaveType() { return GAME_THING_TYPE_PUZZLE_MOBILE_OBJECT; }
 	// BW1W120 006dc510 BW1M119 0112b730
@@ -619,6 +695,8 @@ class PuzzleTortoise : public PieceTortoise
 public:
 	// Override methods
 
+	// BW1W120 006db150 BW1M119 0112dee0
+	virtual bool32_t DecideWhatToDo();
 	// BW1W120 006dd5d0 BW1M119 0113abf0
 	virtual char* GetDebugText();
 	// BW1W120 006dd5c0 BW1M119 0113abb0
@@ -641,9 +719,9 @@ public:
 	// BW1W120 00561890 BW1M119 0113c180
 	virtual char* GetDebugText() { return "PuzzleTotem: "; }
 	// BW1W120 006da740 BW1M119 0112f2b0
-	virtual uint32_t Load(GameOSFile& file);
+	virtual bool32_t Load(GameOSFile& file);
 	// BW1W120 006da7f0 BW1M119 0112f180
-	virtual uint32_t Save(GameOSFile& file);
+	virtual bool32_t Save(GameOSFile& file);
 	// BW1W120 00561880 BW1M119 0113c140
 	virtual uint32_t GetSaveType() { return GAME_THING_TYPE_PUZZLE_TOTEM; }
 	// BW1W120 006da710 BW1M119 0112f3d0

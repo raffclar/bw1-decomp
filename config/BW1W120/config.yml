@@ -4,14 +4,19 @@ object: ../../build/BW1W120/runblack-preprocessed.exe
 hash: e554d46de745e604c05d7e3607b2f4ec61e8c063
 symbols: config/BW1W120/symbols.txt
 splits: config/BW1W120/splits.txt
+generate_imports: true
 
 block_relocations:
+# A 0x009C009B in .data that reads as a pointer into the import lookup tables.
+  - source: 0x00C3107C
 # Text in Creature3D.cpp's .data that reads as code addresses: "tic" of PhysicalActionNames' "StartStatic" and
 # "l3d" of "Data\eyelid.l3d".
   - source: 0x009D077C
   - source: 0x009D1148
 # Abode::CallVirtualFunctionsForCreation's workshop smoke colour 0x808080 is an immediate, like SetupColourPicker's.
   - source: 0x00403267
+# CitadelHeart::DrawCreaturePen's sprite colour 0xc18119 is an immediate, not a pointer into g_scriptFunctionTable.
+  - source: 0x00466A04
 # WS_OVERLAPPEDWINDOW immediates, not pointers into GGlobal::Global.
   - source: 0x007DBAD7
   - source: 0x007DBB1D
@@ -72,7 +77,58 @@ block_relocations:
 # HelpDude::Draw's evil smoke tint 0x7F1F1F is an immediate, not a pointer into LHDraw::ScaledSprite24.
   - source: 0x005C0C26
 
+# 0x800000 (a flag, and the float bits of 1.0e-38) and deflate's 0x800020/0x800080 configuration words read as
+# addresses inside ComputeFlags (LH3DIsland).
+  - source: 0x004035C4
+  - source: 0x008185F6
+  - source: 0x00818611
+  - source: 0x008187AD
+  - source: 0x008A26AC
+  - source: 0x008A26ED
+  - source: 0x0099F8FC
+  - source: 0x0099F910
+  - source: 0x00C392C0
+  - source: 0x00C3C640
+  - source: 0x00C3C644
+  - source: 0x00C3C648
+  - source: 0x00C3C64C
+  - source: 0x00FC075C
+# MeshLodInfo's triangle tables (LH3DIsland) hold pairs of vertex indices that read as code addresses.
+  - source: 0x00C37230
+    end: 0x00C37BF0
+# SetupBox's IME candidate list control ID 0x85b680 is an immediate, not a pointer into
+# LH3DPrimitive::DrawInShadowTnL.
+  - source: 0x00408133
+  - source: 0x004087FD
+  - source: 0x0040C26D
+  - source: 0x0040C2FE
+  - source: 0x0040CD4B
 add_relocations:
+# LH3DIsland: loop bounds one past the end of an array (dtk reads them as the next symbol).
+  - source: 0x007FF560
+    type: x86_abs32
+    target: '?g_darkness_to_color@LandCell@@2PAKA'
+    addend: 0x402
+  - source: 0x0080188D
+    type: x86_abs32
+    target: '?g_list_material@LH3DLandscape@@2PAPAUMaterial@1@A'
+    addend: 0xC8
+  - source: 0x008018A2
+    type: x86_abs32
+    target: '?g_list_country@LH3DLandscape@@2PAPAUCountry@1@A'
+    addend: 0xC8
+  - source: 0x00801A12
+    type: x86_abs32
+    target: '?g_list_material@LH3DLandscape@@2PAPAUMaterial@1@A'
+    addend: 0xC8
+  - source: 0x00801C2A
+    type: x86_abs32
+    target: '?g_index_block@LH3DIsland@@2PAY0CA@EA'
+    addend: 0x400
+  - source: 0x008046AB
+    type: x86_abs32
+    target: '?g_list_country@LH3DLandscape@@2PAPAUCountry@1@A'
+    addend: 0xC8
 # LH3DCreature::StateAction's jump table (dtk misses it): one entry per case block.
   - source: 0x0048752C
     type: x86_abs32
@@ -479,6 +535,46 @@ add_relocations:
     type: x86_abs32
     target: '?Bans@BWGameSpy@@2PAY0CA@DA'
     addend: -0x20
+  - source: 0x0074FF93
+    type: x86_abs32
+    target: '?StateTable@VillagerStateTableEntry@@2PAU1@A'
+    addend: 0x80
+  - source: 0x0074FFDB
+    type: x86_abs32
+    target: '?StateTable@VillagerStateTableEntry@@2PAU1@A'
+    addend: 0x80
+  - source: 0x00750148
+    type: x86_abs32
+    target: '?StateTable@VillagerStateTableEntry@@2PAU1@A'
+    addend: 0x60
+  - source: 0x007548BA
+    type: x86_abs32
+    target: '?StateTable@VillagerStateTableEntry@@2PAU1@A'
+    addend: 0x30
+  - source: 0x0075492A
+    type: x86_abs32
+    target: '?StateTable@VillagerStateTableEntry@@2PAU1@A'
+    addend: 0x40
+  - source: 0x007565A7
+    type: x86_abs32
+    target: '?StateTable@VillagerStateTableEntry@@2PAU1@A'
+    addend: 0x70
+  - source: 0x00756659
+    type: x86_abs32
+    target: '?StateTable@VillagerStateTableEntry@@2PAU1@A'
+    addend: 0x70
+  - source: 0x0074F8D7
+    type: x86_abs32
+    target: '?InfoList@GVillagerInfo@@2PAV1@A'
+    addend: 0x131D0
+  - source: 0x0075116A
+    type: x86_abs32
+    target: '?InfoList@GVillagerInfo@@2PAV1@A'
+    addend: 0x131D0
+  - source: 0x00752679
+    type: x86_abs32
+    target: '?InfoList@GVillagerInfo@@2PAV1@A'
+    addend: 0x133CC
 
 # ScriptFunctions: string literals and dispatch-table entries dtk leaves as raw immediates.
   - source: 0x006F7CD1
@@ -572,6 +668,252 @@ add_relocations:
     type: x86_abs32
     target: '__real@4@3fff8000000000000000'
 
+# LH3DPrimitive: dtk leaves LEA displacements into the transformed vertex cache (LH3DTech::g_cache_t_points) as raw
+# immediates.
+  - source: 0x0084AA0D
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084AA1C
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084AA2B
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084C2C2
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084C2D1
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084C2E0
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084C90B
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084C91A
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084C929
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084CD29
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084CD38
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084CD47
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084D0BF
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+    addend: 0x3C80
+  - source: 0x0084D0D2
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+    addend: 0x3C80
+  - source: 0x0084D0E3
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+    addend: 0x3C80
+  - source: 0x0084E90F
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084E91E
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084E92D
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084F0A3
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084F0B2
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084F0C1
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0084F60D
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+    addend: 0x3C80
+  - source: 0x0084F620
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+    addend: 0x3C80
+  - source: 0x0084F631
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+    addend: 0x3C80
+  - source: 0x00850076
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+    addend: 0x5480
+  - source: 0x008500B1
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x008500D0
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+    addend: 0x20
+  - source: 0x008500F1
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+    addend: 0x40
+  - source: 0x00850800
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0085080F
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0085081E
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x008516C5
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x008516D4
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x008516E3
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00852BB9
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00852BC8
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00852BD7
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00854547
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00854556
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00854565
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00855A45
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00855A54
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00855A63
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00855FA5
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00855FB4
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00855FC3
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x008567D3
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x008567E2
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x008567F1
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x008572B6
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x008572C5
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x008572D4
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x008579D0
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x008579DF
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x008579EE
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00859447
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00859456
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00859465
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00859CA4
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00859CB3
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00859CC2
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0085A631
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0085A640
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0085A64F
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0085AA93
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0085AAA2
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0085AAB1
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0085B11C
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0085B122
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0085B131
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0085BDBA
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0085BDDA
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0085BDE9
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0085D622
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0085D631
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0085D640
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+
+# LH3DPrimitive::CalcFogTable's loop compares against the end of g_fog_table, not g_vertex_inside_triangle.
+  - source: 0x0084A6B4
+    type: x86_abs32
+    target: '?g_fog_table@LH3DPrimitive@@2PAY01KA'
+    addend: 0x2000
+
 timestamp: "2002-06-18T06:13:22+00:00"
 force_size: 0x00843000
 linker_version: "6.0"
@@ -592,6 +934,8 @@ modules:
   name: LHAudio
   symbols: config/BW1W120/LHAudio/symbols.txt
   splits: config/BW1W120/LHAudio/splits.txt
+  generate_exports: true
+  generate_imports: true
 
 - object: LHLogR.dll
   hash: 3c42f20350da2c54eb1ba0a61829b94d9883669a
@@ -599,15 +943,21 @@ modules:
   linker_version: "7.0"
   symbols: config/BW1W120/LHLog/symbols.txt
   splits: config/BW1W120/LHLog/splits.txt
+  generate_exports: true
+  generate_imports: true
 
 - object: LHMultiplayerR.dll
   hash: 4042119212fb6a5da6d736b059347f340eb4cd17
   name: LHMultiplayer
   symbols: config/BW1W120/LHMultiplayer/symbols.txt
   splits: config/BW1W120/LHMultiplayer/splits.txt
+  generate_exports: true
+  generate_imports: true
 
 - object: LHDialogLib.dll
   hash: 64a22b88a51adc4bc119777642263e419ea8d09e
   name: LHDialog
   symbols: config/BW1W120/LHDialog/symbols.txt
   splits: config/BW1W120/LHDialog/splits.txt
+  generate_exports: true
+  generate_imports: true
